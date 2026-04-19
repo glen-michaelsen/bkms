@@ -3,8 +3,12 @@
 import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
 import type { Exercise } from "@/app/api/study/route"
+import { getItemStatus, STATUS_META } from "@/lib/progress"
 
 type Phase = "loading" | "exercise" | "feedback" | "results"
+
+// Cumulative knowledge update shown in feedback banner
+type ProgressUpdate = { streak: number; correctCount: number; incorrectCount: number }
 
 export function StudySession({ type }: { type: "words" | "sentences" }) {
   const [exercises, setExercises] = useState<Exercise[]>([])
@@ -13,6 +17,7 @@ export function StudySession({ type }: { type: "words" | "sentences" }) {
   const [results, setResults] = useState<boolean[]>([])
   const [error, setError] = useState<string | null>(null)
   const [inputValue, setInputValue] = useState("")
+  const [progressUpdate, setProgressUpdate] = useState<ProgressUpdate | null>(null)
   const [selectedOption, setSelectedOption] = useState<string | null>(null)
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null)
 
@@ -37,9 +42,24 @@ export function StudySession({ type }: { type: "words" | "sentences" }) {
         answer.trim().toLowerCase() === exercise.correctAnswer.trim().toLowerCase()
       setIsCorrect(correct)
       setResults((r) => [...r, correct])
+      setProgressUpdate(null)
       setPhase("feedback")
+
+      // Record answer and get updated progress
+      fetch("/api/study/answer", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          itemId: exercise.id,
+          itemType: type === "words" ? "word" : "sentence",
+          isCorrect: correct,
+        }),
+      })
+        .then((r) => r.json())
+        .then((d) => { if (d.progress) setProgressUpdate(d.progress) })
+        .catch(() => {})
     },
-    [exercise]
+    [exercise, type]
   )
 
   const handleOptionSelect = useCallback(
@@ -61,6 +81,7 @@ export function StudySession({ type }: { type: "words" | "sentences" }) {
   )
 
   const handleNext = useCallback(() => {
+    setProgressUpdate(null)
     if (current + 1 >= exercises.length) {
       setPhase("results")
     } else {
@@ -281,6 +302,16 @@ export function StudySession({ type }: { type: "words" | "sentences" }) {
                 </p>
               )}
             </div>
+            {progressUpdate && (() => {
+              const status = getItemStatus(progressUpdate)
+              const meta = STATUS_META[status]
+              return (
+                <span className={`shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full ${meta.bg} ${meta.color}`}>
+                  {status === "known" ? "⭐ " : ""}{meta.label}
+                  {status !== "new" && ` · ${progressUpdate.streak > 0 ? `${progressUpdate.streak}🔥` : "streak reset"}`}
+                </span>
+              )
+            })()}
           </div>
           <button
             onClick={handleNext}

@@ -2,10 +2,52 @@ import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { logoutAction } from "@/app/actions"
+import { db } from "@/db"
+import { words, sentences, userItemProgress } from "@/db/schema"
+import { eq } from "drizzle-orm"
+import { buildStats, STATUS_META, type ItemStats } from "@/lib/progress"
 
 const languageInfo = {
   sr: { label: "Serbian", flag: "🇷🇸", native: "Srpski" },
   hr: { label: "Croatian", flag: "🇭🇷", native: "Hrvatski" },
+}
+
+function StatsBar({ stats }: { stats: ItemStats }) {
+  const segments = [
+    { key: "known" as const,    count: stats.known },
+    { key: "familiar" as const, count: stats.familiar },
+    { key: "learning" as const, count: stats.learning },
+    { key: "new" as const,      count: stats.unseen },
+  ] as const
+
+  if (stats.total === 0) {
+    return <p className="text-xs text-slate-400 mt-3">No items in database yet</p>
+  }
+
+  return (
+    <div className="mt-4">
+      {/* Segmented bar */}
+      <div className="h-1.5 rounded-full overflow-hidden flex gap-px bg-slate-100">
+        {segments.map(({ key, count }) =>
+          count > 0 ? (
+            <div
+              key={key}
+              className={`h-full ${STATUS_META[key].bar} transition-all`}
+              style={{ width: `${(count / stats.total) * 100}%` }}
+            />
+          ) : null
+        )}
+      </div>
+      {/* Counts */}
+      <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-2">
+        {segments.map(({ key, count }) => (
+          <span key={key} className={`text-xs font-medium ${count === 0 ? "text-slate-300" : STATUS_META[key].color}`}>
+            {count} {STATUS_META[key].label}
+          </span>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 export default async function DashboardPage() {
@@ -18,6 +60,23 @@ export default async function DashboardPage() {
     native: "",
   }
   const firstName = session.user.firstName || session.user.email.split("@")[0]
+  const userId = parseInt(session.user.id)
+
+  // Fetch progress stats
+  const [allWords, allSentences, allProgress] = await Promise.all([
+    db.select({ id: words.id }).from(words),
+    db.select({ id: sentences.id }).from(sentences),
+    db.select().from(userItemProgress).where(eq(userItemProgress.userId, userId)),
+  ])
+
+  const wordStats = buildStats(
+    allWords.map((w) => w.id),
+    allProgress.filter((p) => p.itemType === "word")
+  )
+  const sentenceStats = buildStats(
+    allSentences.map((s) => s.id),
+    allProgress.filter((p) => p.itemType === "sentence")
+  )
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
@@ -27,17 +86,11 @@ export default async function DashboardPage() {
           <span className="font-extrabold text-violet-600 text-lg tracking-tight">Nauči</span>
           <div className="flex items-center gap-5">
             {session.user.role === "admin" && (
-              <Link
-                href="/admin"
-                className="text-sm font-semibold text-violet-600 hover:text-violet-800 transition"
-              >
+              <Link href="/admin" className="text-sm font-semibold text-violet-600 hover:text-violet-800 transition">
                 Admin
               </Link>
             )}
-            <Link
-              href="/settings"
-              className="text-sm font-medium text-slate-500 hover:text-slate-900 transition"
-            >
+            <Link href="/settings" className="text-sm font-medium text-slate-500 hover:text-slate-900 transition">
               Settings
             </Link>
             <form action={logoutAction}>
@@ -54,16 +107,12 @@ export default async function DashboardPage() {
         <div className="mb-10">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-violet-100 text-violet-700 text-xs font-semibold rounded-full mb-4">
             <span>{lang.flag}</span>
-            <span>
-              {lang.label} · {lang.native}
-            </span>
+            <span>{lang.label} · {lang.native}</span>
           </div>
           <h1 className="text-4xl font-extrabold text-slate-900 leading-tight">
             Hey {firstName} 👋
           </h1>
-          <p className="text-slate-500 mt-2 text-lg">
-            What would you like to practice today?
-          </p>
+          <p className="text-slate-500 mt-2 text-lg">What would you like to practice today?</p>
         </div>
 
         {/* Cards */}
@@ -77,13 +126,12 @@ export default async function DashboardPage() {
               <div className="w-12 h-12 bg-violet-100 rounded-2xl flex items-center justify-center text-2xl mb-5 group-hover:bg-violet-200 transition-colors">
                 📖
               </div>
-              <h2 className="text-xl font-bold text-slate-900 mb-1.5">
-                Train Words
-              </h2>
+              <h2 className="text-xl font-bold text-slate-900 mb-1.5">Train Words</h2>
               <p className="text-sm text-slate-500 leading-relaxed">
                 Practise vocabulary — translate single words between English and {lang.label}.
               </p>
-              <div className="mt-5 flex items-center text-violet-600 text-sm font-semibold">
+              <StatsBar stats={wordStats} />
+              <div className="mt-4 flex items-center text-violet-600 text-sm font-semibold">
                 Start session
                 <span className="ml-1.5 group-hover:translate-x-1 transition-transform">→</span>
               </div>
@@ -99,13 +147,12 @@ export default async function DashboardPage() {
               <div className="w-12 h-12 bg-fuchsia-100 rounded-2xl flex items-center justify-center text-2xl mb-5 group-hover:bg-fuchsia-200 transition-colors">
                 💬
               </div>
-              <h2 className="text-xl font-bold text-slate-900 mb-1.5">
-                Train Sentences
-              </h2>
+              <h2 className="text-xl font-bold text-slate-900 mb-1.5">Train Sentences</h2>
               <p className="text-sm text-slate-500 leading-relaxed">
                 Build fluency with full phrases — common everyday sentences in {lang.label}.
               </p>
-              <div className="mt-5 flex items-center text-fuchsia-600 text-sm font-semibold">
+              <StatsBar stats={sentenceStats} />
+              <div className="mt-4 flex items-center text-fuchsia-600 text-sm font-semibold">
                 Start session
                 <span className="ml-1.5 group-hover:translate-x-1 transition-transform">→</span>
               </div>
@@ -113,9 +160,8 @@ export default async function DashboardPage() {
           </Link>
         </div>
 
-        {/* Tip */}
         <p className="text-center text-xs text-slate-400 mt-10">
-          Each session is 10 items — a mix of multiple choice and free typing.
+          Items are <span className="font-semibold">Known</span> after 3 correct answers in a row · each session is 10 items
         </p>
       </main>
     </div>

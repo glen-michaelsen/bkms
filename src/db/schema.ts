@@ -63,6 +63,19 @@ export const userLevelConfig = sqliteTable("user_level_config", {
   percentage: integer("percentage").notNull(),
 })
 
+export const userItemProgress = sqliteTable("user_item_progress", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id").notNull().references(() => users.id),
+  itemId: integer("item_id").notNull(),
+  itemType: text("item_type", { enum: ["word", "sentence"] }).notNull(),
+  correctCount: integer("correct_count").notNull().default(0),
+  incorrectCount: integer("incorrect_count").notNull().default(0),
+  streak: integer("streak").notNull().default(0),
+  lastSeenAt: integer("last_seen_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+})
+
 export type User = typeof users.$inferSelect
 export type Category = typeof categories.$inferSelect
 export type Level = typeof levels.$inferSelect
