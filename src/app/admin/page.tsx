@@ -5,7 +5,7 @@ import { db } from "@/db"
 import { words, sentences, categories, levels } from "@/db/schema"
 import { AddItemForm } from "@/components/AddItemForm"
 import { AddNamedItem } from "@/components/AddNamedItem"
-import { addCategoryAction, addLevelAction } from "@/app/actions"
+import { addCategoryAction, addLevelAction, deleteCategoryAction } from "@/app/actions"
 import { eq } from "drizzle-orm"
 
 export default async function AdminPage() {
@@ -52,8 +52,18 @@ export default async function AdminPage() {
             {allCategories.length > 0 && (
               <div className="mt-4 flex flex-wrap gap-2">
                 {allCategories.map((c) => (
-                  <span key={c.id} className="px-3 py-1 bg-violet-50 text-violet-700 text-sm font-medium rounded-full">
+                  <span key={c.id} className="inline-flex items-center gap-1.5 pl-3 pr-1.5 py-1 bg-violet-50 text-violet-700 text-sm font-medium rounded-full">
                     {c.name}
+                    <form action={deleteCategoryAction}>
+                      <input type="hidden" name="id" value={c.id} />
+                      <button
+                        type="submit"
+                        className="w-4 h-4 flex items-center justify-center rounded-full hover:bg-violet-200 text-violet-400 hover:text-violet-700 transition-colors text-xs leading-none"
+                        title={`Delete ${c.name}`}
+                      >
+                        ×
+                      </button>
+                    </form>
                   </span>
                 ))}
               </div>

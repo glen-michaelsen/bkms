@@ -2,10 +2,11 @@
 
 import { signIn, signOut, auth } from "@/auth"
 import { db } from "@/db"
-import { users, categories, levels, userLevelConfig } from "@/db/schema"
+import { users, categories, levels, userLevelConfig, words, sentences } from "@/db/schema"
 import { eq } from "drizzle-orm"
 import bcrypt from "bcryptjs"
 import { redirect } from "next/navigation"
+import { revalidatePath } from "next/cache"
 import { AuthError } from "next-auth"
 
 export async function loginAction(
@@ -169,6 +170,20 @@ export async function addCategoryAction(
   } catch {
     return { error: "A category with that name already exists" }
   }
+}
+
+export async function deleteCategoryAction(formData: FormData) {
+  const session = await auth()
+  if (!session || session.user.role !== "admin") return
+
+  const id = parseInt(formData.get("id") as string)
+  if (isNaN(id)) return
+
+  await db.update(words).set({ categoryId: null }).where(eq(words.categoryId, id))
+  await db.update(sentences).set({ categoryId: null }).where(eq(sentences.categoryId, id))
+  await db.delete(categories).where(eq(categories.id, id))
+
+  revalidatePath("/admin")
 }
 
 export async function addLevelAction(
