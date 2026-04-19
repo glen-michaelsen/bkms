@@ -2,7 +2,7 @@
 
 import { signIn, signOut, auth } from "@/auth"
 import { db } from "@/db"
-import { users } from "@/db/schema"
+import { users, categories, levels, userLevelConfig } from "@/db/schema"
 import { eq } from "drizzle-orm"
 import bcrypt from "bcryptjs"
 import { redirect } from "next/navigation"
@@ -145,6 +145,81 @@ export async function updatePasswordAction(
     .update(users)
     .set({ passwordHash })
     .where(eq(users.id, parseInt(session.user.id)))
+
+  return { success: true }
+}
+
+// ─── Admin: categories & levels ───────────────────────────────────────────────
+
+type SimpleResult = { error?: string; success?: boolean }
+
+export async function addCategoryAction(
+  _prev: SimpleResult | undefined,
+  formData: FormData
+): Promise<SimpleResult> {
+  const session = await auth()
+  if (!session || session.user.role !== "admin") return { error: "Forbidden" }
+
+  const name = (formData.get("name") as string).trim()
+  if (!name) return { error: "Name is required" }
+
+  try {
+    await db.insert(categories).values({ name })
+    return { success: true }
+  } catch {
+    return { error: "A category with that name already exists" }
+  }
+}
+
+export async function addLevelAction(
+  _prev: SimpleResult | undefined,
+  formData: FormData
+): Promise<SimpleResult> {
+  const session = await auth()
+  if (!session || session.user.role !== "admin") return { error: "Forbidden" }
+
+  const name = (formData.get("name") as string).trim()
+  if (!name) return { error: "Name is required" }
+
+  try {
+    await db.insert(levels).values({ name })
+    return { success: true }
+  } catch {
+    return { error: "A level with that name already exists" }
+  }
+}
+
+// ─── User level config ────────────────────────────────────────────────────────
+
+export async function saveLevelConfigAction(
+  _prev: SimpleResult | undefined,
+  formData: FormData
+): Promise<SimpleResult> {
+  const session = await auth()
+  if (!session) return { error: "Not authenticated" }
+
+  const userId = parseInt(session.user.id)
+  const configs: { levelId: number; percentage: number }[] = []
+
+  for (const [key, value] of formData.entries()) {
+    if (key.startsWith("pct_")) {
+      const levelId = parseInt(key.slice(4))
+      const pct = parseInt(value as string) || 0
+      if (!isNaN(levelId)) configs.push({ levelId, percentage: pct })
+    }
+  }
+
+  const total = configs.reduce((sum, c) => sum + c.percentage, 0)
+  if (total !== 100) {
+    return { error: `Percentages must sum to 100% (currently ${total}%)` }
+  }
+
+  await db.delete(userLevelConfig).where(eq(userLevelConfig.userId, userId))
+  if (configs.length > 0) {
+    await db.insert(userLevelConfig).values(
+      configs.map((c) => ({ userId, levelId: c.levelId, percentage: c.percentage }))
+    )
+  }
 
   return { success: true }
 }

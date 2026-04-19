@@ -10,21 +10,37 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json()
-  const { type, english, serbian, croatian } = body
+  const { type, english, serbian, croatian, categoryId, levelId } = body
 
   if (!type || !english?.trim() || !serbian?.trim() || !croatian?.trim()) {
     return NextResponse.json({ error: "All fields required" }, { status: 400 })
   }
-
   if (type !== "words" && type !== "sentences") {
     return NextResponse.json({ error: "Invalid type" }, { status: 400 })
   }
 
-  const table = type === "words" ? words : sentences
-  const [item] = await db
-    .insert(table)
-    .values({ english: english.trim(), serbian: serbian.trim(), croatian: croatian.trim() })
-    .returning()
-
-  return NextResponse.json({ item }, { status: 201 })
+  if (type === "words") {
+    const [item] = await db
+      .insert(words)
+      .values({
+        english: english.trim(),
+        serbian: serbian.trim(),
+        croatian: croatian.trim(),
+        categoryId: categoryId ?? null,
+      })
+      .returning()
+    return NextResponse.json({ item }, { status: 201 })
+  } else {
+    const [item] = await db
+      .insert(sentences)
+      .values({
+        english: english.trim(),
+        serbian: serbian.trim(),
+        croatian: croatian.trim(),
+        categoryId: categoryId ?? null,
+        levelId: levelId ?? null,
+      })
+      .returning()
+    return NextResponse.json({ item }, { status: 201 })
+  }
 }

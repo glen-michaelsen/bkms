@@ -7,6 +7,7 @@ import {
   updateEmailAction,
   updatePasswordAction,
 } from "@/app/actions"
+import { LevelConfig } from "@/components/LevelConfig"
 
 function SectionCard({
   title,
@@ -52,11 +53,15 @@ export function SettingsForm({
   initialEmail,
   initialLanguage,
   initialGender,
+  levels,
+  levelConfig,
 }: {
   initialFirstName: string
   initialEmail: string
   initialLanguage: string
   initialGender: string
+  levels: { id: number; name: string }[]
+  levelConfig: { levelId: number; percentage: number }[]
 }) {
   const { update } = useSession()
 
@@ -219,6 +224,14 @@ export function SettingsForm({
             <SaveButton pending={passwordPending} label="Update password" />
           </div>
         </form>
+      </SectionCard>
+
+      {/* Study levels */}
+      <SectionCard
+        title="Sentence level split"
+        description="Set how often each difficulty level appears in your sentence practice (must total 100%)"
+      >
+        <LevelConfig levels={levels} initialConfig={levelConfig} />
       </SectionCard>
     </div>
   )

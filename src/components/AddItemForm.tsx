@@ -3,11 +3,23 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 
-export function AddItemForm({ type }: { type: "words" | "sentences" }) {
+type Option = { id: number; name: string }
+
+export function AddItemForm({
+  type,
+  categories,
+  levels,
+}: {
+  type: "words" | "sentences"
+  categories: Option[]
+  levels: Option[]
+}) {
   const router = useRouter()
   const [english, setEnglish] = useState("")
   const [serbian, setSe] = useState("")
   const [croatian, setHr] = useState("")
+  const [categoryId, setCategoryId] = useState<string>("")
+  const [levelId, setLevelId] = useState<string>("")
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle")
   const [errorMsg, setErrorMsg] = useState("")
 
@@ -19,7 +31,14 @@ export function AddItemForm({ type }: { type: "words" | "sentences" }) {
     const res = await fetch("/api/admin/items", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ type, english, serbian, croatian }),
+      body: JSON.stringify({
+        type,
+        english,
+        serbian,
+        croatian,
+        categoryId: categoryId ? parseInt(categoryId) : null,
+        levelId: type === "sentences" && levelId ? parseInt(levelId) : null,
+      }),
     })
 
     if (res.ok) {
@@ -27,6 +46,8 @@ export function AddItemForm({ type }: { type: "words" | "sentences" }) {
       setEnglish("")
       setSe("")
       setHr("")
+      setCategoryId("")
+      setLevelId("")
       router.refresh()
       setTimeout(() => setStatus("idle"), 2500)
     } else {
@@ -39,6 +60,9 @@ export function AddItemForm({ type }: { type: "words" | "sentences" }) {
   const label = type === "words" ? "Word" : "Sentence"
   const accent = type === "words" ? "violet" : "fuchsia"
   const placeholder = type === "words" ? "e.g. hello" : "e.g. How are you?"
+
+  const selectCls =
+    "w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition appearance-none cursor-pointer"
 
   return (
     <div className="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm">
@@ -64,12 +88,36 @@ export function AddItemForm({ type }: { type: "words" | "sentences" }) {
           </div>
         ))}
 
-        {status === "error" && (
-          <p className="text-xs text-rose-600 font-medium">{errorMsg}</p>
-        )}
-        {status === "success" && (
-          <p className="text-xs text-emerald-600 font-semibold">{label} added ✓</p>
-        )}
+        <div className={`grid gap-3 ${type === "sentences" ? "grid-cols-2" : "grid-cols-1"}`}>
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 mb-1.5">
+              Category <span className="text-slate-300">(optional)</span>
+            </label>
+            <select value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className={selectCls}>
+              <option value="">No category</option>
+              {categories.map((c) => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {type === "sentences" && (
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 mb-1.5">
+                Level <span className="text-slate-300">(optional)</span>
+              </label>
+              <select value={levelId} onChange={(e) => setLevelId(e.target.value)} className={selectCls}>
+                <option value="">No level</option>
+                {levels.map((l) => (
+                  <option key={l.id} value={l.id}>{l.name}</option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
+
+        {status === "error" && <p className="text-xs text-rose-600 font-medium">{errorMsg}</p>}
+        {status === "success" && <p className="text-xs text-emerald-600 font-semibold">{label} added ✓</p>}
 
         <button
           type="submit"
