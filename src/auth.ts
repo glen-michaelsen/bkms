@@ -35,16 +35,24 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           role: user.role,
           language: user.language,
           gender: user.gender,
+          firstName: user.firstName ?? undefined,
         }
       },
     }),
   ],
   callbacks: {
-    jwt({ token, user }) {
+    jwt({ token, user, trigger, session }) {
+      if (trigger === "update" && session) {
+        if (session.firstName !== undefined) token.firstName = session.firstName
+        if (session.language) token.language = session.language
+        if (session.gender) token.gender = session.gender
+        if (session.email) token.email = session.email
+      }
       if (user) {
         token.role = (user as { role: string }).role
         token.language = (user as { language: string }).language
         token.gender = (user as { gender: string }).gender
+        token.firstName = (user as { firstName?: string }).firstName ?? null
       }
       return token
     },
@@ -53,6 +61,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       session.user.role = token.role as string
       session.user.language = token.language as string
       session.user.gender = token.gender as string
+      session.user.firstName = (token.firstName as string | null) ?? undefined
       return session
     },
   },

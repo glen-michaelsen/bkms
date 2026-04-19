@@ -17,7 +17,7 @@ export default async function DashboardPage() {
     flag: "🌍",
     native: "",
   }
-  const firstName = session.user.email.split("@")[0]
+  const firstName = session.user.firstName || session.user.email.split("@")[0]
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
@@ -34,7 +34,12 @@ export default async function DashboardPage() {
                 Admin
               </Link>
             )}
-            <span className="text-sm text-slate-400 hidden sm:block">{session.user.email}</span>
+            <Link
+              href="/settings"
+              className="text-sm font-medium text-slate-500 hover:text-slate-900 transition"
+            >
+              Settings
+            </Link>
             <form action={logoutAction}>
               <button className="text-sm font-medium text-slate-500 hover:text-slate-900 transition">
                 Sign out
