@@ -12,10 +12,7 @@ export function StudySession({ type }: { type: "words" | "sentences" }) {
   const [phase, setPhase] = useState<Phase>("loading")
   const [results, setResults] = useState<boolean[]>([])
   const [error, setError] = useState<string | null>(null)
-
-  // Type-in state
   const [inputValue, setInputValue] = useState("")
-  // Multiple choice state
   const [selectedOption, setSelectedOption] = useState<string | null>(null)
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null)
 
@@ -23,9 +20,8 @@ export function StudySession({ type }: { type: "words" | "sentences" }) {
     fetch(`/api/study?type=${type}`)
       .then((r) => r.json())
       .then((data) => {
-        if (data.error) {
-          setError(data.error)
-        } else {
+        if (data.error) setError(data.error)
+        else {
           setExercises(data.exercises)
           setPhase("exercise")
         }
@@ -78,10 +74,14 @@ export function StudySession({ type }: { type: "words" | "sentences" }) {
 
   if (error) {
     return (
-      <div className="text-center py-16">
-        <p className="text-red-600 mb-4">{error}</p>
-        <Link href="/dashboard" className="text-indigo-600 hover:underline">
-          Back to dashboard
+      <div className="text-center py-20">
+        <div className="text-5xl mb-4">😕</div>
+        <p className="text-slate-600 mb-6">{error}</p>
+        <Link
+          href="/dashboard"
+          className="inline-flex items-center gap-1.5 text-violet-600 font-semibold hover:underline"
+        >
+          ← Back to dashboard
         </Link>
       </div>
     )
@@ -89,90 +89,136 @@ export function StudySession({ type }: { type: "words" | "sentences" }) {
 
   if (phase === "loading") {
     return (
-      <div className="text-center py-16 text-slate-500">Loading session…</div>
+      <div className="text-center py-20">
+        <div className="inline-flex gap-1.5">
+          {[0, 1, 2].map((i) => (
+            <div
+              key={i}
+              className="w-2.5 h-2.5 bg-violet-400 rounded-full animate-bounce"
+              style={{ animationDelay: `${i * 0.15}s` }}
+            />
+          ))}
+        </div>
+        <p className="text-slate-400 mt-4 text-sm">Loading your session…</p>
+      </div>
     )
   }
 
   if (phase === "results") {
     const score = results.filter(Boolean).length
+    const total = results.length
+    const pct = Math.round((score / total) * 100)
+    const emoji = pct >= 80 ? "🎉" : pct >= 50 ? "👍" : "💪"
+    const msg =
+      pct >= 80
+        ? "Excellent work!"
+        : pct >= 50
+        ? "Good job, keep it up!"
+        : "Keep practising — you'll get there!"
+
     return (
-      <div className="text-center py-12">
-        <div className="text-6xl mb-4">{score >= 8 ? "🎉" : score >= 5 ? "👍" : "💪"}</div>
-        <h2 className="text-2xl font-bold text-slate-900 mb-2">
-          {score} / {results.length} correct
-        </h2>
-        <p className="text-slate-500 mb-8">
-          {score >= 8
-            ? "Excellent work!"
-            : score >= 5
-            ? "Good job, keep it up!"
-            : "Keep practising — you'll get there!"}
-        </p>
+      <div className="text-center py-12 px-4">
+        <div className="text-7xl mb-5">{emoji}</div>
+        <div className="inline-flex items-baseline gap-2 mb-3">
+          <span className="text-5xl font-extrabold text-slate-900">{score}</span>
+          <span className="text-2xl text-slate-400 font-medium">/ {total}</span>
+        </div>
+        <p className="text-slate-500 text-lg mb-2">{msg}</p>
+
+        {/* Score bar */}
+        <div className="w-full max-w-xs mx-auto h-3 bg-slate-100 rounded-full overflow-hidden mt-6 mb-8">
+          <div
+            className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 rounded-full transition-all duration-700"
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+
+        {/* Per-question dots */}
+        <div className="flex gap-2 justify-center mb-10 flex-wrap">
+          {results.map((r, i) => (
+            <div
+              key={i}
+              className={`w-3 h-3 rounded-full ${r ? "bg-emerald-400" : "bg-rose-400"}`}
+              title={r ? "Correct" : "Wrong"}
+            />
+          ))}
+        </div>
+
         <div className="flex gap-3 justify-center flex-wrap">
           <Link
             href={`/study/${type}`}
-            className="px-5 py-2.5 bg-indigo-600 text-white font-medium rounded-lg hover:bg-indigo-700 transition-colors"
             onClick={() => window.location.reload()}
+            className="px-6 py-3 bg-violet-600 text-white font-semibold rounded-2xl hover:bg-violet-700 transition-all active:scale-[0.98]"
           >
             Try again
           </Link>
           <Link
             href="/dashboard"
-            className="px-5 py-2.5 border border-slate-300 text-slate-700 font-medium rounded-lg hover:bg-slate-100 transition-colors"
+            className="px-6 py-3 border-2 border-slate-200 text-slate-700 font-semibold rounded-2xl hover:border-violet-300 hover:bg-violet-50 transition-all"
           >
-            Back to dashboard
+            Dashboard
           </Link>
         </div>
       </div>
     )
   }
 
-  const progress = ((current) / exercises.length) * 100
+  const progress = (current / exercises.length) * 100
 
   return (
-    <div className="max-w-lg mx-auto">
-      {/* Progress */}
-      <div className="mb-6">
-        <div className="flex justify-between text-sm text-slate-500 mb-2">
-          <span>
+    <div className="space-y-6">
+      {/* Progress header */}
+      <div>
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm font-semibold text-slate-500">
             {current + 1} / {exercises.length}
           </span>
-          <span>{exercise.exerciseType === "multiple_choice" ? "Choose the answer" : "Type the answer"}</span>
+          <span
+            className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+              exercise.exerciseType === "multiple_choice"
+                ? "bg-violet-100 text-violet-700"
+                : "bg-fuchsia-100 text-fuchsia-700"
+            }`}
+          >
+            {exercise.exerciseType === "multiple_choice" ? "Choose" : "Type"}
+          </span>
         </div>
-        <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
+        <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
           <div
-            className="h-full bg-indigo-500 rounded-full transition-all duration-300"
+            className="h-full bg-gradient-to-r from-violet-500 to-fuchsia-500 rounded-full transition-all duration-500"
             style={{ width: `${progress}%` }}
           />
         </div>
       </div>
 
-      {/* Prompt */}
-      <div className="bg-white rounded-2xl border border-slate-200 p-6 mb-6 text-center">
-        <p className="text-xs uppercase tracking-wide text-slate-400 mb-2">Translate to {type === "words" ? "the word" : "the sentence"}</p>
-        <p className="text-xl font-semibold text-slate-900">{exercise.english}</p>
+      {/* Question card */}
+      <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-8 text-center">
+        <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-3">
+          Translate to {type === "words" ? "the word" : "the sentence"}
+        </p>
+        <p className="text-2xl font-bold text-slate-900 leading-snug">{exercise.english}</p>
       </div>
 
       {/* Exercise */}
       {exercise.exerciseType === "multiple_choice" ? (
-        <div className="space-y-3">
+        <div className="grid grid-cols-1 gap-3">
           {exercise.options!.map((option) => {
-            let btnClass =
-              "w-full text-left px-4 py-3 rounded-xl border-2 font-medium transition-all "
+            let cls =
+              "w-full text-left px-5 py-4 rounded-2xl border-2 font-medium text-base transition-all duration-150 "
 
             if (phase === "feedback") {
               if (option === exercise.correctAnswer) {
-                btnClass += "border-green-500 bg-green-50 text-green-800"
-              } else if (option === selectedOption && !isCorrect) {
-                btnClass += "border-red-400 bg-red-50 text-red-700"
+                cls += "border-emerald-400 bg-emerald-50 text-emerald-800"
+              } else if (option === selectedOption) {
+                cls += "border-rose-400 bg-rose-50 text-rose-700"
               } else {
-                btnClass += "border-slate-200 text-slate-400"
+                cls += "border-slate-100 text-slate-300 cursor-default"
               }
             } else {
-              btnClass +=
+              cls +=
                 option === selectedOption
-                  ? "border-indigo-500 bg-indigo-50 text-indigo-800"
-                  : "border-slate-200 hover:border-indigo-300 text-slate-700 hover:bg-slate-50"
+                  ? "border-violet-500 bg-violet-50 text-violet-800"
+                  : "border-slate-200 text-slate-700 hover:border-violet-300 hover:bg-violet-50 cursor-pointer active:scale-[0.98]"
             }
 
             return (
@@ -180,7 +226,7 @@ export function StudySession({ type }: { type: "words" | "sentences" }) {
                 key={option}
                 onClick={() => handleOptionSelect(option)}
                 disabled={phase === "feedback"}
-                className={btnClass}
+                className={cls}
               >
                 {option}
               </button>
@@ -196,40 +242,51 @@ export function StudySession({ type }: { type: "words" | "sentences" }) {
             disabled={phase === "feedback"}
             placeholder="Type your answer…"
             autoFocus
-            className="w-full px-4 py-3 border-2 border-slate-200 rounded-xl focus:outline-none focus:border-indigo-500 text-slate-900 disabled:bg-slate-50"
+            className="w-full px-5 py-4 border-2 border-slate-200 rounded-2xl focus:outline-none focus:border-violet-500 text-slate-900 text-base placeholder:text-slate-400 disabled:bg-slate-50 transition"
           />
           {phase === "exercise" && (
             <button
               type="submit"
               disabled={!inputValue.trim()}
-              className="w-full py-3 bg-indigo-600 text-white font-medium rounded-xl hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+              className="w-full py-4 bg-violet-600 text-white font-semibold rounded-2xl hover:bg-violet-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
             >
-              Check
+              Check answer
             </button>
           )}
         </form>
       )}
 
-      {/* Feedback */}
+      {/* Feedback banner */}
       {phase === "feedback" && (
         <div
-          className={`mt-4 p-4 rounded-xl ${
-            isCorrect ? "bg-green-50 border border-green-200" : "bg-red-50 border border-red-200"
+          className={`rounded-2xl p-5 ${
+            isCorrect
+              ? "bg-emerald-50 border border-emerald-200"
+              : "bg-rose-50 border border-rose-200"
           }`}
         >
-          <p className={`font-semibold ${isCorrect ? "text-green-700" : "text-red-700"}`}>
-            {isCorrect ? "Correct!" : "Not quite"}
-          </p>
-          {!isCorrect && (
-            <p className="text-sm mt-1 text-slate-600">
-              Correct answer: <span className="font-medium">{exercise.correctAnswer}</span>
-            </p>
-          )}
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p
+                className={`font-bold text-base ${
+                  isCorrect ? "text-emerald-700" : "text-rose-700"
+                }`}
+              >
+                {isCorrect ? "Correct! 🎯" : "Not quite 😅"}
+              </p>
+              {!isCorrect && (
+                <p className="text-sm text-slate-600 mt-1">
+                  Correct answer:{" "}
+                  <span className="font-semibold text-slate-800">{exercise.correctAnswer}</span>
+                </p>
+              )}
+            </div>
+          </div>
           <button
             onClick={handleNext}
-            className="mt-3 w-full py-2.5 bg-slate-900 text-white font-medium rounded-lg hover:bg-slate-700 transition-colors"
+            className="mt-4 w-full py-3 bg-slate-900 text-white font-semibold rounded-xl hover:bg-slate-700 transition-all active:scale-[0.98]"
           >
-            {current + 1 >= exercises.length ? "See results" : "Next"}
+            {current + 1 >= exercises.length ? "See results →" : "Next →"}
           </button>
         </div>
       )}

@@ -14,21 +14,22 @@ export default async function StudyPage({
   const { type } = await params
   if (type !== "words" && type !== "sentences") redirect("/dashboard")
 
-  const label = type === "words" ? "Words" : "Sentences"
-
   return (
-    <div className="min-h-screen flex flex-col">
-      <nav className="bg-white border-b border-slate-200">
-        <div className="max-w-3xl mx-auto px-4 h-14 flex items-center justify-between">
-          <Link href="/dashboard" className="text-sm text-slate-500 hover:text-slate-900">
-            ← Dashboard
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      <nav className="bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-10">
+        <div className="max-w-2xl mx-auto px-5 h-16 flex items-center justify-between">
+          <Link
+            href="/dashboard"
+            className="flex items-center gap-1.5 text-sm font-medium text-slate-500 hover:text-slate-900 transition"
+          >
+            ← Back
           </Link>
-          <span className="font-semibold text-slate-700">Training {label}</span>
-          <div className="w-16" />
+          <span className="font-extrabold text-violet-600 text-lg tracking-tight">Nauči</span>
+          <div className="w-14" />
         </div>
       </nav>
 
-      <main className="flex-1 max-w-3xl mx-auto w-full px-4 py-10">
+      <main className="flex-1 max-w-2xl mx-auto w-full px-5 py-10">
         <StudySession type={type as "words" | "sentences"} />
       </main>
     </div>

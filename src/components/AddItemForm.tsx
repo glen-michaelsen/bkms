@@ -28,7 +28,7 @@ export function AddItemForm({ type }: { type: "words" | "sentences" }) {
       setSe("")
       setHr("")
       router.refresh()
-      setTimeout(() => setStatus("idle"), 2000)
+      setTimeout(() => setStatus("idle"), 2500)
     } else {
       const data = await res.json()
       setErrorMsg(data.error || "Something went wrong")
@@ -37,52 +37,48 @@ export function AddItemForm({ type }: { type: "words" | "sentences" }) {
   }
 
   const label = type === "words" ? "Word" : "Sentence"
+  const accent = type === "words" ? "violet" : "fuchsia"
   const placeholder = type === "words" ? "e.g. hello" : "e.g. How are you?"
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-5">
-      <h3 className="font-semibold text-slate-900 mb-4">Add {label}</h3>
+    <div className="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm">
+      <div className="flex items-center gap-2.5 mb-5">
+        <span className="text-xl">{type === "words" ? "📖" : "💬"}</span>
+        <h3 className="font-bold text-slate-900">Add {label}</h3>
+      </div>
       <form onSubmit={handleSubmit} className="space-y-3">
-        <div>
-          <label className="block text-xs font-medium text-slate-500 mb-1">English</label>
-          <input
-            value={english}
-            onChange={(e) => setEnglish(e.target.value)}
-            required
-            placeholder={placeholder}
-            className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-slate-500 mb-1">Serbian (Srpski)</label>
-          <input
-            value={serbian}
-            onChange={(e) => setSe(e.target.value)}
-            required
-            className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-          />
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-slate-500 mb-1">Croatian (Hrvatski)</label>
-          <input
-            value={croatian}
-            onChange={(e) => setHr(e.target.value)}
-            required
-            className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-          />
-        </div>
+        {[
+          { label: "English", value: english, set: setEnglish, placeholder },
+          { label: "Serbian (Srpski)", value: serbian, set: setSe, placeholder: "" },
+          { label: "Croatian (Hrvatski)", value: croatian, set: setHr, placeholder: "" },
+        ].map(({ label: l, value, set, placeholder: ph }) => (
+          <div key={l}>
+            <label className="block text-xs font-semibold text-slate-500 mb-1.5">{l}</label>
+            <input
+              value={value}
+              onChange={(e) => set(e.target.value)}
+              required
+              placeholder={ph}
+              className="w-full px-4 py-2.5 text-sm border border-slate-200 rounded-xl bg-slate-50 focus:bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition"
+            />
+          </div>
+        ))}
 
         {status === "error" && (
-          <p className="text-xs text-red-600">{errorMsg}</p>
+          <p className="text-xs text-rose-600 font-medium">{errorMsg}</p>
         )}
         {status === "success" && (
-          <p className="text-xs text-green-600">{label} added successfully!</p>
+          <p className="text-xs text-emerald-600 font-semibold">{label} added ✓</p>
         )}
 
         <button
           type="submit"
           disabled={status === "loading"}
-          className="w-full py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+          className={`w-full py-2.5 text-sm font-semibold rounded-xl transition-all active:scale-[0.98] disabled:opacity-50 ${
+            accent === "violet"
+              ? "bg-violet-600 text-white hover:bg-violet-700"
+              : "bg-fuchsia-600 text-white hover:bg-fuchsia-700"
+          }`}
         >
           {status === "loading" ? "Adding…" : `Add ${label}`}
         </button>
