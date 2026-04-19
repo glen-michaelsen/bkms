@@ -3,14 +3,64 @@ import { redirect } from "next/navigation"
 import Link from "next/link"
 import { logoutAction } from "@/app/actions"
 import { db } from "@/db"
-import { words, sentences, userItemProgress } from "@/db/schema"
-import { eq } from "drizzle-orm"
+import { words, sentences, userItemProgress, userDailyActivity } from "@/db/schema"
+import { eq, and, gte } from "drizzle-orm"
 import { buildStats, STATUS_META, type ItemStats } from "@/lib/progress"
+import { ActivityGraph } from "@/components/ActivityGraph"
 
 const languageInfo = {
   sr: { label: "Serbian", flag: "🇷🇸", native: "Srpski" },
   hr: { label: "Croatian", flag: "🇭🇷", native: "Hrvatski" },
 }
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function prevDay(dateStr: string): string {
+  const d = new Date(dateStr + "T00:00:00Z")
+  d.setUTCDate(d.getUTCDate() - 1)
+  return d.toISOString().slice(0, 10)
+}
+
+function calcStreak(activityMap: Map<string, number>, today: string): number {
+  let d = activityMap.has(today) ? today : prevDay(today) // grace period
+  let streak = 0
+  while ((activityMap.get(d) ?? 0) > 0) {
+    streak++
+    d = prevDay(d)
+  }
+  return streak
+}
+
+function buildGrid(activityMap: Map<string, number>, numWeeks = 16) {
+  const today = new Date()
+  const todayStr = today.toISOString().slice(0, 10)
+  const dow = today.getUTCDay()
+  const daysFromMonday = dow === 0 ? 6 : dow - 1
+  const currentMonday = new Date(today)
+  currentMonday.setUTCDate(today.getUTCDate() - daysFromMonday)
+
+  const start = new Date(currentMonday)
+  start.setUTCDate(currentMonday.getUTCDate() - (numWeeks - 1) * 7)
+
+  const weeks = []
+  for (let w = 0; w < numWeeks; w++) {
+    const week = []
+    for (let d = 0; d < 7; d++) {
+      const date = new Date(start)
+      date.setUTCDate(start.getUTCDate() + w * 7 + d)
+      const dateStr = date.toISOString().slice(0, 10)
+      week.push({
+        date: dateStr,
+        count: activityMap.get(dateStr) ?? 0,
+        isFuture: dateStr > todayStr,
+      })
+    }
+    weeks.push(week)
+  }
+  return weeks
+}
+
+// ── StatsBar ─────────────────────────────────────────────────────────────────
 
 function StatsBar({ stats }: { stats: ItemStats }) {
   const segments = [
@@ -21,24 +71,22 @@ function StatsBar({ stats }: { stats: ItemStats }) {
   ] as const
 
   if (stats.total === 0) {
-    return <p className="text-xs text-slate-400 mt-3">No items in database yet</p>
+    return <p className="text-xs text-slate-400 mt-3">No items yet</p>
   }
 
   return (
     <div className="mt-4">
-      {/* Segmented bar */}
       <div className="h-1.5 rounded-full overflow-hidden flex gap-px bg-slate-100">
         {segments.map(({ key, count }) =>
           count > 0 ? (
             <div
               key={key}
-              className={`h-full ${STATUS_META[key].bar} transition-all`}
+              className={`h-full ${STATUS_META[key].bar}`}
               style={{ width: `${(count / stats.total) * 100}%` }}
             />
           ) : null
         )}
       </div>
-      {/* Counts */}
       <div className="flex flex-wrap gap-x-3 gap-y-0.5 mt-2">
         {segments.map(({ key, count }) => (
           <span key={key} className={`text-xs font-medium ${count === 0 ? "text-slate-300" : STATUS_META[key].color}`}>
@@ -50,23 +98,31 @@ function StatsBar({ stats }: { stats: ItemStats }) {
   )
 }
 
+// ── Page ─────────────────────────────────────────────────────────────────────
+
 export default async function DashboardPage() {
   const session = await auth()
   if (!session) redirect("/login")
 
   const lang = languageInfo[session.user.language as "sr" | "hr"] ?? {
-    label: session.user.language,
-    flag: "🌍",
-    native: "",
+    label: session.user.language, flag: "🌍", native: "",
   }
   const firstName = session.user.firstName || session.user.email.split("@")[0]
   const userId = parseInt(session.user.id)
+  const today = new Date().toISOString().slice(0, 10)
 
-  // Fetch progress stats
-  const [allWords, allSentences, allProgress] = await Promise.all([
+  // 16 weeks back for graph
+  const graphStart = new Date()
+  graphStart.setUTCDate(graphStart.getUTCDate() - 16 * 7)
+  const graphStartStr = graphStart.toISOString().slice(0, 10)
+
+  const [allWords, allSentences, allProgress, allActivity] = await Promise.all([
     db.select({ id: words.id }).from(words),
     db.select({ id: sentences.id }).from(sentences),
     db.select().from(userItemProgress).where(eq(userItemProgress.userId, userId)),
+    db.select().from(userDailyActivity).where(
+      and(eq(userDailyActivity.userId, userId), gte(userDailyActivity.date, graphStartStr))
+    ),
   ])
 
   const wordStats = buildStats(
@@ -78,9 +134,13 @@ export default async function DashboardPage() {
     allProgress.filter((p) => p.itemType === "sentence")
   )
 
+  const activityMap = new Map(allActivity.map((a) => [a.date, a.answersCount]))
+  const streak = calcStreak(activityMap, today)
+  const weeks = buildGrid(activityMap)
+  const totalDaysActive = allActivity.length
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
-      {/* Nav */}
       <nav className="bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-10">
         <div className="max-w-3xl mx-auto px-5 h-16 flex items-center justify-between">
           <span className="font-extrabold text-violet-600 text-lg tracking-tight">Nauči</span>
@@ -102,9 +162,9 @@ export default async function DashboardPage() {
         </div>
       </nav>
 
-      <main className="flex-1 max-w-3xl mx-auto w-full px-5 py-12">
+      <main className="flex-1 max-w-3xl mx-auto w-full px-5 py-10 space-y-6">
         {/* Hero */}
-        <div className="mb-10">
+        <div>
           <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-violet-100 text-violet-700 text-xs font-semibold rounded-full mb-4">
             <span>{lang.flag}</span>
             <span>{lang.label} · {lang.native}</span>
@@ -115,7 +175,10 @@ export default async function DashboardPage() {
           <p className="text-slate-500 mt-2 text-lg">What would you like to practice today?</p>
         </div>
 
-        {/* Cards */}
+        {/* Activity graph + streak */}
+        <ActivityGraph weeks={weeks} streak={streak} totalDaysActive={totalDaysActive} />
+
+        {/* Study cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <Link
             href="/study/words"
@@ -160,8 +223,8 @@ export default async function DashboardPage() {
           </Link>
         </div>
 
-        <p className="text-center text-xs text-slate-400 mt-10">
-          Items are <span className="font-semibold">Known</span> after 3 correct answers in a row · each session is 10 items
+        <p className="text-center text-xs text-slate-400">
+          <span className="font-semibold">Known</span> = 3 correct in a row · each session is 10 items
         </p>
       </main>
     </div>

@@ -63,6 +63,13 @@ export const userLevelConfig = sqliteTable("user_level_config", {
   percentage: integer("percentage").notNull(),
 })
 
+export const userDailyActivity = sqliteTable("user_daily_activity", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id").notNull().references(() => users.id),
+  date: text("date").notNull(), // YYYY-MM-DD UTC
+  answersCount: integer("answers_count").notNull().default(1),
+})
+
 export const userItemProgress = sqliteTable("user_item_progress", {
   id: integer("id").primaryKey({ autoIncrement: true }),
   userId: integer("user_id").notNull().references(() => users.id),

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { db } from "@/db"
-import { userItemProgress } from "@/db/schema"
+import { userItemProgress, userDailyActivity } from "@/db/schema"
 import { eq, and } from "drizzle-orm"
 
 export async function POST(req: NextRequest) {
@@ -14,7 +14,9 @@ export async function POST(req: NextRequest) {
   }
 
   const userId = parseInt(session.user.id)
+  const today = new Date().toISOString().slice(0, 10) // YYYY-MM-DD UTC
 
+  // ── Update item progress ──────────────────────────────────────────────────
   const existing = await db
     .select()
     .from(userItemProgress)
@@ -46,12 +48,24 @@ export async function POST(req: NextRequest) {
       streak: isCorrect ? 1 : 0,
     }
     await db.insert(userItemProgress).values({
-      userId,
-      itemId,
-      itemType,
-      ...progress,
-      lastSeenAt: new Date(),
+      userId, itemId, itemType, ...progress, lastSeenAt: new Date(),
     })
+  }
+
+  // ── Upsert daily activity ─────────────────────────────────────────────────
+  const todayActivity = await db
+    .select()
+    .from(userDailyActivity)
+    .where(and(eq(userDailyActivity.userId, userId), eq(userDailyActivity.date, today)))
+    .get()
+
+  if (todayActivity) {
+    await db
+      .update(userDailyActivity)
+      .set({ answersCount: todayActivity.answersCount + 1 })
+      .where(eq(userDailyActivity.id, todayActivity.id))
+  } else {
+    await db.insert(userDailyActivity).values({ userId, date: today, answersCount: 1 })
   }
 
   return NextResponse.json({ ok: true, progress })
