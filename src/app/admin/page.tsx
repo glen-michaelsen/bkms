@@ -5,6 +5,7 @@ import { db } from "@/db"
 import { words, sentences, categories, levels } from "@/db/schema"
 import { AddItemForm } from "@/components/AddItemForm"
 import { AddNamedItem } from "@/components/AddNamedItem"
+import { CsvUpload } from "@/components/CsvUpload"
 import { addCategoryAction, addLevelAction, deleteCategoryAction } from "@/app/actions"
 import { eq } from "drizzle-orm"
 
@@ -96,6 +97,15 @@ export default async function AdminPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
             <AddItemForm type="words" categories={allCategories} levels={allLevels} />
             <AddItemForm type="sentences" categories={allCategories} levels={allLevels} />
+          </div>
+        </section>
+
+        {/* ── Bulk import ───────────────────────────────────────────── */}
+        <section>
+          <h2 className="text-2xl font-extrabold text-slate-900 mb-6">Bulk import</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <CsvUpload type="words" />
+            <CsvUpload type="sentences" />
           </div>
         </section>
 
