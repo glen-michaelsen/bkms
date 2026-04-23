@@ -17,10 +17,15 @@ type ProgressUpdate = { streak: number; correctCount: number; incorrectCount: nu
 // Strip punctuation, collapse whitespace, lowercase — used for both evaluation
 // and closeness scoring so that "Kako si" === "Kako si?"
 
+// Explicit letter set: basic Latin + Serbian/Croatian diacritics + full Cyrillic block
+const LETTER_RE = /[a-zA-ZčćđšžČĆĐŠŽ\u0400-\u04FF0-9]/
+
 function normalize(text: string): string {
   return text
     .toLowerCase()
-    .replace(/[^a-zA-ZÀ-žа-яА-ЯёЁ0-9\s]/g, "") // remove all non-letter/digit/space
+    .split("")
+    .filter((c) => LETTER_RE.test(c) || c === " ")
+    .join("")
     .replace(/\s+/g, " ")
     .trim()
 }
@@ -64,7 +69,8 @@ function closenessLabel(c: Closeness): string {
 
 // ── Hint helper ───────────────────────────────────────────────────────────────
 
-const IS_LETTER = /[a-zA-ZÀ-žа-яА-ЯёЁ0-9]/
+// IS_LETTER reuses the same explicit set as normalize()
+const IS_LETTER = LETTER_RE
 
 function HintDisplay({ text }: { text: string }) {
   // Split on spaces, then filter each word down to only letter characters
