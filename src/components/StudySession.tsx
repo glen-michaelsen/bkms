@@ -13,6 +13,18 @@ type Closeness = "very_close" | "close" | "wrong"
 // Cumulative knowledge update shown in feedback banner
 type ProgressUpdate = { streak: number; correctCount: number; incorrectCount: number }
 
+// ── Normalisation ────────────────────────────────────────────────────────────
+// Strip punctuation, collapse whitespace, lowercase — used for both evaluation
+// and closeness scoring so that "Kako si" === "Kako si?"
+
+function normalize(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/[^a-zA-ZÀ-žа-яА-ЯёЁ0-9\s]/g, "") // remove all non-letter/digit/space
+    .replace(/\s+/g, " ")
+    .trim()
+}
+
 // ── Levenshtein helpers ───────────────────────────────────────────────────────
 
 function levenshtein(a: string, b: string): number {
@@ -30,8 +42,8 @@ function levenshtein(a: string, b: string): number {
 }
 
 function getCloseness(given: string, correct: string): Closeness {
-  const a = given.trim().toLowerCase()
-  const b = correct.trim().toLowerCase()
+  const a = normalize(given)
+  const b = normalize(correct)
   const dist = levenshtein(a, b)
   if (dist <= 2) return "very_close"
   if (dist <= Math.max(4, Math.floor(b.length * 0.35))) return "close"
@@ -52,21 +64,27 @@ function closenessLabel(c: Closeness): string {
 
 // ── Hint helper ───────────────────────────────────────────────────────────────
 
+const IS_LETTER = /[a-zA-ZÀ-žа-яА-ЯёЁ0-9]/
+
 function HintDisplay({ text }: { text: string }) {
-  const words = text.trim().split(/\s+/)
+  // Split on spaces, then filter each word down to only letter characters
+  const words = text.trim().split(/\s+/).map((w) => [...w].filter((c) => IS_LETTER.test(c)))
+  // Drop empty word slots (e.g. a lone punctuation token)
+  const letterWords = words.filter((w) => w.length > 0)
+
   return (
     <div className="text-center select-none">
-      {words.map((word, wi) => (
+      {letterWords.map((letters, wi) => (
         <span
           key={wi}
-          style={{ display: "inline-block", marginRight: wi < words.length - 1 ? "22px" : 0 }}
+          style={{ display: "inline-block", marginRight: wi < letterWords.length - 1 ? "22px" : 0 }}
         >
-          {[...word].map((_, ci) => (
+          {letters.map((_, ci) => (
             <span
               key={ci}
               style={{
                 display: "inline-block",
-                marginRight: ci < word.length - 1 ? "6px" : 0,
+                marginRight: ci < letters.length - 1 ? "6px" : 0,
                 color: "#8b5cf6",
                 fontFamily: "monospace",
                 fontSize: "20px",
@@ -121,8 +139,7 @@ export function StudySession({ type, hintEnabled: initialHint }: { type: "words"
 
   const checkAnswer = useCallback(
     (answer: string) => {
-      const correct =
-        answer.trim().toLowerCase() === exercise.correctAnswer.trim().toLowerCase()
+      const correct = normalize(answer) === normalize(exercise.correctAnswer)
       setIsCorrect(correct)
       setCloseness(
         correct || exercise.exerciseType === "multiple_choice"
