@@ -55,15 +55,29 @@ function closenessLabel(c: Closeness): string {
 function HintDisplay({ text }: { text: string }) {
   const words = text.trim().split(/\s+/)
   return (
-    <div className="flex justify-center items-center gap-4 flex-wrap">
+    <div className="text-center select-none">
       {words.map((word, wi) => (
-        <div key={wi} className="flex items-center gap-2">
+        <span
+          key={wi}
+          style={{ display: "inline-block", marginRight: wi < words.length - 1 ? "22px" : 0 }}
+        >
           {[...word].map((_, ci) => (
-            <span key={ci} className="text-violet-400 font-mono text-xl font-semibold leading-none">
+            <span
+              key={ci}
+              style={{
+                display: "inline-block",
+                marginRight: ci < word.length - 1 ? "6px" : 0,
+                color: "#8b5cf6",
+                fontFamily: "monospace",
+                fontSize: "20px",
+                fontWeight: "700",
+                lineHeight: "1",
+              }}
+            >
               _
             </span>
           ))}
-        </div>
+        </span>
       ))}
     </div>
   )
