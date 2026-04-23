@@ -52,12 +52,21 @@ function closenessLabel(c: Closeness): string {
 
 // ── Hint helper ───────────────────────────────────────────────────────────────
 
-function buildHint(text: string): string {
-  return text
-    .trim()
-    .split(/\s+/)
-    .map((word) => [...word].map(() => "_").join(" "))
-    .join("   ")
+function HintDisplay({ text }: { text: string }) {
+  const words = text.trim().split(/\s+/)
+  return (
+    <div className="flex justify-center items-center gap-4 flex-wrap">
+      {words.map((word, wi) => (
+        <div key={wi} className="flex items-center gap-2">
+          {[...word].map((_, ci) => (
+            <span key={ci} className="text-violet-400 font-mono text-xl font-semibold leading-none">
+              _
+            </span>
+          ))}
+        </div>
+      ))}
+    </div>
+  )
 }
 
 export function StudySession({ type, hintEnabled: initialHint }: { type: "words" | "sentences"; hintEnabled: boolean }) {
@@ -337,10 +346,8 @@ export function StudySession({ type, hintEnabled: initialHint }: { type: "words"
       ) : (
         <form onSubmit={handleTypeInSubmit} className="space-y-3">
           {hintEnabled && phase === "exercise" && (
-            <div className="text-center py-2 px-4 bg-violet-50 rounded-2xl border border-violet-100">
-              <p className="font-mono text-lg tracking-[0.3em] text-violet-400 select-none">
-                {buildHint(exercise.correctAnswer)}
-              </p>
+            <div className="py-3 px-4 bg-violet-50 rounded-2xl border border-violet-100 select-none">
+              <HintDisplay text={exercise.correctAnswer} />
             </div>
           )}
           <input
