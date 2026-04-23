@@ -150,6 +150,17 @@ export async function updatePasswordAction(
   return { success: true }
 }
 
+// ─── Hint preference ─────────────────────────────────────────────────────────
+
+export async function setHintEnabledAction(enabled: boolean): Promise<void> {
+  const session = await auth()
+  if (!session) return
+  await db
+    .update(users)
+    .set({ hintEnabled: enabled })
+    .where(eq(users.id, parseInt(session.user.id)))
+}
+
 // ─── Admin: categories & levels ───────────────────────────────────────────────
 
 type SimpleResult = { error?: string; success?: boolean }

@@ -36,6 +36,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           language: user.language,
           gender: user.gender,
           firstName: user.firstName ?? undefined,
+          hintEnabled: user.hintEnabled,
         }
       },
     }),
@@ -47,12 +48,14 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (session.language) token.language = session.language
         if (session.gender) token.gender = session.gender
         if (session.email) token.email = session.email
+        if (session.hintEnabled !== undefined) token.hintEnabled = session.hintEnabled
       }
       if (user) {
         token.role = (user as { role: string }).role
         token.language = (user as { language: string }).language
         token.gender = (user as { gender: string }).gender
         token.firstName = (user as { firstName?: string }).firstName ?? null
+        token.hintEnabled = (user as { hintEnabled: boolean }).hintEnabled
       }
       return token
     },
@@ -62,6 +65,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       session.user.language = token.language as string
       session.user.gender = token.gender as string
       session.user.firstName = (token.firstName as string | null) ?? undefined
+      session.user.hintEnabled = (token.hintEnabled as boolean) ?? false
       return session
     },
   },

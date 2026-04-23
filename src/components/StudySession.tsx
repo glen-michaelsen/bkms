@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useCallback } from "react"
 import Link from "next/link"
+import { useSession } from "next-auth/react"
 import type { Exercise } from "@/app/api/study/route"
 import { getItemStatus, STATUS_META } from "@/lib/progress"
+import { setHintEnabledAction } from "@/app/actions"
 
 type Phase = "loading" | "exercise" | "feedback" | "results"
 type Closeness = "very_close" | "close" | "wrong"
@@ -48,7 +50,18 @@ function closenessLabel(c: Closeness): string {
   return "Not quite"
 }
 
-export function StudySession({ type }: { type: "words" | "sentences" }) {
+// ── Hint helper ───────────────────────────────────────────────────────────────
+
+function buildHint(text: string): string {
+  return text
+    .trim()
+    .split(/\s+/)
+    .map((word) => [...word].map(() => "_").join(" "))
+    .join("   ")
+}
+
+export function StudySession({ type, hintEnabled: initialHint }: { type: "words" | "sentences"; hintEnabled: boolean }) {
+  const { update: updateSession } = useSession()
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [current, setCurrent] = useState(0)
   const [phase, setPhase] = useState<Phase>("loading")
@@ -59,6 +72,14 @@ export function StudySession({ type }: { type: "words" | "sentences" }) {
   const [selectedOption, setSelectedOption] = useState<string | null>(null)
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null)
   const [closeness, setCloseness] = useState<Closeness | null>(null)
+  const [hintEnabled, setHintEnabled] = useState(initialHint)
+
+  const toggleHint = useCallback(() => {
+    const next = !hintEnabled
+    setHintEnabled(next)
+    setHintEnabledAction(next)
+    updateSession({ hintEnabled: next })
+  }, [hintEnabled, updateSession])
 
   useEffect(() => {
     fetch(`/api/study?type=${type}`)
@@ -239,15 +260,29 @@ export function StudySession({ type }: { type: "words" | "sentences" }) {
           <span className="text-sm font-semibold text-slate-500">
             {current + 1} / {exercises.length}
           </span>
-          <span
-            className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-              exercise.exerciseType === "multiple_choice"
-                ? "bg-violet-100 text-violet-700"
-                : "bg-fuchsia-100 text-fuchsia-700"
-            }`}
-          >
-            {exercise.exerciseType === "multiple_choice" ? "Choose" : "Type"}
-          </span>
+          <div className="flex items-center gap-2">
+            {exercise.exerciseType === "type_in" && (
+              <button
+                onClick={toggleHint}
+                className={`text-xs font-semibold px-2.5 py-1 rounded-full transition-colors ${
+                  hintEnabled
+                    ? "bg-violet-600 text-white"
+                    : "bg-slate-100 text-slate-500 hover:bg-slate-200"
+                }`}
+              >
+                💡 Hint
+              </button>
+            )}
+            <span
+              className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
+                exercise.exerciseType === "multiple_choice"
+                  ? "bg-violet-100 text-violet-700"
+                  : "bg-fuchsia-100 text-fuchsia-700"
+              }`}
+            >
+              {exercise.exerciseType === "multiple_choice" ? "Choose" : "Type"}
+            </span>
+          </div>
         </div>
         <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
           <div
@@ -301,6 +336,13 @@ export function StudySession({ type }: { type: "words" | "sentences" }) {
         </div>
       ) : (
         <form onSubmit={handleTypeInSubmit} className="space-y-3">
+          {hintEnabled && phase === "exercise" && (
+            <div className="text-center py-2 px-4 bg-violet-50 rounded-2xl border border-violet-100">
+              <p className="font-mono text-lg tracking-[0.3em] text-violet-400 select-none">
+                {buildHint(exercise.correctAnswer)}
+              </p>
+            </div>
+          )}
           <input
             type="text"
             value={inputValue}

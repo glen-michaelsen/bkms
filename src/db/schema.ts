@@ -8,6 +8,7 @@ export const users = sqliteTable("users", {
   gender: text("gender", { enum: ["male", "female"] }).notNull(),
   firstName: text("first_name"),
   role: text("role", { enum: ["user", "admin"] }).notNull().default("user"),
+  hintEnabled: integer("hint_enabled", { mode: "boolean" }).notNull().default(false),
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
     .$defaultFn(() => new Date()),
