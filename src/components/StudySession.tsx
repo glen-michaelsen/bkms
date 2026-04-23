@@ -6,9 +6,47 @@ import type { Exercise } from "@/app/api/study/route"
 import { getItemStatus, STATUS_META } from "@/lib/progress"
 
 type Phase = "loading" | "exercise" | "feedback" | "results"
+type Closeness = "very_close" | "close" | "wrong"
 
 // Cumulative knowledge update shown in feedback banner
 type ProgressUpdate = { streak: number; correctCount: number; incorrectCount: number }
+
+// ── Levenshtein helpers ───────────────────────────────────────────────────────
+
+function levenshtein(a: string, b: string): number {
+  const m = a.length, n = b.length
+  const dp: number[][] = Array.from({ length: m + 1 }, (_, i) =>
+    Array.from({ length: n + 1 }, (_, j) => (i === 0 ? j : j === 0 ? i : 0))
+  )
+  for (let i = 1; i <= m; i++)
+    for (let j = 1; j <= n; j++)
+      dp[i][j] =
+        a[i - 1] === b[j - 1]
+          ? dp[i - 1][j - 1]
+          : 1 + Math.min(dp[i - 1][j], dp[i][j - 1], dp[i - 1][j - 1])
+  return dp[m][n]
+}
+
+function getCloseness(given: string, correct: string): Closeness {
+  const a = given.trim().toLowerCase()
+  const b = correct.trim().toLowerCase()
+  const dist = levenshtein(a, b)
+  if (dist <= 2) return "very_close"
+  if (dist <= Math.max(4, Math.floor(b.length * 0.35))) return "close"
+  return "wrong"
+}
+
+const CLOSENESS_META: Record<Closeness, { banner: string; title: string; emoji: string }> = {
+  very_close: { banner: "bg-amber-50 border border-amber-200",  title: "text-amber-700",  emoji: "😅", },
+  close:      { banner: "bg-orange-50 border border-orange-200", title: "text-orange-700", emoji: "💪", },
+  wrong:      { banner: "bg-rose-50 border border-rose-200",     title: "text-rose-700",   emoji: "😅", },
+}
+
+function closenessLabel(c: Closeness): string {
+  if (c === "very_close") return "Almost! Just a small typo"
+  if (c === "close")      return "Close! Nearly there"
+  return "Not quite"
+}
 
 export function StudySession({ type }: { type: "words" | "sentences" }) {
   const [exercises, setExercises] = useState<Exercise[]>([])
@@ -20,6 +58,7 @@ export function StudySession({ type }: { type: "words" | "sentences" }) {
   const [progressUpdate, setProgressUpdate] = useState<ProgressUpdate | null>(null)
   const [selectedOption, setSelectedOption] = useState<string | null>(null)
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null)
+  const [closeness, setCloseness] = useState<Closeness | null>(null)
 
   useEffect(() => {
     fetch(`/api/study?type=${type}`)
@@ -41,6 +80,11 @@ export function StudySession({ type }: { type: "words" | "sentences" }) {
       const correct =
         answer.trim().toLowerCase() === exercise.correctAnswer.trim().toLowerCase()
       setIsCorrect(correct)
+      setCloseness(
+        correct || exercise.exerciseType === "multiple_choice"
+          ? null
+          : getCloseness(answer, exercise.correctAnswer)
+      )
       setResults((r) => [...r, correct])
       setProgressUpdate(null)
       setPhase("feedback")
@@ -90,6 +134,7 @@ export function StudySession({ type }: { type: "words" | "sentences" }) {
       setInputValue("")
       setSelectedOption(null)
       setIsCorrect(null)
+      setCloseness(null)
     }
   }, [current, exercises.length])
 
@@ -278,49 +323,48 @@ export function StudySession({ type }: { type: "words" | "sentences" }) {
       )}
 
       {/* Feedback banner */}
-      {phase === "feedback" && (
-        <div
-          className={`rounded-2xl p-5 ${
-            isCorrect
-              ? "bg-emerald-50 border border-emerald-200"
-              : "bg-rose-50 border border-rose-200"
-          }`}
-        >
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p
-                className={`font-bold text-base ${
-                  isCorrect ? "text-emerald-700" : "text-rose-700"
-                }`}
-              >
-                {isCorrect ? "Correct! 🎯" : "Not quite 😅"}
-              </p>
-              {!isCorrect && (
-                <p className="text-sm text-slate-600 mt-1">
-                  Correct answer:{" "}
-                  <span className="font-semibold text-slate-800">{exercise.correctAnswer}</span>
-                </p>
-              )}
+      {phase === "feedback" && (() => {
+        const cm = closeness ? CLOSENESS_META[closeness] : null
+        const bannerCls = isCorrect
+          ? "bg-emerald-50 border border-emerald-200"
+          : cm?.banner ?? CLOSENESS_META.wrong.banner
+        const titleCls = isCorrect ? "text-emerald-700" : cm?.title ?? CLOSENESS_META.wrong.title
+        const headline = isCorrect
+          ? "Correct! 🎯"
+          : `${closenessLabel(closeness ?? "wrong")} ${cm?.emoji ?? "😅"}`
+
+        return (
+          <div className={`rounded-2xl p-5 ${bannerCls}`}>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className={`font-bold text-base ${titleCls}`}>{headline}</p>
+                {!isCorrect && (
+                  <p className="text-sm text-slate-600 mt-1">
+                    Correct answer:{" "}
+                    <span className="font-semibold text-slate-800">{exercise.correctAnswer}</span>
+                  </p>
+                )}
+              </div>
+              {progressUpdate && (() => {
+                const status = getItemStatus(progressUpdate)
+                const meta = STATUS_META[status]
+                return (
+                  <span className={`shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full ${meta.bg} ${meta.color}`}>
+                    {status === "known" ? "⭐ " : ""}{meta.label}
+                    {status !== "new" && progressUpdate.streak > 0 && ` · ${progressUpdate.streak}🔥`}
+                  </span>
+                )
+              })()}
             </div>
-            {progressUpdate && (() => {
-              const status = getItemStatus(progressUpdate)
-              const meta = STATUS_META[status]
-              return (
-                <span className={`shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full ${meta.bg} ${meta.color}`}>
-                  {status === "known" ? "⭐ " : ""}{meta.label}
-                  {status !== "new" && ` · ${progressUpdate.streak > 0 ? `${progressUpdate.streak}🔥` : "streak reset"}`}
-                </span>
-              )
-            })()}
+            <button
+              onClick={handleNext}
+              className="mt-4 w-full py-3 bg-slate-900 text-white font-semibold rounded-xl hover:bg-slate-700 transition-all active:scale-[0.98]"
+            >
+              {current + 1 >= exercises.length ? "See results →" : "Next →"}
+            </button>
           </div>
-          <button
-            onClick={handleNext}
-            className="mt-4 w-full py-3 bg-slate-900 text-white font-semibold rounded-xl hover:bg-slate-700 transition-all active:scale-[0.98]"
-          >
-            {current + 1 >= exercises.length ? "See results →" : "Next →"}
-          </button>
-        </div>
-      )}
+        )
+      })()}
     </div>
   )
 }
