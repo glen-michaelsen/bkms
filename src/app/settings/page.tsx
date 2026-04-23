@@ -25,7 +25,7 @@ export default async function SettingsPage() {
           <Link href="/dashboard" className="text-sm font-medium text-slate-500 hover:text-slate-900 transition">
             ← Dashboard
           </Link>
-          <span className="font-extrabold text-violet-600 text-lg tracking-tight">Nauči</span>
+          <img src="/logo.svg" alt="Čujemo se" className="h-6" />
           <div className="w-14" />
         </div>
       </nav>

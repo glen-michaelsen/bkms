@@ -32,7 +32,10 @@ export default async function AdminPage() {
           <Link href="/dashboard" className="text-sm font-medium text-slate-500 hover:text-slate-900 transition">
             ← Dashboard
           </Link>
-          <span className="font-extrabold text-violet-600 text-lg tracking-tight">Nauči · Admin</span>
+          <div className="flex items-center gap-2">
+            <img src="/logo.svg" alt="Čujemo se" className="h-6" />
+            <span className="text-slate-400 font-medium text-sm">· Admin</span>
+          </div>
           <div className="w-20" />
         </div>
       </nav>

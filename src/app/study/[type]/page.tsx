@@ -24,7 +24,7 @@ export default async function StudyPage({
           >
             ← Back
           </Link>
-          <span className="font-extrabold text-violet-600 text-lg tracking-tight">Nauči</span>
+          <img src="/logo.svg" alt="Čujemo se" className="h-6" />
           <div className="w-14" />
         </div>
       </nav>

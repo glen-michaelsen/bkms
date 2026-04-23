@@ -10,8 +10,12 @@ const jakarta = Plus_Jakarta_Sans({
 })
 
 export const metadata: Metadata = {
-  title: "Nauči — Serbian & Croatian",
+  title: "Čujemo se — Serbian & Croatian",
   description: "Learn Serbian and Croatian with daily practice",
+  icons: {
+    icon: "/favicon.svg",
+    apple: "/app-icon.svg",
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

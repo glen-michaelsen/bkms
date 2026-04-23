@@ -18,7 +18,7 @@ function LoginForm() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_#a78bfa_0%,_transparent_60%)] opacity-50" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_#ec4899_0%,_transparent_60%)] opacity-30" />
         <div className="relative z-10">
-          <span className="text-white font-bold text-xl tracking-tight">Nauči</span>
+          <img src="/logo.svg" alt="Čujemo se" className="h-7 brightness-0 invert" />
         </div>
         <div className="relative z-10">
           <blockquote className="text-white/90 text-2xl font-medium leading-relaxed">
@@ -42,7 +42,7 @@ function LoginForm() {
       <div className="flex-1 flex items-center justify-center px-6 py-12 bg-slate-50">
         <div className="w-full max-w-sm">
           <div className="lg:hidden mb-8 text-center">
-            <span className="text-violet-600 font-bold text-2xl">Nauči</span>
+            <img src="/logo.svg" alt="Čujemo se" className="h-8 mx-auto" />
           </div>
 
           <div className="mb-8">

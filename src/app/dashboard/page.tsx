@@ -143,7 +143,7 @@ export default async function DashboardPage() {
     <div className="min-h-screen bg-slate-50 flex flex-col">
       <nav className="bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-10">
         <div className="max-w-3xl mx-auto px-5 h-16 flex items-center justify-between">
-          <span className="font-extrabold text-violet-600 text-lg tracking-tight">Nauči</span>
+          <img src="/logo.svg" alt="Čujemo se" className="h-6" />
           <div className="flex items-center gap-5">
             {session.user.role === "admin" && (
               <Link href="/admin" className="text-sm font-semibold text-violet-600 hover:text-violet-800 transition">
