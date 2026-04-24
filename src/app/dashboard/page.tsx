@@ -8,6 +8,7 @@ import { eq, and, gte } from "drizzle-orm"
 import { buildStats, STATUS_META, type ItemStats } from "@/lib/progress"
 import { ActivityGraph } from "@/components/ActivityGraph"
 import { CategoryTags } from "@/components/CategoryTags"
+import { DailySentences } from "@/components/DailySentences"
 
 const languageInfo = {
   sr: { label: "Serbian", flag: "🇷🇸", native: "Srpski" },
@@ -112,9 +113,9 @@ export default async function DashboardPage() {
   const userId = parseInt(session.user.id)
   const today = new Date().toISOString().slice(0, 10)
 
-  // 16 weeks back for graph
+  // 12 weeks back for graph
   const graphStart = new Date()
-  graphStart.setUTCDate(graphStart.getUTCDate() - 16 * 7)
+  graphStart.setUTCDate(graphStart.getUTCDate() - 12 * 7)
   const graphStartStr = graphStart.toISOString().slice(0, 10)
 
   const [allWords, allSentences, allProgress, allActivity, allCategories] = await Promise.all([
@@ -138,7 +139,7 @@ export default async function DashboardPage() {
 
   const activityMap = new Map(allActivity.map((a) => [a.date, a.answersCount]))
   const streak = calcStreak(activityMap, today)
-  const weeks = buildGrid(activityMap)
+  const weeks = buildGrid(activityMap, 12)
   const totalDaysActive = allActivity.length
 
   return (
@@ -177,8 +178,11 @@ export default async function DashboardPage() {
           <p className="text-slate-500 mt-2 text-lg">What would you like to practice today?</p>
         </div>
 
-        {/* Activity graph + streak */}
-        <ActivityGraph weeks={weeks} streak={streak} totalDaysActive={totalDaysActive} />
+        {/* Activity graph + daily sentences — side by side */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+          <ActivityGraph weeks={weeks} streak={streak} totalDaysActive={totalDaysActive} numWeeks={12} />
+          <DailySentences />
+        </div>
 
         {/* Study cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">

@@ -23,10 +23,12 @@ export function ActivityGraph({
   weeks,
   streak,
   totalDaysActive,
+  numWeeks = 16,
 }: {
   weeks: DayData[][]
   streak: number
   totalDaysActive: number
+  numWeeks?: number
 }) {
   return (
     <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
@@ -34,7 +36,7 @@ export function ActivityGraph({
       <div className="flex items-center justify-between mb-5">
         <div>
           <h3 className="font-bold text-slate-900">Training activity</h3>
-          <p className="text-sm text-slate-400 mt-0.5">{totalDaysActive} active days in the last 16 weeks</p>
+          <p className="text-sm text-slate-400 mt-0.5">{totalDaysActive} active days in the last {numWeeks} weeks</p>
         </div>
         <div className="flex items-center gap-2 bg-amber-50 border border-amber-100 px-4 py-2.5 rounded-2xl">
           <span className="text-xl leading-none">🔥</span>
