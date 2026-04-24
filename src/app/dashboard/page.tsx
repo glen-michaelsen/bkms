@@ -3,10 +3,11 @@ import { redirect } from "next/navigation"
 import Link from "next/link"
 import { logoutAction } from "@/app/actions"
 import { db } from "@/db"
-import { words, sentences, userItemProgress, userDailyActivity } from "@/db/schema"
+import { words, sentences, userItemProgress, userDailyActivity, categories } from "@/db/schema"
 import { eq, and, gte } from "drizzle-orm"
 import { buildStats, STATUS_META, type ItemStats } from "@/lib/progress"
 import { ActivityGraph } from "@/components/ActivityGraph"
+import { CategoryTags } from "@/components/CategoryTags"
 
 const languageInfo = {
   sr: { label: "Serbian", flag: "🇷🇸", native: "Srpski" },
@@ -116,13 +117,14 @@ export default async function DashboardPage() {
   graphStart.setUTCDate(graphStart.getUTCDate() - 16 * 7)
   const graphStartStr = graphStart.toISOString().slice(0, 10)
 
-  const [allWords, allSentences, allProgress, allActivity] = await Promise.all([
+  const [allWords, allSentences, allProgress, allActivity, allCategories] = await Promise.all([
     db.select({ id: words.id }).from(words),
     db.select({ id: sentences.id }).from(sentences),
     db.select().from(userItemProgress).where(eq(userItemProgress.userId, userId)),
     db.select().from(userDailyActivity).where(
       and(eq(userDailyActivity.userId, userId), gte(userDailyActivity.date, graphStartStr))
     ),
+    db.select({ id: categories.id, name: categories.name }).from(categories),
   ])
 
   const wordStats = buildStats(
@@ -222,6 +224,9 @@ export default async function DashboardPage() {
             </div>
           </Link>
         </div>
+
+        {/* Category tags */}
+        <CategoryTags categories={allCategories} />
 
         <p className="text-center text-xs text-slate-400">
           <span className="font-semibold">Known</span> = 3 correct in a row · each session is 10 items

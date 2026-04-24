@@ -107,7 +107,7 @@ function HintDisplay({ text }: { text: string }) {
   )
 }
 
-export function StudySession({ type, hintEnabled: initialHint }: { type: "words" | "sentences"; hintEnabled: boolean }) {
+export function StudySession({ type, hintEnabled: initialHint, categoryId }: { type: "words" | "sentences"; hintEnabled: boolean; categoryId?: number }) {
   const { update: updateSession } = useSession()
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [current, setCurrent] = useState(0)
@@ -129,7 +129,8 @@ export function StudySession({ type, hintEnabled: initialHint }: { type: "words"
   }, [hintEnabled, updateSession])
 
   useEffect(() => {
-    fetch(`/api/study?type=${type}`)
+    const url = `/api/study?type=${type}${categoryId ? `&category=${categoryId}` : ""}`
+    fetch(url)
       .then((r) => r.json())
       .then((data) => {
         if (data.error) setError(data.error)

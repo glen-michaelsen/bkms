@@ -45,10 +45,13 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Invalid type" }, { status: 400 })
   }
 
+  const categoryParam = req.nextUrl.searchParams.get("category")
+  const categoryId = categoryParam ? parseInt(categoryParam) : null
+
   const language = session.user.language as "sr" | "hr"
   const userId = parseInt(session.user.id)
 
-  // Fetch all items
+  // Fetch all items (always needed for MC distractor generation)
   const allItems = await db.select().from(type === "words" ? words : sentences)
 
   if (allItems.length < 4) {
@@ -58,10 +61,24 @@ export async function GET(req: NextRequest) {
     )
   }
 
-  // For sentences: check if user has level config
-  let sessionItems = shuffle(allItems).slice(0, 10)
+  // Session pool: restrict to category when requested
+  const sessionPool =
+    categoryId !== null
+      ? allItems.filter((i) => i.categoryId === categoryId)
+      : allItems
 
-  if (type === "sentences") {
+  if (sessionPool.length === 0) {
+    return NextResponse.json(
+      { error: "No items found for this category" },
+      { status: 400 }
+    )
+  }
+
+  const sessionSize = Math.min(10, sessionPool.length)
+  let sessionItems = shuffle(sessionPool).slice(0, sessionSize)
+
+  if (type === "sentences" && categoryId === null) {
+    // Level-distribution only applies to the full (non-category) flow
     const levelConfigs = await db
       .select()
       .from(userLevelConfig)
@@ -73,7 +90,6 @@ export async function GET(req: NextRequest) {
 
       for (const { levelId, count } of distribution) {
         if (count === 0) continue
-        // sentences have levelId column
         const pool = shuffle(
           (allItems as (typeof allItems[number] & { levelId?: number | null })[]).filter(
             (s) => s.levelId === levelId
@@ -82,7 +98,6 @@ export async function GET(req: NextRequest) {
         picked.push(...pool.slice(0, count))
       }
 
-      // Fill any shortfall (e.g. a level had fewer items than requested)
       const shortfall = 10 - picked.length
       if (shortfall > 0) {
         const usedIds = new Set(picked.map((i) => i.id))
