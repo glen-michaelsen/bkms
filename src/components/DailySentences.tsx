@@ -1,4 +1,5 @@
-// Pure server component — no "use client" needed, all logic is date math
+// DailySentences is a server component; CurrentTime is a client component for local time
+import { CurrentTime } from "./CurrentTime"
 
 const DAYS_SR = ["nedelja", "ponedeljak", "utorak", "sreda", "četvrtak", "petak", "subota"]
 const DAYS_EN = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
@@ -73,6 +74,7 @@ export function DailySentences() {
             <p className="text-xs text-slate-400">{en}</p>
           </div>
         ))}
+        <CurrentTime />
       </div>
     </div>
   )
