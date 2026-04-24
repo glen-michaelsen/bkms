@@ -60,8 +60,6 @@ export function DailySentences() {
     return (
       <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 flex flex-col">
         <div className="w-12 h-12 bg-violet-100 rounded-2xl flex items-center justify-center text-2xl mb-4">📅</div>
-        <h3 className="text-xl font-extrabold text-slate-900 mb-1">Danas</h3>
-        <p className="text-sm text-slate-400 mb-5">Today's phrases in Serbian</p>
         <Skeleton />
       </div>
     )
@@ -83,17 +81,15 @@ export function DailySentences() {
       <div className="w-12 h-12 bg-violet-100 rounded-2xl flex items-center justify-center text-2xl mb-4">
         📅
       </div>
-      <h3 className="text-xl font-extrabold text-slate-900 mb-1">Danas</h3>
-      <p className="text-sm text-slate-400 mb-5">Today's phrases in Serbian</p>
 
       <div className="space-y-4 flex-1">
+        <CurrentTime />
         {sentences.map(({ sr, en }, i) => (
           <div key={i} className="flex flex-col gap-0.5">
             <p className="font-semibold text-slate-800 leading-snug">{sr}</p>
             <p className="text-xs text-slate-400">{en}</p>
           </div>
         ))}
-        <CurrentTime />
       </div>
     </div>
   )
