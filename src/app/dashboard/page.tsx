@@ -9,6 +9,7 @@ import { buildStats, STATUS_META, type ItemStats } from "@/lib/progress"
 import { ActivityGraph } from "@/components/ActivityGraph"
 import { CategoryTags } from "@/components/CategoryTags"
 import { DailySentences } from "@/components/DailySentences"
+import { Greeting } from "@/components/Greeting"
 
 const languageInfo = {
   sr: { label: "Serbian", flag: "🇷🇸", native: "Srpski" },
@@ -173,7 +174,7 @@ export default async function DashboardPage() {
             <span>{lang.label} · {lang.native}</span>
           </div>
           <h1 className="text-4xl font-extrabold text-slate-900 leading-tight">
-            Hey {firstName} 👋
+            <Greeting firstName={firstName} />
           </h1>
           <p className="text-slate-500 mt-2 text-lg">What would you like to practice today?</p>
         </div>
