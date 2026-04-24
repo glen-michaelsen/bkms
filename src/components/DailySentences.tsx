@@ -1,4 +1,6 @@
-// DailySentences is a server component; CurrentTime is a client component for local time
+"use client"
+
+import { useState } from "react"
 import { CurrentTime } from "./CurrentTime"
 
 const DAYS_SR = ["nedelja", "ponedeljak", "utorak", "sreda", "četvrtak", "petak", "subota"]
@@ -38,10 +40,10 @@ function getSeason(month: number): { sr: string; en: string } {
 }
 
 export function DailySentences() {
-  const now = new Date()
-  const dow   = now.getUTCDay()          // 0 = Sunday
-  const day   = now.getUTCDate()         // 1–31
-  const month = now.getUTCMonth() + 1    // 1–12
+  const [now] = useState(() => new Date())
+  const dow   = now.getDay()          // 0 = Sunday, local time
+  const day   = now.getDate()         // 1–31, local time
+  const month = now.getMonth() + 1    // 1–12, local time
   const season = getSeason(month)
 
   const sentences = [
