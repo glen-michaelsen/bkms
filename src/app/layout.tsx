@@ -12,15 +12,27 @@ const jakarta = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   title: "Čujemo se — Serbian & Croatian",
   description: "Learn Serbian and Croatian with daily practice",
+  manifest: "/manifest.json",
   icons: {
     icon: "/favicon.svg",
-    apple: "/app-icon.svg",
+    apple: "/icons/apple-touch-icon.png",
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Čujemo se",
+  },
+  other: {
+    "mobile-web-app-capable": "yes",
   },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${jakarta.variable} h-full`}>
+      <head>
+        <meta name="theme-color" content="#7c3aed" />
+      </head>
       <body className="min-h-full bg-white font-[family-name:var(--font-jakarta)] antialiased">
         <Providers>{children}</Providers>
       </body>
