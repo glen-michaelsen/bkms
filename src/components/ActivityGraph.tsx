@@ -33,19 +33,17 @@ export function ActivityGraph({
   return (
     <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
       {/* Header row */}
-      <div className="flex items-center justify-between mb-5">
-        <div>
-          <h3 className="font-bold text-slate-900">Training activity</h3>
-          <p className="text-sm text-slate-400 mt-0.5">{totalDaysActive} active days in the last {numWeeks} weeks</p>
+      <div className="flex items-start justify-between mb-4">
+        <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center text-2xl">
+          🔥
         </div>
-        <div className="flex items-center gap-2 bg-amber-50 border border-amber-100 px-4 py-2.5 rounded-2xl">
-          <span className="text-xl leading-none">🔥</span>
-          <div>
-            <p className="text-lg font-extrabold text-amber-700 leading-none">{streak}</p>
-            <p className="text-xs text-amber-500 font-medium mt-0.5">day streak</p>
-          </div>
+        <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-100 px-3 py-2 rounded-2xl">
+          <span className="text-base font-extrabold text-amber-700 leading-none">{streak}</span>
+          <span className="text-xs text-amber-500 font-medium">day streak</span>
         </div>
       </div>
+      <h3 className="text-xl font-extrabold text-slate-900 mb-1">Training activity</h3>
+      <p className="text-sm text-slate-400 mb-5">{totalDaysActive} active days in the last {numWeeks} weeks</p>
 
       {/* Graph */}
       <div className="overflow-x-auto">
