@@ -1,7 +1,6 @@
 "use client"
 
-// Captures local time once at page-load (useState initialiser runs on mount)
-import { useState } from "react"
+import { useState, useEffect } from "react"
 
 const ONES  = ["", "jedan", "dva", "tri", "četiri", "pet", "šest", "sedam", "osam", "devet"]
 const TEENS = ["deset", "jedanaest", "dvanaest", "trinaest", "četrnaest", "petnaest",
@@ -19,7 +18,17 @@ function srNum(n: number): string {
 function pad2(n: number) { return n.toString().padStart(2, "0") }
 
 export function CurrentTime() {
-  const [now] = useState(() => new Date())
+  const [now, setNow] = useState<Date | null>(null)
+  useEffect(() => { setNow(new Date()) }, [])
+
+  if (!now) {
+    return (
+      <div className="flex flex-col gap-1.5 animate-pulse">
+        <div className="h-4 bg-slate-100 rounded-full w-4/5" />
+        <div className="h-3 bg-slate-100 rounded-full w-1/3" />
+      </div>
+    )
+  }
 
   const h = now.getHours()
   const m = now.getMinutes()

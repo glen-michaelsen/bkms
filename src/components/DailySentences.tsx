@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { CurrentTime } from "./CurrentTime"
 
 const DAYS_SR = ["nedelja", "ponedeljak", "utorak", "sreda", "četvrtak", "petak", "subota"]
@@ -39,26 +39,43 @@ function getSeason(month: number): { sr: string; en: string } {
   return { sr: "zima", en: "winter" }
 }
 
+function Skeleton() {
+  return (
+    <div className="space-y-4 flex-1 animate-pulse">
+      {[72, 56, 64, 48].map((w, i) => (
+        <div key={i} className="flex flex-col gap-1.5">
+          <div className={`h-4 bg-slate-100 rounded-full`} style={{ width: `${w}%` }} />
+          <div className="h-3 bg-slate-100 rounded-full w-1/3" />
+        </div>
+      ))}
+    </div>
+  )
+}
+
 export function DailySentences() {
-  const [now] = useState(() => new Date())
-  const dow   = now.getDay()          // 0 = Sunday, local time
-  const day   = now.getDate()         // 1–31, local time
-  const month = now.getMonth() + 1    // 1–12, local time
+  const [now, setNow] = useState<Date | null>(null)
+  useEffect(() => { setNow(new Date()) }, [])
+
+  if (!now) {
+    return (
+      <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 flex flex-col">
+        <div className="w-12 h-12 bg-violet-100 rounded-2xl flex items-center justify-center text-2xl mb-4">📅</div>
+        <h3 className="text-xl font-extrabold text-slate-900 mb-1">Danas</h3>
+        <p className="text-sm text-slate-400 mb-5">Today's phrases in Serbian</p>
+        <Skeleton />
+      </div>
+    )
+  }
+
+  const dow    = now.getDay()
+  const day    = now.getDate()
+  const month  = now.getMonth() + 1
   const season = getSeason(month)
 
   const sentences = [
-    {
-      sr: `Danas je ${DAYS_SR[dow]}.`,
-      en: `Today is ${DAYS_EN[dow]}`,
-    },
-    {
-      sr: `Datum je ${ORDINALS_SR[day]} ${MONTHS_SR[month]}.`,
-      en: `The date is ${MONTHS_EN[month]} ${ORDINALS_EN[day]}`,
-    },
-    {
-      sr: `Godišnje doba je ${season.sr}.`,
-      en: `The season is ${season.en}`,
-    },
+    { sr: `Danas je ${DAYS_SR[dow]}.`,              en: `Today is ${DAYS_EN[dow]}` },
+    { sr: `Datum je ${ORDINALS_SR[day]} ${MONTHS_SR[month]}.`, en: `The date is ${MONTHS_EN[month]} ${ORDINALS_EN[day]}` },
+    { sr: `Godišnje doba je ${season.sr}.`,          en: `The season is ${season.en}` },
   ]
 
   return (
