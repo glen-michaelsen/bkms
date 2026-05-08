@@ -215,6 +215,43 @@ export async function addLevelAction(
   }
 }
 
+// ─── Admin: edit & delete words / sentences ───────────────────────────────────
+
+type WordData = { english: string; serbian: string; croatian: string; categoryId: number | null }
+type SentenceData = WordData & { levelId: number | null }
+
+export async function updateWordAction(id: number, data: WordData): Promise<SimpleResult> {
+  const session = await auth()
+  if (!session || session.user.role !== "admin") return { error: "Forbidden" }
+  await db.update(words).set(data).where(eq(words.id, id))
+  revalidatePath("/admin")
+  return { success: true }
+}
+
+export async function deleteWordAction(id: number): Promise<SimpleResult> {
+  const session = await auth()
+  if (!session || session.user.role !== "admin") return { error: "Forbidden" }
+  await db.delete(words).where(eq(words.id, id))
+  revalidatePath("/admin")
+  return { success: true }
+}
+
+export async function updateSentenceAction(id: number, data: SentenceData): Promise<SimpleResult> {
+  const session = await auth()
+  if (!session || session.user.role !== "admin") return { error: "Forbidden" }
+  await db.update(sentences).set(data).where(eq(sentences.id, id))
+  revalidatePath("/admin")
+  return { success: true }
+}
+
+export async function deleteSentenceAction(id: number): Promise<SimpleResult> {
+  const session = await auth()
+  if (!session || session.user.role !== "admin") return { error: "Forbidden" }
+  await db.delete(sentences).where(eq(sentences.id, id))
+  revalidatePath("/admin")
+  return { success: true }
+}
+
 // ─── User level config ────────────────────────────────────────────────────────
 
 export async function saveLevelConfigAction(

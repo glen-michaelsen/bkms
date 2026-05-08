@@ -4,6 +4,10 @@ import { useState } from "react"
 import { AddItemForm } from "./AddItemForm"
 import { AddNamedItem } from "./AddNamedItem"
 import { CsvUpload } from "./CsvUpload"
+import {
+  updateWordAction, deleteWordAction,
+  updateSentenceAction, deleteSentenceAction,
+} from "@/app/actions"
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -227,27 +231,309 @@ function FilterSelect({
   )
 }
 
-function WordsPanel({ words, categories }: { words: Word[]; categories: Category[] }) {
-  const [q, setQ]     = useState("")
-  const [cat, setCat] = useState("")
+// ── Shared modal primitives ───────────────────────────────────────────────────
+
+function ModalBackdrop({ onClose, children }: { onClose: () => void; children: React.ReactNode }) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm"
+      onClick={onClose}
+    >
+      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg" onClick={e => e.stopPropagation()}>
+        {children}
+      </div>
+    </div>
+  )
+}
+
+function RowActions({ onEdit, onDelete }: { onEdit: () => void; onDelete: () => void }) {
+  return (
+    <td className="px-3 py-3 text-right whitespace-nowrap">
+      <button
+        onClick={onEdit}
+        title="Edit"
+        className="inline-flex items-center justify-center w-7 h-7 rounded-lg text-slate-400 hover:text-violet-600 hover:bg-violet-50 transition-colors"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
+          <path d="M2.695 14.763l-1.262 3.154a.5.5 0 0 0 .65.65l3.155-1.262a4 4 0 0 0 1.343-.885L17.5 5.5a2.121 2.121 0 0 0-3-3L3.58 13.42a4 4 0 0 0-.885 1.343Z" />
+        </svg>
+      </button>
+      <button
+        onClick={onDelete}
+        title="Delete"
+        className="inline-flex items-center justify-center w-7 h-7 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors ml-0.5"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="w-3.5 h-3.5">
+          <path fillRule="evenodd" d="M8.75 1A2.75 2.75 0 0 0 6 3.75v.443c-.795.077-1.584.176-2.365.298a.75.75 0 1 0 .23 1.482l.149-.022.841 10.518A2.75 2.75 0 0 0 7.596 19h4.807a2.75 2.75 0 0 0 2.742-2.53l.841-10.52.149.023a.75.75 0 0 0 .23-1.482A41.03 41.03 0 0 0 14 4.193v-.443A2.75 2.75 0 0 0 11.25 1h-2.5ZM10 4c.84 0 1.673.025 2.5.075V3.75c0-.69-.56-1.25-1.25-1.25h-2.5c-.69 0-1.25.56-1.25 1.25v.325C8.327 4.025 9.16 4 10 4ZM8.58 7.72a.75.75 0 0 0-1.5.06l.3 7.5a.75.75 0 1 0 1.5-.06l-.3-7.5Zm4.34.06a.75.75 0 1 0-1.5-.06l-.3 7.5a.75.75 0 1 0 1.5.06l.3-7.5Z" clipRule="evenodd" />
+        </svg>
+      </button>
+    </td>
+  )
+}
+
+// ── Delete confirmation modal ─────────────────────────────────────────────────
+
+function DeleteModal({
+  label, onConfirm, onCancel, busy,
+}: { label: string; onConfirm: () => void; onCancel: () => void; busy: boolean }) {
+  const [text, setText] = useState("")
+  return (
+    <ModalBackdrop onClose={onCancel}>
+      <div className="p-7">
+        <p className="text-xs font-semibold uppercase tracking-widest text-rose-400 mb-1">Delete</p>
+        <h3 className="text-xl font-extrabold text-slate-900 mb-1">Are you sure?</h3>
+        <p className="text-sm text-slate-500 mb-1">You are about to permanently delete:</p>
+        <p className="text-sm font-semibold text-slate-800 bg-slate-50 rounded-xl px-4 py-2.5 mb-5 break-words">{label}</p>
+        <p className="text-sm text-slate-500 mb-2">Type <span className="font-mono font-bold text-slate-800">DELETE</span> to confirm:</p>
+        <input
+          autoFocus
+          value={text}
+          onChange={e => setText(e.target.value)}
+          placeholder="DELETE"
+          className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-rose-300 focus:border-rose-400 mb-5 transition"
+        />
+        <div className="flex gap-3">
+          <button
+            onClick={onCancel}
+            className="flex-1 py-2.5 rounded-2xl border border-slate-200 text-sm font-semibold text-slate-500 hover:bg-slate-50 transition"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={text !== "DELETE" || busy}
+            className="flex-1 py-2.5 rounded-2xl bg-rose-500 text-white text-sm font-semibold hover:bg-rose-600 disabled:opacity-40 disabled:cursor-not-allowed transition"
+          >
+            {busy ? "Deleting…" : "Delete permanently"}
+          </button>
+        </div>
+      </div>
+    </ModalBackdrop>
+  )
+}
+
+// ── Edit modal & confirm diff ─────────────────────────────────────────────────
+
+type WordForm     = { english: string; serbian: string; croatian: string; categoryId: string }
+type SentenceForm = WordForm & { levelId: string }
+
+function DiffRow({ label, before, after }: { label: string; before: string; after: string }) {
+  const changed = before !== after
+  return (
+    <div className={`rounded-xl px-4 py-2.5 ${changed ? "bg-amber-50 border border-amber-100" : "bg-slate-50"}`}>
+      <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 mb-1">{label}</p>
+      {changed ? (
+        <div className="flex flex-col gap-0.5">
+          <p className="text-xs line-through text-slate-400">{before || "—"}</p>
+          <p className="text-sm font-semibold text-slate-900">{after || "—"}</p>
+        </div>
+      ) : (
+        <p className="text-sm text-slate-600">{before || "—"}</p>
+      )}
+    </div>
+  )
+}
+
+function EditWordModal({
+  item, categories, onSave, onCancel,
+}: {
+  item: Word; categories: Category[]
+  onSave: (updated: Word) => void; onCancel: () => void
+}) {
   const catMap = Object.fromEntries(categories.map(c => [c.id, c.name]))
-  const filtered = words.filter(w =>
+  const [form, setForm] = useState<WordForm>({
+    english: item.english, serbian: item.serbian, croatian: item.croatian,
+    categoryId: item.categoryId != null ? String(item.categoryId) : "",
+  })
+  const [confirming, setConfirming] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const set = (k: keyof WordForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+    setForm(f => ({ ...f, [k]: e.target.value }))
+
+  async function handleConfirm() {
+    setBusy(true)
+    const data = {
+      english: form.english.trim(), serbian: form.serbian.trim(), croatian: form.croatian.trim(),
+      categoryId: form.categoryId ? parseInt(form.categoryId) : null,
+    }
+    await updateWordAction(item.id, data)
+    onSave({ ...item, ...data })
+  }
+
+  const newCatLabel = form.categoryId ? (catMap[parseInt(form.categoryId)] ?? "—") : "—"
+  const oldCatLabel = item.categoryId ? (catMap[item.categoryId] ?? "—") : "—"
+
+  return (
+    <ModalBackdrop onClose={onCancel}>
+      <div className="p-7">
+        {!confirming ? (
+          <>
+            <p className="text-xs font-semibold uppercase tracking-widest text-violet-400 mb-1">Edit word</p>
+            <h3 className="text-xl font-extrabold text-slate-900 mb-5">{item.english}</h3>
+            <div className="space-y-3 mb-6">
+              {(["english", "serbian", "croatian"] as const).map(k => (
+                <div key={k}>
+                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 block capitalize">{k}</label>
+                  <input value={form[k]} onChange={set(k)} className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-violet-300 focus:border-violet-400 transition" />
+                </div>
+              ))}
+              <div>
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 block">Category</label>
+                <select value={form.categoryId} onChange={set("categoryId")} className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-violet-300 focus:border-violet-400 transition appearance-none">
+                  <option value="">— none —</option>
+                  {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={onCancel} className="flex-1 py-2.5 rounded-2xl border border-slate-200 text-sm font-semibold text-slate-500 hover:bg-slate-50 transition">Cancel</button>
+              <button onClick={() => setConfirming(true)} className="flex-1 py-2.5 rounded-2xl bg-violet-600 text-white text-sm font-semibold hover:bg-violet-700 transition">Review changes</button>
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="text-xs font-semibold uppercase tracking-widest text-violet-400 mb-1">Confirm changes</p>
+            <h3 className="text-xl font-extrabold text-slate-900 mb-5">Review before saving</h3>
+            <div className="space-y-2 mb-6">
+              <DiffRow label="English"  before={item.english}  after={form.english.trim()} />
+              <DiffRow label="Serbian"  before={item.serbian}  after={form.serbian.trim()} />
+              <DiffRow label="Croatian" before={item.croatian} after={form.croatian.trim()} />
+              <DiffRow label="Category" before={oldCatLabel}   after={newCatLabel} />
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => setConfirming(false)} className="flex-1 py-2.5 rounded-2xl border border-slate-200 text-sm font-semibold text-slate-500 hover:bg-slate-50 transition">← Back</button>
+              <button onClick={handleConfirm} disabled={busy} className="flex-1 py-2.5 rounded-2xl bg-violet-600 text-white text-sm font-semibold hover:bg-violet-700 disabled:opacity-40 transition">{busy ? "Saving…" : "Save changes"}</button>
+            </div>
+          </>
+        )}
+      </div>
+    </ModalBackdrop>
+  )
+}
+
+function EditSentenceModal({
+  item, categories, levels, onSave, onCancel,
+}: {
+  item: Sentence; categories: Category[]; levels: Level[]
+  onSave: (updated: Sentence) => void; onCancel: () => void
+}) {
+  const catMap   = Object.fromEntries(categories.map(c => [c.id, c.name]))
+  const levelMap = Object.fromEntries(levels.map(l => [l.id, l.name]))
+  const [form, setForm] = useState<SentenceForm>({
+    english: item.english, serbian: item.serbian, croatian: item.croatian,
+    categoryId: item.categoryId != null ? String(item.categoryId) : "",
+    levelId:    item.levelId    != null ? String(item.levelId)    : "",
+  })
+  const [confirming, setConfirming] = useState(false)
+  const [busy, setBusy] = useState(false)
+  const set = (k: keyof SentenceForm) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+    setForm(f => ({ ...f, [k]: e.target.value }))
+
+  async function handleConfirm() {
+    setBusy(true)
+    const data = {
+      english: form.english.trim(), serbian: form.serbian.trim(), croatian: form.croatian.trim(),
+      categoryId: form.categoryId ? parseInt(form.categoryId) : null,
+      levelId:    form.levelId    ? parseInt(form.levelId)    : null,
+    }
+    await updateSentenceAction(item.id, data)
+    onSave({ ...item, ...data })
+  }
+
+  const newCatLabel   = form.categoryId ? (catMap[parseInt(form.categoryId)]     ?? "—") : "—"
+  const oldCatLabel   = item.categoryId ? (catMap[item.categoryId]               ?? "—") : "—"
+  const newLevelLabel = form.levelId    ? (levelMap[parseInt(form.levelId)]      ?? "—") : "—"
+  const oldLevelLabel = item.levelId    ? (levelMap[item.levelId]                ?? "—") : "—"
+
+  return (
+    <ModalBackdrop onClose={onCancel}>
+      <div className="p-7 max-h-[90vh] overflow-y-auto">
+        {!confirming ? (
+          <>
+            <p className="text-xs font-semibold uppercase tracking-widest text-violet-400 mb-1">Edit sentence</p>
+            <h3 className="text-xl font-extrabold text-slate-900 mb-5 leading-snug">{item.english}</h3>
+            <div className="space-y-3 mb-6">
+              {(["english", "serbian", "croatian"] as const).map(k => (
+                <div key={k}>
+                  <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 block capitalize">{k}</label>
+                  <input value={form[k]} onChange={set(k)} className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-violet-300 focus:border-violet-400 transition" />
+                </div>
+              ))}
+              <div>
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 block">Category</label>
+                <select value={form.categoryId} onChange={set("categoryId")} className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-violet-300 focus:border-violet-400 transition appearance-none">
+                  <option value="">— none —</option>
+                  {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 block">Level</label>
+                <select value={form.levelId} onChange={set("levelId")} className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-sky-300 focus:border-sky-400 transition appearance-none">
+                  <option value="">— none —</option>
+                  {levels.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}
+                </select>
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={onCancel} className="flex-1 py-2.5 rounded-2xl border border-slate-200 text-sm font-semibold text-slate-500 hover:bg-slate-50 transition">Cancel</button>
+              <button onClick={() => setConfirming(true)} className="flex-1 py-2.5 rounded-2xl bg-violet-600 text-white text-sm font-semibold hover:bg-violet-700 transition">Review changes</button>
+            </div>
+          </>
+        ) : (
+          <>
+            <p className="text-xs font-semibold uppercase tracking-widest text-violet-400 mb-1">Confirm changes</p>
+            <h3 className="text-xl font-extrabold text-slate-900 mb-5">Review before saving</h3>
+            <div className="space-y-2 mb-6">
+              <DiffRow label="English"  before={item.english}  after={form.english.trim()} />
+              <DiffRow label="Serbian"  before={item.serbian}  after={form.serbian.trim()} />
+              <DiffRow label="Croatian" before={item.croatian} after={form.croatian.trim()} />
+              <DiffRow label="Category" before={oldCatLabel}   after={newCatLabel} />
+              <DiffRow label="Level"    before={oldLevelLabel} after={newLevelLabel} />
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => setConfirming(false)} className="flex-1 py-2.5 rounded-2xl border border-slate-200 text-sm font-semibold text-slate-500 hover:bg-slate-50 transition">← Back</button>
+              <button onClick={handleConfirm} disabled={busy} className="flex-1 py-2.5 rounded-2xl bg-violet-600 text-white text-sm font-semibold hover:bg-violet-700 disabled:opacity-40 transition">{busy ? "Saving…" : "Save changes"}</button>
+            </div>
+          </>
+        )}
+      </div>
+    </ModalBackdrop>
+  )
+}
+
+// ── Words panel ───────────────────────────────────────────────────────────────
+
+function WordsPanel({ words: initialWords, categories }: { words: Word[]; categories: Category[] }) {
+  const [items, setItems] = useState(initialWords)
+  const [q, setQ]         = useState("")
+  const [cat, setCat]     = useState("")
+  const [editing, setEditing]   = useState<Word | null>(null)
+  const [deleting, setDeleting] = useState<Word | null>(null)
+  const [deleteBusy, setDeleteBusy] = useState(false)
+
+  const catMap = Object.fromEntries(categories.map(c => [c.id, c.name]))
+  const filtered = items.filter(w =>
     (q.trim() === "" || matches(q, w.english, w.serbian, w.croatian)) &&
     (cat === "" || w.categoryId === parseInt(cat))
   )
+
+  async function handleDelete() {
+    if (!deleting) return
+    setDeleteBusy(true)
+    await deleteWordAction(deleting.id)
+    setItems(prev => prev.filter(w => w.id !== deleting.id))
+    setDeleting(null)
+    setDeleteBusy(false)
+  }
 
   return (
     <div>
       <div className="flex gap-3 mb-5">
         <div className="flex-1"><SearchInput value={q} onChange={setQ} placeholder="Search English, Serbian or Croatian…" /></div>
-        <FilterSelect
-          value={cat} onChange={setCat}
-          options={categories.map(c => ({ value: String(c.id), label: c.name }))}
-          placeholder="All categories" accent="violet"
-        />
+        <FilterSelect value={cat} onChange={setCat} options={categories.map(c => ({ value: String(c.id), label: c.name }))} placeholder="All categories" accent="violet" />
       </div>
       <p className="text-xs text-slate-400 mb-3">
-        {filtered.length === words.length ? `${words.length} words` : `${filtered.length} of ${words.length} words`}
+        {filtered.length === items.length ? `${items.length} words` : `${filtered.length} of ${items.length} words`}
       </p>
       <div className="bg-white rounded-3xl border border-slate-100 overflow-hidden shadow-sm">
         <table className="w-full text-sm">
@@ -257,13 +543,14 @@ function WordsPanel({ words, categories }: { words: Word[]; categories: Category
               <th className="px-5 py-3.5 text-left font-semibold text-slate-500">Serbian</th>
               <th className="px-5 py-3.5 text-left font-semibold text-slate-500">Croatian</th>
               <th className="px-5 py-3.5 text-left font-semibold text-slate-500">Category</th>
+              <th className="px-3 py-3.5" />
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
             {filtered.length === 0 ? (
-              <tr><td colSpan={4} className="px-5 py-10 text-center text-slate-400">No results</td></tr>
+              <tr><td colSpan={5} className="px-5 py-10 text-center text-slate-400">No results</td></tr>
             ) : filtered.map(w => (
-              <tr key={w.id} className="hover:bg-slate-50/50 transition-colors">
+              <tr key={w.id} className="hover:bg-slate-50/50 transition-colors group">
                 <td className="px-5 py-3.5 font-medium text-slate-900">{w.english}</td>
                 <td className="px-5 py-3.5 text-slate-600">{w.serbian}</td>
                 <td className="px-5 py-3.5 text-slate-600">{w.croatian}</td>
@@ -272,44 +559,67 @@ function WordsPanel({ words, categories }: { words: Word[]; categories: Category
                     ? <span className="px-2.5 py-1 bg-violet-50 text-violet-700 text-xs font-medium rounded-full">{catMap[w.categoryId] ?? "—"}</span>
                     : <span className="text-slate-300">—</span>}
                 </td>
+                <RowActions onEdit={() => setEditing(w)} onDelete={() => setDeleting(w)} />
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {editing && (
+        <EditWordModal
+          item={editing} categories={categories}
+          onSave={updated => { setItems(prev => prev.map(w => w.id === updated.id ? updated : w)); setEditing(null) }}
+          onCancel={() => setEditing(null)}
+        />
+      )}
+      {deleting && (
+        <DeleteModal
+          label={`${deleting.english} / ${deleting.serbian} / ${deleting.croatian}`}
+          onConfirm={handleDelete} onCancel={() => setDeleting(null)} busy={deleteBusy}
+        />
+      )}
     </div>
   )
 }
 
-function SentencesPanel({ sentences, categories, levels }: { sentences: Sentence[]; categories: Category[]; levels: Level[] }) {
-  const [q, setQ]       = useState("")
-  const [cat, setCat]   = useState("")
-  const [lvl, setLvl]   = useState("")
+// ── Sentences panel ───────────────────────────────────────────────────────────
+
+function SentencesPanel({ sentences: initialSentences, categories, levels }: { sentences: Sentence[]; categories: Category[]; levels: Level[] }) {
+  const [items, setItems] = useState(initialSentences)
+  const [q, setQ]         = useState("")
+  const [cat, setCat]     = useState("")
+  const [lvl, setLvl]     = useState("")
+  const [editing, setEditing]   = useState<Sentence | null>(null)
+  const [deleting, setDeleting] = useState<Sentence | null>(null)
+  const [deleteBusy, setDeleteBusy] = useState(false)
+
   const catMap   = Object.fromEntries(categories.map(c => [c.id, c.name]))
   const levelMap = Object.fromEntries(levels.map(l => [l.id, l.name]))
-  const filtered = sentences.filter(s =>
+  const filtered = items.filter(s =>
     (q.trim() === "" || matches(q, s.english, s.serbian, s.croatian)) &&
     (cat === "" || s.categoryId === parseInt(cat)) &&
     (lvl === "" || s.levelId === parseInt(lvl))
   )
 
+  async function handleDelete() {
+    if (!deleting) return
+    setDeleteBusy(true)
+    await deleteSentenceAction(deleting.id)
+    setItems(prev => prev.filter(s => s.id !== deleting.id))
+    setDeleting(null)
+    setDeleteBusy(false)
+  }
+
   return (
     <div>
       <div className="flex gap-3 mb-5">
         <div className="flex-1"><SearchInput value={q} onChange={setQ} placeholder="Search English, Serbian or Croatian…" /></div>
-        <FilterSelect
-          value={cat} onChange={setCat}
-          options={categories.map(c => ({ value: String(c.id), label: c.name }))}
-          placeholder="All categories" accent="violet"
-        />
-        <FilterSelect
-          value={lvl} onChange={setLvl}
-          options={levels.map(l => ({ value: String(l.id), label: l.name }))}
-          placeholder="All levels" accent="sky"
-        />
+        <FilterSelect value={cat} onChange={setCat} options={categories.map(c => ({ value: String(c.id), label: c.name }))} placeholder="All categories" accent="violet" />
+        <FilterSelect value={lvl} onChange={setLvl} options={levels.map(l => ({ value: String(l.id), label: l.name }))} placeholder="All levels" accent="sky" />
       </div>
       <p className="text-xs text-slate-400 mb-3">
-        {filtered.length === sentences.length ? `${sentences.length} sentences` : `${filtered.length} of ${sentences.length} sentences`}
+        {filtered.length === items.length ? `${items.length} sentences` : `${filtered.length} of ${items.length} sentences`}
       </p>
       <div className="bg-white rounded-3xl border border-slate-100 overflow-hidden shadow-sm">
         <table className="w-full text-sm">
@@ -320,13 +630,14 @@ function SentencesPanel({ sentences, categories, levels }: { sentences: Sentence
               <th className="px-5 py-3.5 text-left font-semibold text-slate-500">Croatian</th>
               <th className="px-5 py-3.5 text-left font-semibold text-slate-500">Category</th>
               <th className="px-5 py-3.5 text-left font-semibold text-slate-500">Level</th>
+              <th className="px-3 py-3.5" />
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-50">
             {filtered.length === 0 ? (
-              <tr><td colSpan={5} className="px-5 py-10 text-center text-slate-400">No results</td></tr>
+              <tr><td colSpan={6} className="px-5 py-10 text-center text-slate-400">No results</td></tr>
             ) : filtered.map(s => (
-              <tr key={s.id} className="hover:bg-slate-50/50 transition-colors">
+              <tr key={s.id} className="hover:bg-slate-50/50 transition-colors group">
                 <td className="px-5 py-3.5 font-medium text-slate-900">{s.english}</td>
                 <td className="px-5 py-3.5 text-slate-600">{s.serbian}</td>
                 <td className="px-5 py-3.5 text-slate-600">{s.croatian}</td>
@@ -340,11 +651,26 @@ function SentencesPanel({ sentences, categories, levels }: { sentences: Sentence
                     ? <span className="px-2.5 py-1 bg-sky-50 text-sky-700 text-xs font-medium rounded-full">{levelMap[s.levelId] ?? "—"}</span>
                     : <span className="text-slate-300">—</span>}
                 </td>
+                <RowActions onEdit={() => setEditing(s)} onDelete={() => setDeleting(s)} />
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {editing && (
+        <EditSentenceModal
+          item={editing} categories={categories} levels={levels}
+          onSave={updated => { setItems(prev => prev.map(s => s.id === updated.id ? updated : s)); setEditing(null) }}
+          onCancel={() => setEditing(null)}
+        />
+      )}
+      {deleting && (
+        <DeleteModal
+          label={`${deleting.english} / ${deleting.serbian} / ${deleting.croatian}`}
+          onConfirm={handleDelete} onCancel={() => setDeleting(null)} busy={deleteBusy}
+        />
+      )}
     </div>
   )
 }
