@@ -194,7 +194,7 @@ function AddContentPanel({ categories, levels }: { categories: Category[]; level
 
 function SearchInput({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) {
   return (
-    <div className="relative mb-5">
+    <div className="relative">
       <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-base pointer-events-none">🔍</span>
       <input
         type="search"
@@ -207,14 +207,45 @@ function SearchInput({ value, onChange, placeholder }: { value: string; onChange
   )
 }
 
+function FilterSelect({
+  value, onChange, options, placeholder, accent = "violet",
+}: {
+  value: string; onChange: (v: string) => void
+  options: { value: string; label: string }[]
+  placeholder: string; accent?: "violet" | "sky"
+}) {
+  const ring = accent === "violet" ? "focus:ring-violet-300 focus:border-violet-400" : "focus:ring-sky-300 focus:border-sky-400"
+  return (
+    <select
+      value={value}
+      onChange={e => onChange(e.target.value)}
+      className={`py-2.5 pl-3.5 pr-8 rounded-2xl border border-slate-200 bg-white text-sm text-slate-700 focus:outline-none focus:ring-2 transition appearance-none cursor-pointer ${ring}`}
+    >
+      <option value="">{placeholder}</option>
+      {options.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+    </select>
+  )
+}
+
 function WordsPanel({ words, categories }: { words: Word[]; categories: Category[] }) {
-  const [q, setQ] = useState("")
+  const [q, setQ]     = useState("")
+  const [cat, setCat] = useState("")
   const catMap = Object.fromEntries(categories.map(c => [c.id, c.name]))
-  const filtered = q.trim() === "" ? words : words.filter(w => matches(q, w.english, w.serbian, w.croatian))
+  const filtered = words.filter(w =>
+    (q.trim() === "" || matches(q, w.english, w.serbian, w.croatian)) &&
+    (cat === "" || w.categoryId === parseInt(cat))
+  )
 
   return (
     <div>
-      <SearchInput value={q} onChange={setQ} placeholder="Search English, Serbian or Croatian…" />
+      <div className="flex gap-3 mb-5">
+        <div className="flex-1"><SearchInput value={q} onChange={setQ} placeholder="Search English, Serbian or Croatian…" /></div>
+        <FilterSelect
+          value={cat} onChange={setCat}
+          options={categories.map(c => ({ value: String(c.id), label: c.name }))}
+          placeholder="All categories" accent="violet"
+        />
+      </div>
       <p className="text-xs text-slate-400 mb-3">
         {filtered.length === words.length ? `${words.length} words` : `${filtered.length} of ${words.length} words`}
       </p>
@@ -251,14 +282,32 @@ function WordsPanel({ words, categories }: { words: Word[]; categories: Category
 }
 
 function SentencesPanel({ sentences, categories, levels }: { sentences: Sentence[]; categories: Category[]; levels: Level[] }) {
-  const [q, setQ] = useState("")
+  const [q, setQ]       = useState("")
+  const [cat, setCat]   = useState("")
+  const [lvl, setLvl]   = useState("")
   const catMap   = Object.fromEntries(categories.map(c => [c.id, c.name]))
   const levelMap = Object.fromEntries(levels.map(l => [l.id, l.name]))
-  const filtered = q.trim() === "" ? sentences : sentences.filter(s => matches(q, s.english, s.serbian, s.croatian))
+  const filtered = sentences.filter(s =>
+    (q.trim() === "" || matches(q, s.english, s.serbian, s.croatian)) &&
+    (cat === "" || s.categoryId === parseInt(cat)) &&
+    (lvl === "" || s.levelId === parseInt(lvl))
+  )
 
   return (
     <div>
-      <SearchInput value={q} onChange={setQ} placeholder="Search English, Serbian or Croatian…" />
+      <div className="flex gap-3 mb-5">
+        <div className="flex-1"><SearchInput value={q} onChange={setQ} placeholder="Search English, Serbian or Croatian…" /></div>
+        <FilterSelect
+          value={cat} onChange={setCat}
+          options={categories.map(c => ({ value: String(c.id), label: c.name }))}
+          placeholder="All categories" accent="violet"
+        />
+        <FilterSelect
+          value={lvl} onChange={setLvl}
+          options={levels.map(l => ({ value: String(l.id), label: l.name }))}
+          placeholder="All levels" accent="sky"
+        />
+      </div>
       <p className="text-xs text-slate-400 mb-3">
         {filtered.length === sentences.length ? `${sentences.length} sentences` : `${filtered.length} of ${sentences.length} sentences`}
       </p>
