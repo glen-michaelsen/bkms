@@ -3,52 +3,44 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import Link from "next/link"
 
-// ── Static puzzle definition (mockup) ────────────────────────────────────────
+// ── Puzzle definition ─────────────────────────────────────────────────────────
 //
-// Grid is 9×9, 0-indexed [row][col].
-// Words are placed manually to create overlapping intersections.
+// Grid layout (cols 0-5, rows 0-7):
 //
-//   0123456789
-// 0 ·····K····
-// 1 ···VODA···
-// 2 ·····U····
-// 3 ·····Ć····
-// 4 HLEB·A····
-// 5 ·····S····
-// 6 ···SREDA··
-// 7 ·····T····
-// 8 ·····A····
+//   0 1 2 3 4 5
+// 0 . . . . . .
+// 1 . . . . . .
+// 2 . . . S . .   ← SREDA (down) starts here
+// 3 . . G R A D   ← GRAD crosses SREDA at R  (SREDA[1] = GRAD[1] = R) ✓
+// 4 . H L E B .   ← HLEB crosses SREDA at E  (SREDA[2] = HLEB[2] = E) ✓
+// 5 . V O D A .   ← VODA crosses SREDA at D  (SREDA[3] = VODA[2] = D) ✓
+// 6 . . D A N .   ← DAN  crosses SREDA at A  (SREDA[4] = DAN[1]  = A) ✓
+// 7 . . . . . .
+//
+// Clue numbers (reading order of start cells):
+//   1 = SREDA (2,3)  2 = GRAD (3,2)  3 = HLEB (4,1)
+//   4 = VODA  (5,1)  5 = DAN  (6,2)
 
-const GRID_ROWS = 9
-const GRID_COLS = 9
+const GRID_ROWS = 8
+const GRID_COLS = 6
 
 type Direction = "across" | "down"
 
 interface PuzzleWord {
   id: number
   direction: Direction
-  row: number        // start row
-  col: number        // start col
-  answer: string     // uppercase Serbian
-  clue: string       // English clue
+  row: number
+  col: number
+  answer: string   // uppercase Serbian
+  clue: string     // English clue
 }
 
-const WORDS: PuzzleWord[] = [
-  { id: 1, direction: "across", row: 1, col: 3, answer: "VODA",   clue: "Water" },
-  { id: 2, direction: "across", row: 4, col: 0, answer: "HLEB",   clue: "Bread" },
-  { id: 3, direction: "across", row: 6, col: 3, answer: "SREDA",  clue: "Wednesday" },
-  { id: 4, direction: "down",   row: 0, col: 5, answer: "KUĆASTA", clue: "House (adj.)" },
-  { id: 5, direction: "down",   row: 0, col: 5, answer: "KUKASTA", clue: "House (adj.)" },
-]
-
-// Simpler static word set that overlaps cleanly
 const PUZZLE_WORDS: PuzzleWord[] = [
-  { id: 1, direction: "across", row: 2, col: 1, answer: "VODA",   clue: "Water" },
-  { id: 2, direction: "across", row: 4, col: 0, answer: "HLEB",   clue: "Bread" },
-  { id: 3, direction: "across", row: 6, col: 2, answer: "SREDA",  clue: "Wednesday" },
-  { id: 4, direction: "down",   row: 0, col: 3, answer: "KUĆA",   clue: "House" },
-  { id: 5, direction: "down",   row: 2, col: 6, answer: "DAN",    clue: "Day" },
-  { id: 6, direction: "down",   row: 4, col: 4, answer: "JEZIK",  clue: "Language / tongue" },
+  { id: 1, direction: "down",   row: 2, col: 3, answer: "SREDA", clue: "Wednesday" },
+  { id: 2, direction: "across", row: 3, col: 2, answer: "GRAD",  clue: "City" },
+  { id: 3, direction: "across", row: 4, col: 1, answer: "HLEB",  clue: "Bread" },
+  { id: 4, direction: "across", row: 5, col: 1, answer: "VODA",  clue: "Water" },
+  { id: 5, direction: "across", row: 6, col: 2, answer: "DAN",   clue: "Day" },
 ]
 
 // ── Build cell map ────────────────────────────────────────────────────────────
