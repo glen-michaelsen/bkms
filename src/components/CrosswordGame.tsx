@@ -88,6 +88,7 @@ function NoPuzzle() {
 
 const CELL_SIZE = 44 // px
 const SAVE_DEBOUNCE_MS = 800
+const SPECIAL_CHARS = ["Č", "Ć", "Š", "Đ", "Ž"]
 
 interface CrosswordGameProps {
   puzzle: GeneratedPuzzle | null
@@ -222,15 +223,22 @@ function CrosswordBoard({ puzzle, date, initialInput, initialSolvedAt }: Require
     const letter = e.key.toUpperCase()
     if (letter.length === 1 && /[A-ZČĆĐŠŽ]/.test(letter)) {
       e.preventDefault()
-      const key = `${row},${col}`
-      setInput(prev => {
-        const m = new Map(prev)
-        m.set(key, letter)
-        saveProgress(m, false)
-        return m
-      })
-      moveToNext(row, col, dir)
+      insertLetter(letter)
     }
+  }
+
+  function insertLetter(letter: string) {
+    if (!selected || solved) return
+    const { row, col, dir } = selected
+    const key = `${row},${col}`
+    if (!grid.has(key)) return
+    setInput(prev => {
+      const m = new Map(prev)
+      m.set(key, letter)
+      saveProgress(m, false)
+      return m
+    })
+    moveToNext(row, col, dir)
   }
 
   // ── Clue lists ─────────────────────────────────────────────────────────────
@@ -346,6 +354,21 @@ function CrosswordBoard({ puzzle, date, initialInput, initialSolvedAt }: Require
 
           {/* Clue lists */}
           <div className="flex-1 space-y-6 min-w-0">
+            {/* Special character buttons */}
+            {!solved && (
+              <div className="flex flex-wrap gap-2">
+                {SPECIAL_CHARS.map(ch => (
+                  <button
+                    key={ch}
+                    onMouseDown={e => { e.preventDefault(); insertLetter(ch) }}
+                    disabled={!selected}
+                    className="w-11 h-11 rounded-xl border border-slate-200 bg-white text-base font-bold text-slate-700 shadow-sm transition-colors hover:bg-violet-50 hover:border-violet-300 hover:text-violet-700 disabled:opacity-30 disabled:cursor-not-allowed"
+                  >
+                    {ch}
+                  </button>
+                ))}
+              </div>
+            )}
             {[
               { label: "Across", clues: acrossClues },
               { label: "Down",   clues: downClues },
