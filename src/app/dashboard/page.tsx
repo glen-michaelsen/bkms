@@ -3,7 +3,7 @@ import { redirect } from "next/navigation"
 import Link from "next/link"
 import { logoutAction } from "@/app/actions"
 import { db } from "@/db"
-import { words, sentences, userItemProgress, userDailyActivity, categories } from "@/db/schema"
+import { words, sentences, userItemProgress, userDailyActivity, categories, userCrosswordProgress } from "@/db/schema"
 import { eq, and, gte } from "drizzle-orm"
 import { buildStats, STATUS_META, type ItemStats } from "@/lib/progress"
 import { ActivityGraph } from "@/components/ActivityGraph"
@@ -101,6 +101,28 @@ function StatsBar({ stats }: { stats: ItemStats }) {
   )
 }
 
+// ── GameCard ──────────────────────────────────────────────────────────────────
+
+function GameCard({ href, emoji, name, solved }: { href: string; emoji: string; name: string; solved: boolean }) {
+  return (
+    <Link
+      href={href}
+      className="group flex items-center gap-3 bg-white border border-slate-100 rounded-2xl px-4 py-3 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 min-w-[160px]"
+    >
+      <span className="text-2xl">{emoji}</span>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-semibold text-slate-800 leading-tight">{name}</p>
+        {solved ? (
+          <p className="text-xs font-medium text-emerald-600 mt-0.5">Solved today ✓</p>
+        ) : (
+          <p className="text-xs text-slate-400 mt-0.5">Play today's puzzle</p>
+        )}
+      </div>
+      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${solved ? "bg-emerald-400" : "bg-slate-200"}`} />
+    </Link>
+  )
+}
+
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default async function DashboardPage() {
@@ -119,7 +141,7 @@ export default async function DashboardPage() {
   graphStart.setUTCDate(graphStart.getUTCDate() - 12 * 7)
   const graphStartStr = graphStart.toISOString().slice(0, 10)
 
-  const [allWords, allSentences, allProgress, allActivity, allCategories] = await Promise.all([
+  const [allWords, allSentences, allProgress, allActivity, allCategories, crosswordProgress] = await Promise.all([
     db.select({ id: words.id }).from(words),
     db.select({ id: sentences.id }).from(sentences),
     db.select().from(userItemProgress).where(eq(userItemProgress.userId, userId)),
@@ -127,6 +149,10 @@ export default async function DashboardPage() {
       and(eq(userDailyActivity.userId, userId), gte(userDailyActivity.date, graphStartStr))
     ),
     db.select({ id: categories.id, name: categories.name }).from(categories),
+    db.select({ solvedAt: userCrosswordProgress.solvedAt })
+      .from(userCrosswordProgress)
+      .where(and(eq(userCrosswordProgress.userId, userId), eq(userCrosswordProgress.date, today)))
+      .get(),
   ])
 
   const wordStats = buildStats(
@@ -228,6 +254,20 @@ export default async function DashboardPage() {
               </div>
             </div>
           </Link>
+        </div>
+
+        {/* Games */}
+        <div>
+          <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Daily Games</h2>
+          <div className="flex flex-wrap gap-3">
+            <GameCard
+              href="/games/crossword"
+              emoji="🔤"
+              name="Crossword"
+              solved={!!crosswordProgress?.solvedAt}
+            />
+            {/* Add more <GameCard /> here as new games are built */}
+          </div>
         </div>
 
         {/* Category tags */}
