@@ -74,7 +74,9 @@ export function SettingsForm({
   initialVerbOfDayEnabled: boolean
 }) {
   const { update } = useSession()
+  const [timezone, setTimezone]           = useState(initialTimezone)
   const [streakEnabled, setStreakEnabled] = useState(initialStreakMailEnabled)
+  const [streakHour, setStreakHour]       = useState(initialStreakMailHour)
   const [verbEnabled, setVerbEnabled]     = useState(initialVerbOfDayEnabled)
 
   const [profileState, profileAction, profilePending] = useActionState(updateProfileAction, undefined)
@@ -241,7 +243,8 @@ export function SettingsForm({
             <label className="block text-sm font-semibold text-slate-700 mb-1.5">Your timezone</label>
             <select
               name="timezone"
-              defaultValue={initialTimezone}
+              value={timezone}
+              onChange={e => setTimezone(e.target.value)}
               className="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition appearance-none cursor-pointer"
             >
               {TIMEZONES.map(tz => (
@@ -271,7 +274,8 @@ export function SettingsForm({
                 <label className="block text-xs font-semibold text-slate-600 mb-1.5">Send reminder at</label>
                 <select
                   name="streakMailHour"
-                  defaultValue={initialStreakMailHour}
+                  value={streakHour}
+                  onChange={e => setStreakHour(parseInt(e.target.value))}
                   className="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition appearance-none cursor-pointer text-sm"
                 >
                   {Array.from({ length: 24 }, (_, h) => (

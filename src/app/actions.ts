@@ -368,6 +368,7 @@ export async function updateEmailPrefsAction(
     ...((!verbEnabled) ? { verbOfDayEnabledAt: null } : {}),
   }).where(eq(users.id, userId))
 
+  revalidatePath("/settings")
   return { success: true }
 }
 
