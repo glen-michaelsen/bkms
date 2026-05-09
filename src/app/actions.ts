@@ -2,8 +2,8 @@
 
 import { signIn, signOut, auth } from "@/auth"
 import { db } from "@/db"
-import { users, categories, levels, userLevelConfig, words, sentences } from "@/db/schema"
-import { eq } from "drizzle-orm"
+import { users, categories, levels, userLevelConfig, words, sentences, userCrosswordProgress } from "@/db/schema"
+import { eq, and } from "drizzle-orm"
 import bcrypt from "bcryptjs"
 import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
@@ -250,6 +250,52 @@ export async function deleteSentenceAction(id: number): Promise<SimpleResult> {
   await db.delete(sentences).where(eq(sentences.id, id))
   revalidatePath("/admin")
   return { success: true }
+}
+
+// ─── Crossword progress ───────────────────────────────────────────────────────
+
+export async function saveCrosswordProgressAction(
+  date: string,
+  inputJson: string,
+  solved: boolean,
+): Promise<void> {
+  const session = await auth()
+  if (!session) return
+
+  const userId = parseInt(session.user.id)
+
+  const existing = await db
+    .select()
+    .from(userCrosswordProgress)
+    .where(
+      and(
+        eq(userCrosswordProgress.userId, userId),
+        eq(userCrosswordProgress.date, date),
+      ),
+    )
+
+  if (existing.length > 0) {
+    await db
+      .update(userCrosswordProgress)
+      .set({
+        inputJson,
+        // Only set solvedAt once — don't overwrite if already solved
+        solvedAt: solved && !existing[0].solvedAt ? new Date() : existing[0].solvedAt,
+      })
+      .where(
+        and(
+          eq(userCrosswordProgress.userId, userId),
+          eq(userCrosswordProgress.date, date),
+        ),
+      )
+  } else {
+    await db.insert(userCrosswordProgress).values({
+      userId,
+      date,
+      inputJson,
+      solvedAt: solved ? new Date() : null,
+    })
+  }
 }
 
 // ─── User level config ────────────────────────────────────────────────────────

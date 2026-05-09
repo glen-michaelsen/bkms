@@ -84,6 +84,23 @@ export const userItemProgress = sqliteTable("user_item_progress", {
     .$defaultFn(() => new Date()),
 })
 
+export const crosswordPuzzles = sqliteTable("crossword_puzzles", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  date: text("date").notNull().unique(), // YYYY-MM-DD
+  puzzleJson: text("puzzle_json").notNull(),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+})
+
+export const userCrosswordProgress = sqliteTable("user_crossword_progress", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id").notNull().references(() => users.id),
+  date: text("date").notNull(), // YYYY-MM-DD
+  inputJson: text("input_json").notNull().default("{}"), // Record<"row,col", letter>
+  solvedAt: integer("solved_at", { mode: "timestamp" }),
+})
+
 export type User = typeof users.$inferSelect
 export type Category = typeof categories.$inferSelect
 export type Level = typeof levels.$inferSelect
