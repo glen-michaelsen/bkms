@@ -4,6 +4,7 @@ import { useState, useActionState } from "react"
 import { AddItemForm } from "./AddItemForm"
 import { AddNamedItem } from "./AddNamedItem"
 import { CsvUpload } from "./CsvUpload"
+import { VerbCsvUpload } from "./VerbCsvUpload"
 import {
   updateWordAction, deleteWordAction,
   updateSentenceAction, deleteSentenceAction,
@@ -705,9 +706,12 @@ function VerbsPanel({ verbs }: { verbs: Verb[] }) {
 
   return (
     <div className="space-y-8">
+      {/* CSV import */}
+      <VerbCsvUpload />
+
       {/* Add form */}
       <div className="bg-white rounded-2xl border border-slate-100 p-6">
-        <h3 className="font-bold text-slate-800 mb-4">Add verb</h3>
+        <h3 className="font-bold text-slate-800 mb-4">Add verb manually</h3>
         <form action={addAction} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>

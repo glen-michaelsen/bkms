@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { db } from "@/db"
-import { words, sentences, categories, levels } from "@/db/schema"
-import { eq } from "drizzle-orm"
+import { words, sentences, categories, levels, verbs } from "@/db/schema"
+import { eq, max } from "drizzle-orm"
 
 type Row = {
   english: string
@@ -10,6 +10,18 @@ type Row = {
   croatian: string
   category?: string
   level?: string
+}
+
+type VerbRow = {
+  infinitive: string
+  translation: string
+  ja: string
+  ti: string
+  on_ona: string
+  mi: string
+  vi: string
+  oni: string
+  examples: { serbian: string; english: string }[]
 }
 
 async function findOrCreate(
@@ -31,8 +43,43 @@ export async function POST(req: NextRequest) {
   const body = await req.json()
   const { type, rows } = body as { type: string; rows: Row[] }
 
-  if (type !== "words" && type !== "sentences") {
+  if (type !== "words" && type !== "sentences" && type !== "verbs") {
     return NextResponse.json({ error: "Invalid type" }, { status: 400 })
+  }
+
+  // ── Verbs ──────────────────────────────────────────────────────────────────
+  if (type === "verbs") {
+    const verbRows = (rows as unknown) as VerbRow[]
+    let imported = 0
+    const errors: string[] = []
+    const maxRow = await db.select({ m: max(verbs.sortOrder) }).from(verbs).get()
+    let nextOrder = (maxRow?.m ?? 0) + 1
+
+    for (let i = 0; i < verbRows.length; i++) {
+      const r = verbRows[i]
+      if (!r.infinitive?.trim() || !r.translation?.trim() || !r.ja?.trim()) {
+        errors.push(`Row ${i + 1}: missing required fields`)
+        continue
+      }
+      try {
+        await db.insert(verbs).values({
+          infinitive:   r.infinitive.trim(),
+          translation:  r.translation.trim(),
+          ja:           r.ja.trim(),
+          ti:           r.ti.trim(),
+          onOna:        r.on_ona.trim(),
+          mi:           r.mi.trim(),
+          vi:           r.vi.trim(),
+          oni:          r.oni.trim(),
+          examplesJson: JSON.stringify(r.examples ?? []),
+          sortOrder:    nextOrder++,
+        })
+        imported++
+      } catch {
+        errors.push(`Row ${i + 1}: failed to insert`)
+      }
+    }
+    return NextResponse.json({ imported, errors })
   }
   if (!Array.isArray(rows) || rows.length === 0) {
     return NextResponse.json({ error: "No rows provided" }, { status: 400 })
