@@ -1,6 +1,6 @@
 "use client"
 
-import { useActionState, useEffect, useState } from "react"
+import { useActionState, useEffect, useState, useTransition } from "react"
 import { useSession } from "next-auth/react"
 import {
   updateProfileAction,
@@ -82,7 +82,22 @@ export function SettingsForm({
   const [profileState, profileAction, profilePending] = useActionState(updateProfileAction, undefined)
   const [emailState, emailAction, emailPending]       = useActionState(updateEmailAction, undefined)
   const [passwordState, passwordAction, passwordPending] = useActionState(updatePasswordAction, undefined)
-  const [emailPrefsState, emailPrefsAction, emailPrefsPending] = useActionState(updateEmailPrefsAction, undefined)
+
+  // Email prefs: call the action directly to avoid Next.js router refresh remounting the component
+  const [emailPrefsPending, startEmailPrefsTransition] = useTransition()
+  const [emailPrefsState, setEmailPrefsState] = useState<{ error?: string; success?: boolean } | undefined>()
+
+  function saveEmailPrefs() {
+    startEmailPrefsTransition(async () => {
+      const fd = new FormData()
+      fd.set("timezone", timezone)
+      fd.set("streakMailEnabled", streakEnabled ? "1" : "0")
+      fd.set("streakMailHour", streakHour.toString())
+      fd.set("verbOfDayEnabled", verbEnabled ? "1" : "0")
+      const res = await updateEmailPrefsAction(undefined, fd)
+      setEmailPrefsState(res)
+    })
+  }
 
   // Sync profile changes (name, language, gender) into the JWT session
   useEffect(() => {
@@ -237,7 +252,7 @@ export function SettingsForm({
         title="Email notifications"
         description="Optional emails to help you stay consistent"
       >
-        <form action={emailPrefsAction} className="space-y-6">
+        <div className="space-y-6">
           {/* Timezone */}
           <div>
             <label className="block text-sm font-semibold text-slate-700 mb-1.5">Your timezone</label>
@@ -267,7 +282,6 @@ export function SettingsForm({
               >
                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${streakEnabled ? "translate-x-6" : "translate-x-1"}`} />
               </button>
-              <input type="hidden" name="streakMailEnabled" value={streakEnabled ? "1" : "0"} />
             </div>
             {streakEnabled && (
               <div>
@@ -301,14 +315,20 @@ export function SettingsForm({
             >
               <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${verbEnabled ? "translate-x-6" : "translate-x-1"}`} />
             </button>
-            <input type="hidden" name="verbOfDayEnabled" value={verbEnabled ? "1" : "0"} />
           </div>
 
           <div className="flex items-center justify-between pt-1">
             <StatusMessage state={emailPrefsState} />
-            <SaveButton pending={emailPrefsPending} />
+            <button
+              type="button"
+              onClick={saveEmailPrefs}
+              disabled={emailPrefsPending}
+              className="px-5 py-2.5 bg-violet-600 text-white text-sm font-semibold rounded-xl hover:bg-violet-700 disabled:opacity-50 transition-all active:scale-[0.98]"
+            >
+              {emailPrefsPending ? "Saving…" : "Save changes"}
+            </button>
           </div>
-        </form>
+        </div>
       </SectionCard>
 
       {/* Study levels */}
