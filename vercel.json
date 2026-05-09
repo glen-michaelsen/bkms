@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/streak-mail",
+      "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/verb-of-day",
+      "schedule": "0 * * * *"
+    }
+  ]
+}

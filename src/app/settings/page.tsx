@@ -3,19 +3,24 @@ import { redirect } from "next/navigation"
 import Link from "next/link"
 import { SettingsForm } from "@/components/SettingsForm"
 import { db } from "@/db"
-import { levels, userLevelConfig } from "@/db/schema"
+import { users, levels, userLevelConfig } from "@/db/schema"
 import { eq } from "drizzle-orm"
 
 export default async function SettingsPage() {
   const session = await auth()
   if (!session) redirect("/login")
 
-  const [allLevels, levelConfig] = await Promise.all([
+  const userId = parseInt(session.user.id)
+
+  const [allLevels, levelConfig, userRow] = await Promise.all([
     db.select().from(levels).orderBy(levels.id),
-    db
-      .select()
-      .from(userLevelConfig)
-      .where(eq(userLevelConfig.userId, parseInt(session.user.id))),
+    db.select().from(userLevelConfig).where(eq(userLevelConfig.userId, userId)),
+    db.select({
+      timezone: users.timezone,
+      streakMailEnabled: users.streakMailEnabled,
+      streakMailHour: users.streakMailHour,
+      verbOfDayEnabled: users.verbOfDayEnabled,
+    }).from(users).where(eq(users.id, userId)).get(),
   ])
 
   return (
@@ -43,6 +48,10 @@ export default async function SettingsPage() {
           initialGender={session.user.gender}
           levels={allLevels.map((l) => ({ id: l.id, name: l.name }))}
           levelConfig={levelConfig.map((c) => ({ levelId: c.levelId, percentage: c.percentage }))}
+          initialTimezone={userRow?.timezone ?? "Europe/Belgrade"}
+          initialStreakMailEnabled={userRow?.streakMailEnabled ?? false}
+          initialStreakMailHour={userRow?.streakMailHour ?? 20}
+          initialVerbOfDayEnabled={userRow?.verbOfDayEnabled ?? false}
         />
       </main>
     </div>

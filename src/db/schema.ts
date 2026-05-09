@@ -9,6 +9,15 @@ export const users = sqliteTable("users", {
   firstName: text("first_name"),
   role: text("role", { enum: ["user", "admin"] }).notNull().default("user"),
   hintEnabled: integer("hint_enabled", { mode: "boolean" }).notNull().default(false),
+  // Timezone & email preferences
+  timezone: text("timezone").notNull().default("Europe/Belgrade"),
+  streakMailEnabled: integer("streak_mail_enabled", { mode: "boolean" }).notNull().default(false),
+  streakMailHour: integer("streak_mail_hour").notNull().default(20),
+  verbOfDayEnabled: integer("verb_of_day_enabled", { mode: "boolean" }).notNull().default(false),
+  verbOfDayEnabledAt: text("verb_of_day_enabled_at"), // YYYY-MM-DD, set when first enabled
+  // Idempotency guards for cron mailers
+  streakMailLastSentDate: text("streak_mail_last_sent_date"),
+  verbMailLastSentDate: text("verb_mail_last_sent_date"),
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
     .$defaultFn(() => new Date()),
@@ -101,7 +110,25 @@ export const userCrosswordProgress = sqliteTable("user_crossword_progress", {
   solvedAt: integer("solved_at", { mode: "timestamp" }),
 })
 
+export const verbs = sqliteTable("verbs", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  infinitive: text("infinitive").notNull(),       // e.g. "piti"
+  translation: text("translation").notNull(),     // e.g. "to drink"
+  ja: text("ja").notNull(),                       // e.g. "pijem"
+  ti: text("ti").notNull(),
+  onOna: text("on_ona").notNull(),
+  mi: text("mi").notNull(),
+  vi: text("vi").notNull(),
+  oni: text("oni").notNull(),
+  examplesJson: text("examples_json").notNull().default("[]"), // [{serbian,english}]
+  sortOrder: integer("sort_order").notNull().default(0),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+})
+
 export type User = typeof users.$inferSelect
+export type Verb = typeof verbs.$inferSelect
 export type Category = typeof categories.$inferSelect
 export type Level = typeof levels.$inferSelect
 export type Word = typeof words.$inferSelect

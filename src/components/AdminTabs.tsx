@@ -1,12 +1,13 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useActionState } from "react"
 import { AddItemForm } from "./AddItemForm"
 import { AddNamedItem } from "./AddNamedItem"
 import { CsvUpload } from "./CsvUpload"
 import {
   updateWordAction, deleteWordAction,
   updateSentenceAction, deleteSentenceAction,
+  addVerbAction, deleteVerbAction,
 } from "@/app/actions"
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -15,6 +16,8 @@ type Category  = { id: number; name: string }
 type Level     = { id: number; name: string }
 type Word      = { id: number; english: string; serbian: string; croatian: string; categoryId: number | null }
 type Sentence  = { id: number; english: string; serbian: string; croatian: string; categoryId: number | null; levelId: number | null }
+type VerbExample = { serbian: string; english: string }
+type Verb      = { id: number; infinitive: string; translation: string; ja: string; ti: string; onOna: string; mi: string; vi: string; oni: string; examplesJson: string; sortOrder: number }
 type UserRow   = {
   id: number; email: string; firstName: string | null; language: string
   createdAt: Date | null; lastActive: string | null; streak: number; totalAnswers: number
@@ -40,12 +43,13 @@ export type AdminTabsProps = {
   levels: Level[]
   words: Word[]
   sentences: Sentence[]
+  verbs: Verb[]
   actions: ServerActions
 }
 
 // ── Tab definitions ──────────────────────────────────────────────────────────
 
-const TABS = ["Stats", "Taxonomies", "Add content", "Words", "Sentences"] as const
+const TABS = ["Stats", "Taxonomies", "Add content", "Words", "Sentences", "Verbs"] as const
 type Tab = (typeof TABS)[number]
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -675,9 +679,138 @@ function SentencesPanel({ sentences: initialSentences, categories, levels }: { s
   )
 }
 
+// ── VerbsPanel ───────────────────────────────────────────────────────────────
+
+function VerbsPanel({ verbs }: { verbs: Verb[] }) {
+  const [items, setItems]         = useState(verbs)
+  const [addState, addAction, addPending] = useActionState(addVerbAction, undefined)
+  const [examples, setExamples]   = useState([{ serbian: "", english: "" }])
+  const [deletingId, setDeletingId] = useState<number | null>(null)
+  const [deleteBusy, setDeleteBusy] = useState(false)
+
+  // Clear form on success
+  const formRef = useState<HTMLFormElement | null>(null)
+
+  async function handleDelete(id: number) {
+    setDeleteBusy(true)
+    const res = await deleteVerbAction(id)
+    if (!res.error) setItems(prev => prev.filter(v => v.id !== id))
+    setDeletingId(null)
+    setDeleteBusy(false)
+  }
+
+  const conjFields: [keyof Verb, string][] = [
+    ["ja", "Ja"], ["ti", "Ti"], ["onOna", "On / Ona"], ["mi", "Mi"], ["vi", "Vi"], ["oni", "Oni / One"],
+  ]
+
+  return (
+    <div className="space-y-8">
+      {/* Add form */}
+      <div className="bg-white rounded-2xl border border-slate-100 p-6">
+        <h3 className="font-bold text-slate-800 mb-4">Add verb</h3>
+        <form action={addAction} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">Infinitive</label>
+              <input name="infinitive" required placeholder="piti" className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-violet-500" />
+            </div>
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">English</label>
+              <input name="translation" required placeholder="to drink" className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-violet-500" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            {conjFields.map(([field, label]) => (
+              <div key={field}>
+                <label className="block text-xs font-semibold text-slate-500 mb-1">{label}</label>
+                <input name={field} required placeholder={label.toLowerCase()} className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-violet-500" />
+              </div>
+            ))}
+          </div>
+
+          {/* Examples */}
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-xs font-semibold text-slate-600">Example sentences</label>
+              <button type="button" onClick={() => setExamples(e => [...e, { serbian: "", english: "" }])}
+                className="text-xs text-violet-600 font-semibold hover:text-violet-800">+ Add example</button>
+            </div>
+            <div className="space-y-2">
+              {examples.map((_, i) => (
+                <div key={i} className="grid grid-cols-2 gap-2">
+                  <input name={`example_serbian_${i}`} placeholder="Serbian sentence" className="px-3 py-2 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                  <input name={`example_english_${i}`} placeholder="English translation" className="px-3 py-2 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4">
+            {addState?.error && <p className="text-sm text-rose-600">{addState.error}</p>}
+            {addState?.success && <p className="text-sm text-emerald-600 font-semibold">Verb added ✓</p>}
+            <button type="submit" disabled={addPending}
+              className="ml-auto px-5 py-2.5 bg-violet-600 text-white text-sm font-semibold rounded-xl hover:bg-violet-700 disabled:opacity-50 transition">
+              {addPending ? "Saving…" : "Add verb"}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      {/* Verb list */}
+      <div className="space-y-3">
+        {items.length === 0 && <p className="text-sm text-slate-400">No verbs yet.</p>}
+        {items.map((v, idx) => {
+          const examples: VerbExample[] = JSON.parse(v.examplesJson || "[]")
+          return (
+            <div key={v.id} className="bg-white rounded-2xl border border-slate-100 p-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-baseline gap-2 mb-1">
+                    <span className="text-xs font-bold text-slate-400">#{idx + 1}</span>
+                    <span className="font-bold text-slate-900">{v.infinitive}</span>
+                    <span className="text-sm text-slate-500">— {v.translation}</span>
+                  </div>
+                  <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-slate-600">
+                    {[["Ja", v.ja], ["Ti", v.ti], ["On/Ona", v.onOna], ["Mi", v.mi], ["Vi", v.vi], ["Oni", v.oni]].map(([p, f]) => (
+                      <span key={p}><span className="text-slate-400">{p} </span>{f}</span>
+                    ))}
+                  </div>
+                  {examples.length > 0 && (
+                    <div className="mt-2 space-y-0.5">
+                      {examples.map((ex, i) => (
+                        <p key={i} className="text-xs text-slate-500 italic">"{ex.serbian}" — {ex.english}</p>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <button onClick={() => setDeletingId(v.id)}
+                  className="text-slate-300 hover:text-rose-500 transition flex-shrink-0 p-1">
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      {deletingId !== null && (
+        <DeleteModal
+          label={items.find(v => v.id === deletingId)?.infinitive ?? ""}
+          onConfirm={() => handleDelete(deletingId)}
+          onCancel={() => setDeletingId(null)}
+          busy={deleteBusy}
+        />
+      )}
+    </div>
+  )
+}
+
 // ── Root component ───────────────────────────────────────────────────────────
 
-export function AdminTabs({ stats, userRows, categories, levels, words, sentences, actions }: AdminTabsProps) {
+export function AdminTabs({ stats, userRows, categories, levels, words, sentences, verbs, actions }: AdminTabsProps) {
   const [activeTab, setActiveTab] = useState<Tab>("Stats")
 
   return (
@@ -705,6 +838,7 @@ export function AdminTabs({ stats, userRows, categories, levels, words, sentence
       {activeTab === "Add content" && <AddContentPanel categories={categories} levels={levels} />}
       {activeTab === "Words"       && <WordsPanel words={words} categories={categories} />}
       {activeTab === "Sentences"   && <SentencesPanel sentences={sentences} categories={categories} levels={levels} />}
+      {activeTab === "Verbs"       && <VerbsPanel verbs={verbs} />}
     </>
   )
 }

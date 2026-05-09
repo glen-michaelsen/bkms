@@ -1,13 +1,15 @@
 "use client"
 
-import { useActionState, useEffect } from "react"
+import { useActionState, useEffect, useState } from "react"
 import { useSession } from "next-auth/react"
 import {
   updateProfileAction,
   updateEmailAction,
   updatePasswordAction,
+  updateEmailPrefsAction,
 } from "@/app/actions"
 import { LevelConfig } from "@/components/LevelConfig"
+import { TIMEZONES } from "@/lib/timezones"
 
 function SectionCard({
   title,
@@ -55,6 +57,10 @@ export function SettingsForm({
   initialGender,
   levels,
   levelConfig,
+  initialTimezone,
+  initialStreakMailEnabled,
+  initialStreakMailHour,
+  initialVerbOfDayEnabled,
 }: {
   initialFirstName: string
   initialEmail: string
@@ -62,21 +68,19 @@ export function SettingsForm({
   initialGender: string
   levels: { id: number; name: string }[]
   levelConfig: { levelId: number; percentage: number }[]
+  initialTimezone: string
+  initialStreakMailEnabled: boolean
+  initialStreakMailHour: number
+  initialVerbOfDayEnabled: boolean
 }) {
   const { update } = useSession()
+  const [streakEnabled, setStreakEnabled] = useState(initialStreakMailEnabled)
+  const [verbEnabled, setVerbEnabled]     = useState(initialVerbOfDayEnabled)
 
-  const [profileState, profileAction, profilePending] = useActionState(
-    updateProfileAction,
-    undefined
-  )
-  const [emailState, emailAction, emailPending] = useActionState(
-    updateEmailAction,
-    undefined
-  )
-  const [passwordState, passwordAction, passwordPending] = useActionState(
-    updatePasswordAction,
-    undefined
-  )
+  const [profileState, profileAction, profilePending] = useActionState(updateProfileAction, undefined)
+  const [emailState, emailAction, emailPending]       = useActionState(updateEmailAction, undefined)
+  const [passwordState, passwordAction, passwordPending] = useActionState(updatePasswordAction, undefined)
+  const [emailPrefsState, emailPrefsAction, emailPrefsPending] = useActionState(updateEmailPrefsAction, undefined)
 
   // Sync profile changes (name, language, gender) into the JWT session
   useEffect(() => {
@@ -222,6 +226,83 @@ export function SettingsForm({
           <div className="flex items-center justify-between">
             <StatusMessage state={passwordState} />
             <SaveButton pending={passwordPending} label="Update password" />
+          </div>
+        </form>
+      </SectionCard>
+
+      {/* Email notifications */}
+      <SectionCard
+        title="Email notifications"
+        description="Optional emails to help you stay consistent"
+      >
+        <form action={emailPrefsAction} className="space-y-6">
+          {/* Timezone */}
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Your timezone</label>
+            <select
+              name="timezone"
+              defaultValue={initialTimezone}
+              className="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition appearance-none cursor-pointer"
+            >
+              {TIMEZONES.map(tz => (
+                <option key={tz.value} value={tz.value}>{tz.label}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Streak reminder */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold text-slate-700">Streak reminder</p>
+                <p className="text-xs text-slate-500 mt-0.5">Get a nudge if you haven't practised that day</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setStreakEnabled(v => !v)}
+                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${streakEnabled ? "bg-violet-600" : "bg-slate-200"}`}
+              >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${streakEnabled ? "translate-x-6" : "translate-x-1"}`} />
+              </button>
+              <input type="hidden" name="streakMailEnabled" value={streakEnabled ? "1" : "0"} />
+            </div>
+            {streakEnabled && (
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1.5">Send reminder at</label>
+                <select
+                  name="streakMailHour"
+                  defaultValue={initialStreakMailHour}
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition appearance-none cursor-pointer text-sm"
+                >
+                  {Array.from({ length: 24 }, (_, h) => (
+                    <option key={h} value={h}>
+                      {h.toString().padStart(2, "0")}:00
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+          </div>
+
+          {/* Verb of the day */}
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-semibold text-slate-700">Verb of the day</p>
+              <p className="text-xs text-slate-500 mt-0.5">Daily email at 8 AM with a verb, its conjugation and examples</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setVerbEnabled(v => !v)}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${verbEnabled ? "bg-violet-600" : "bg-slate-200"}`}
+            >
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${verbEnabled ? "translate-x-6" : "translate-x-1"}`} />
+            </button>
+            <input type="hidden" name="verbOfDayEnabled" value={verbEnabled ? "1" : "0"} />
+          </div>
+
+          <div className="flex items-center justify-between pt-1">
+            <StatusMessage state={emailPrefsState} />
+            <SaveButton pending={emailPrefsPending} />
           </div>
         </form>
       </SectionCard>

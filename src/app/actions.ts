@@ -2,8 +2,8 @@
 
 import { signIn, signOut, auth } from "@/auth"
 import { db } from "@/db"
-import { users, categories, levels, userLevelConfig, words, sentences, userCrosswordProgress } from "@/db/schema"
-import { eq, and } from "drizzle-orm"
+import { users, categories, levels, userLevelConfig, words, sentences, userCrosswordProgress, verbs } from "@/db/schema"
+import { eq, and, max } from "drizzle-orm"
 import bcrypt from "bcryptjs"
 import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
@@ -330,5 +330,104 @@ export async function saveLevelConfigAction(
     )
   }
 
+  return { success: true }
+}
+
+// ─── Email notification preferences ──────────────────────────────────────────
+
+export async function updateEmailPrefsAction(
+  _prev: SimpleResult | undefined,
+  formData: FormData
+): Promise<SimpleResult> {
+  const session = await auth()
+  if (!session) return { error: "Not authenticated" }
+
+  const userId = parseInt(session.user.id)
+  const timezone        = (formData.get("timezone") as string) || "Europe/Belgrade"
+  const streakEnabled   = formData.get("streakMailEnabled") === "1"
+  const streakHour      = Math.min(23, Math.max(0, parseInt(formData.get("streakMailHour") as string) || 20))
+  const verbEnabled     = formData.get("verbOfDayEnabled") === "1"
+
+  // If verb of day is being switched on for the first time, record today as start date
+  let verbEnabledAt: string | undefined
+  if (verbEnabled) {
+    const current = await db.select({ verbOfDayEnabledAt: users.verbOfDayEnabledAt })
+      .from(users).where(eq(users.id, userId)).get()
+    if (!current?.verbOfDayEnabledAt) {
+      verbEnabledAt = new Date().toISOString().slice(0, 10)
+    }
+  }
+
+  await db.update(users).set({
+    timezone,
+    streakMailEnabled: streakEnabled,
+    streakMailHour: streakHour,
+    verbOfDayEnabled: verbEnabled,
+    ...(verbEnabledAt ? { verbOfDayEnabledAt: verbEnabledAt } : {}),
+    // Clear start date if disabling so re-enabling restarts from verb #1
+    ...((!verbEnabled) ? { verbOfDayEnabledAt: null } : {}),
+  }).where(eq(users.id, userId))
+
+  return { success: true }
+}
+
+// ─── Admin: verbs ─────────────────────────────────────────────────────────────
+
+type VerbData = {
+  infinitive: string; translation: string
+  ja: string; ti: string; onOna: string; mi: string; vi: string; oni: string
+  examplesJson: string // JSON string
+}
+
+export async function addVerbAction(
+  _prev: SimpleResult | undefined,
+  formData: FormData
+): Promise<SimpleResult> {
+  const session = await auth()
+  if (!session || session.user.role !== "admin") return { error: "Forbidden" }
+
+  const infinitive  = (formData.get("infinitive") as string).trim()
+  const translation = (formData.get("translation") as string).trim()
+  const ja          = (formData.get("ja") as string).trim()
+  const ti          = (formData.get("ti") as string).trim()
+  const onOna       = (formData.get("onOna") as string).trim()
+  const mi          = (formData.get("mi") as string).trim()
+  const vi          = (formData.get("vi") as string).trim()
+  const oni         = (formData.get("oni") as string).trim()
+
+  if (!infinitive || !translation || !ja || !ti || !onOna || !mi || !vi || !oni) {
+    return { error: "All conjugation fields are required" }
+  }
+
+  // Build examples from paired fields: example_serbian_0, example_english_0, ...
+  const examples: { serbian: string; english: string }[] = []
+  for (let i = 0; i < 10; i++) {
+    const sr = (formData.get(`example_serbian_${i}`) as string | null)?.trim()
+    const en = (formData.get(`example_english_${i}`) as string | null)?.trim()
+    if (sr && en) examples.push({ serbian: sr, english: en })
+  }
+
+  // Sort order = current max + 1
+  const maxRow = await db.select({ m: max(verbs.sortOrder) }).from(verbs).get()
+  const sortOrder = (maxRow?.m ?? 0) + 1
+
+  try {
+    await db.insert(verbs).values({
+      infinitive, translation, ja, ti, onOna, mi, vi, oni,
+      examplesJson: JSON.stringify(examples),
+      sortOrder,
+    })
+    revalidatePath("/admin")
+    return { success: true }
+  } catch {
+    return { error: "Failed to add verb" }
+  }
+}
+
+export async function deleteVerbAction(id: number): Promise<SimpleResult> {
+  const session = await auth()
+  if (!session || session.user.role !== "admin") return { error: "Forbidden" }
+  await db.delete(verbs).where(eq(verbs.id, id))
+  revalidatePath("/admin")
   return { success: true }
 }

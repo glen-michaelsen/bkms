@@ -2,7 +2,7 @@ import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { db } from "@/db"
-import { words, sentences, categories, levels, users, userDailyActivity } from "@/db/schema"
+import { words, sentences, categories, levels, users, userDailyActivity, verbs } from "@/db/schema"
 import { desc } from "drizzle-orm"
 import { addCategoryAction, addLevelAction, deleteCategoryAction } from "@/app/actions"
 import { AdminTabs } from "@/components/AdminTabs"
@@ -32,13 +32,14 @@ export default async function AdminPage() {
   const today   = new Date().toISOString().slice(0, 10)
   const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
 
-  const [allCategories, allLevels, allWords, allSentences, allUsers, allActivity] = await Promise.all([
+  const [allCategories, allLevels, allWords, allSentences, allUsers, allActivity, allVerbs] = await Promise.all([
     db.select().from(categories).orderBy(categories.id),
     db.select().from(levels).orderBy(levels.id),
     db.select().from(words).orderBy(words.id),
     db.select().from(sentences).orderBy(sentences.id),
     db.select().from(users).orderBy(desc(users.createdAt)),
     db.select().from(userDailyActivity),
+    db.select().from(verbs).orderBy(verbs.sortOrder, verbs.id),
   ])
 
   // ── Stats ─────────────────────────────────────────────────────────────────
@@ -88,6 +89,7 @@ export default async function AdminPage() {
           levels={allLevels}
           words={allWords}
           sentences={allSentences}
+          verbs={allVerbs}
           actions={{ addCategoryAction, addLevelAction, deleteCategoryAction }}
         />
       </main>
