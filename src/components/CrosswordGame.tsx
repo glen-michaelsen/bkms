@@ -5,24 +5,30 @@ import Link from "next/link"
 
 // ── Puzzle definition ─────────────────────────────────────────────────────────
 //
-// Grid layout (cols 0-5, rows 0-7):
+// Across words alternate LEFT / RIGHT of the spine so no two consecutive
+// across words share a column — eliminating false vertical patterns.
 //
-//   0 1 2 3 4 5
-// 0 . . . . . .
-// 1 . . . . . .
-// 2 . . . S . .   ← SREDA (down) starts here
-// 3 . . G R A D   ← GRAD crosses SREDA at R  (SREDA[1] = GRAD[1] = R) ✓
-// 4 . H L E B .   ← HLEB crosses SREDA at E  (SREDA[2] = HLEB[2] = E) ✓
-// 5 . V O D A .   ← VODA crosses SREDA at D  (SREDA[3] = VODA[2] = D) ✓
-// 6 . . D A N .   ← DAN  crosses SREDA at A  (SREDA[4] = DAN[1]  = A) ✓
-// 7 . . . . . .
+// Grid layout (cols 0-6, rows 0-7):
+//
+//   0 1 2 3 4 5 6
+// 0 . . . . . . .
+// 1 . . . . . . .
+// 2 . . . S T A N   ← STAN  crosses SREDA at S  (SREDA[0]=STAN[0]=S) → goes RIGHT
+// 3 . M I R . . .   ← MIR   crosses SREDA at R  (SREDA[1]=MIR[2] =R) → goes LEFT
+// 4 . . . E V R O   ← EVRO  crosses SREDA at E  (SREDA[2]=EVRO[0]=E) → goes RIGHT
+// 5 G R A D . . .   ← GRAD  crosses SREDA at D  (SREDA[3]=GRAD[3]=D) → goes LEFT
+// 6 . . . A U T O   ← AUTO  crosses SREDA at A  (SREDA[4]=AUTO[0]=A) → goes RIGHT
+// 7 . . . . . . .
+//
+// At every row, white cells only exist at SREDA's col (3) + the word's own cells.
+// No two consecutive across words share any column → no false vertical words.
 //
 // Clue numbers (reading order of start cells):
-//   1 = SREDA (2,3)  2 = GRAD (3,2)  3 = HLEB (4,1)
-//   4 = VODA  (5,1)  5 = DAN  (6,2)
+//   1 = SREDA/STAN (2,3)  2 = MIR (3,1)  3 = EVRO (4,3)
+//   4 = GRAD (5,0)        5 = AUTO (6,3)
 
 const GRID_ROWS = 8
-const GRID_COLS = 6
+const GRID_COLS = 7
 
 type Direction = "across" | "down"
 
@@ -37,10 +43,11 @@ interface PuzzleWord {
 
 const PUZZLE_WORDS: PuzzleWord[] = [
   { id: 1, direction: "down",   row: 2, col: 3, answer: "SREDA", clue: "Wednesday" },
-  { id: 2, direction: "across", row: 3, col: 2, answer: "GRAD",  clue: "City" },
-  { id: 3, direction: "across", row: 4, col: 1, answer: "HLEB",  clue: "Bread" },
-  { id: 4, direction: "across", row: 5, col: 1, answer: "VODA",  clue: "Water" },
-  { id: 5, direction: "across", row: 6, col: 2, answer: "DAN",   clue: "Day" },
+  { id: 2, direction: "across", row: 2, col: 3, answer: "STAN",  clue: "Apartment" },
+  { id: 3, direction: "across", row: 3, col: 1, answer: "MIR",   clue: "Peace" },
+  { id: 4, direction: "across", row: 4, col: 3, answer: "EVRO",  clue: "Euro (currency)" },
+  { id: 5, direction: "across", row: 5, col: 0, answer: "GRAD",  clue: "City" },
+  { id: 6, direction: "across", row: 6, col: 3, answer: "AUTO",  clue: "Car" },
 ]
 
 // ── Build cell map ────────────────────────────────────────────────────────────
