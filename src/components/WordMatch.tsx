@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react"
 import Link from "next/link"
+import { saveWordMatchSolvedAction } from "@/app/actions"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -20,6 +21,25 @@ type DragState = {
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
+
+/** Seeded PRNG (mulberry32) — deterministic shuffle per date */
+function seededShuffle<T>(arr: T[], seed: number): T[] {
+  const out = [...arr]
+  let s = seed
+  for (let i = out.length - 1; i > 0; i--) {
+    s = (s ^ (s << 13)) >>> 0
+    s = (s ^ (s >> 17)) >>> 0
+    s = (s ^ (s << 5)) >>> 0
+    const j = s % (i + 1)
+    ;[out[i], out[j]] = [out[j], out[i]]
+  }
+  return out
+}
+
+/** Convert YYYY-MM-DD to a stable integer seed */
+function dateSeed(date: string): number {
+  return date.split("-").reduce((acc, part) => acc * 10000 + parseInt(part), 0)
+}
 
 function rightEdge(el: HTMLElement, container: HTMLElement) {
   const r = el.getBoundingClientRect()
@@ -59,27 +79,27 @@ function Line({ x1, y1, x2, y2, color, opacity = 1, width = 2.5 }: {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-export function WordMatch({ initialWords }: { initialWords: Word[] }) {
-  const [words]   = useState(initialWords)
-  const [shuffled, setShuffled] = useState<Word[]>([])
+export function WordMatch({
+  initialWords,
+  date,
+  initialSolved,
+}: {
+  initialWords: Word[]
+  date: string
+  initialSolved: boolean
+}) {
+  const [words]    = useState(initialWords)
+  const [shuffled] = useState(() => seededShuffle(initialWords, dateSeed(date)))
   const [connections, setConnections] = useState<Connection[]>([])
-  const [drag, setDrag]         = useState<DragState | null>(null)
-  const [solved, setSolved]     = useState(false)
-  const [, setTick]             = useState(0) // triggers re-render for SVG positions
+  const [drag, setDrag]       = useState<DragState | null>(null)
+  const [solved, setSolved]   = useState(false)
+  const [alreadySolved]       = useState(initialSolved)
+  const [, setTick]           = useState(0)
+  const savedRef              = useRef(false)
 
   const containerRef  = useRef<HTMLDivElement>(null)
   const leftRefs      = useRef<(HTMLDivElement | null)[]>([])
   const rightRefs     = useRef<(HTMLDivElement | null)[]>([])
-
-  // Shuffle on mount (and on new game)
-  function newGame() {
-    setShuffled([...words].sort(() => Math.random() - 0.5))
-    setConnections([])
-    setDrag(null)
-    setSolved(false)
-  }
-
-  useEffect(() => { newGame() }, [words]) // eslint-disable-line
 
   // Force re-render on resize so SVG lines reposition
   useEffect(() => {
@@ -90,10 +110,18 @@ export function WordMatch({ initialWords }: { initialWords: Word[] }) {
 
   // Check win condition
   useEffect(() => {
-    if (connections.length === words.length && connections.every(c => c.correct)) {
+    if (
+      connections.length === words.length &&
+      connections.every(c => c.correct) &&
+      !solved
+    ) {
       setSolved(true)
+      if (!savedRef.current) {
+        savedRef.current = true
+        saveWordMatchSolvedAction(date)
+      }
     }
-  }, [connections, words.length])
+  }, [connections, words.length, solved, date])
 
   // ── Drag handlers ──────────────────────────────────────────────────────────
 
@@ -104,7 +132,6 @@ export function WordMatch({ initialWords }: { initialWords: Word[] }) {
 
   function startDrag(e: React.PointerEvent, leftIdx: number) {
     e.preventDefault()
-    // Remove existing connection from this left word
     setConnections(prev => prev.filter(c => c.leftIdx !== leftIdx))
     const pos = pointerPos(e)
     setDrag({ leftIdx, x: pos.x, y: pos.y })
@@ -119,7 +146,6 @@ export function WordMatch({ initialWords }: { initialWords: Word[] }) {
   const handlePointerUp = useCallback((e: React.PointerEvent) => {
     if (!drag) return
 
-    // Find which right word was released on
     let matched = -1
     for (let i = 0; i < rightRefs.current.length; i++) {
       const el = rightRefs.current[i]
@@ -129,7 +155,6 @@ export function WordMatch({ initialWords }: { initialWords: Word[] }) {
     if (matched >= 0) {
       const correct = words[drag.leftIdx].id === shuffled[matched].id
       setConnections(prev => {
-        // Remove any existing connection to this right slot
         const filtered = prev.filter(c => c.rightIdx !== matched)
         return [...filtered, { leftIdx: drag.leftIdx, rightIdx: matched, correct }]
       })
@@ -158,10 +183,40 @@ export function WordMatch({ initialWords }: { initialWords: Word[] }) {
     return { x1: start.x, y1: start.y, x2: drag.x, y2: drag.y }
   })()
 
-  // ── Derived sets for styling ───────────────────────────────────────────────
-
   const connectedLeft  = new Map(connections.map(c => [c.leftIdx,  c.correct]))
   const connectedRight = new Map(connections.map(c => [c.rightIdx, c.correct]))
+
+  // ── Already solved view ────────────────────────────────────────────────────
+
+  if (alreadySolved && !solved) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col">
+        <nav className="bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-10">
+          <div className="max-w-2xl mx-auto px-5 h-16 flex items-center justify-between">
+            <Link href="/dashboard" className="text-sm font-medium text-slate-500 hover:text-slate-900 transition">← Dashboard</Link>
+            <div className="flex items-center gap-2">
+              <span className="text-xl">🔗</span>
+              <span className="font-bold text-slate-900">Word Match</span>
+            </div>
+            <div />
+          </div>
+        </nav>
+        <main className="flex-1 flex items-center justify-center p-8">
+          <div className="bg-white rounded-3xl shadow-xl p-10 text-center max-w-sm w-full">
+            <div className="text-5xl mb-4">✅</div>
+            <h2 className="text-2xl font-extrabold text-slate-900 mb-2">Already solved!</h2>
+            <p className="text-slate-500 mb-6">You've completed today's Word Match. Come back tomorrow for a new puzzle.</p>
+            <Link
+              href="/dashboard"
+              className="block w-full py-3 rounded-2xl bg-violet-600 text-white font-semibold hover:bg-violet-700 transition"
+            >
+              Back to dashboard
+            </Link>
+          </div>
+        </main>
+      </div>
+    )
+  }
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
@@ -175,12 +230,7 @@ export function WordMatch({ initialWords }: { initialWords: Word[] }) {
             <span className="text-xl">🔗</span>
             <span className="font-bold text-slate-900">Word Match</span>
           </div>
-          <button
-            onClick={newGame}
-            className="text-sm font-semibold text-violet-600 hover:text-violet-800 transition"
-          >
-            New game
-          </button>
+          <div className="text-xs text-slate-400 font-medium">{date}</div>
         </div>
       </nav>
 
@@ -293,21 +343,13 @@ export function WordMatch({ initialWords }: { initialWords: Word[] }) {
           <div className="bg-white rounded-3xl shadow-2xl p-8 text-center max-w-sm w-full">
             <div className="text-5xl mb-4">🎉</div>
             <h2 className="text-2xl font-extrabold text-slate-900 mb-2">Perfect match!</h2>
-            <p className="text-slate-500 mb-6">You matched all {words.length} words correctly.</p>
-            <div className="flex flex-col gap-3">
-              <button
-                onClick={newGame}
-                className="w-full py-3 rounded-2xl bg-violet-600 text-white font-semibold hover:bg-violet-700 transition"
-              >
-                Play again
-              </button>
-              <Link
-                href="/dashboard"
-                className="block w-full py-3 rounded-2xl bg-slate-100 text-slate-700 font-semibold hover:bg-slate-200 transition"
-              >
-                Back to dashboard
-              </Link>
-            </div>
+            <p className="text-slate-500 mb-6">You matched all {words.length} words correctly. Come back tomorrow for a new puzzle.</p>
+            <Link
+              href="/dashboard"
+              className="block w-full py-3 rounded-2xl bg-violet-600 text-white font-semibold hover:bg-violet-700 transition"
+            >
+              Back to dashboard
+            </Link>
           </div>
         </div>
       )}

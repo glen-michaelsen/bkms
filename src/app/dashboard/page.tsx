@@ -3,7 +3,7 @@ import { redirect } from "next/navigation"
 import Link from "next/link"
 import { logoutAction } from "@/app/actions"
 import { db } from "@/db"
-import { words, sentences, userItemProgress, userDailyActivity, categories, userCrosswordProgress } from "@/db/schema"
+import { words, sentences, userItemProgress, userDailyActivity, categories, userCrosswordProgress, userWordMatchProgress } from "@/db/schema"
 import { eq, and, gte } from "drizzle-orm"
 import { buildStats, STATUS_META, type ItemStats } from "@/lib/progress"
 import { ActivityGraph } from "@/components/ActivityGraph"
@@ -141,7 +141,7 @@ export default async function DashboardPage() {
   graphStart.setUTCDate(graphStart.getUTCDate() - 12 * 7)
   const graphStartStr = graphStart.toISOString().slice(0, 10)
 
-  const [allWords, allSentences, allProgress, allActivity, allCategories, crosswordProgress] = await Promise.all([
+  const [allWords, allSentences, allProgress, allActivity, allCategories, crosswordProgress, wordMatchProgress] = await Promise.all([
     db.select({ id: words.id }).from(words),
     db.select({ id: sentences.id }).from(sentences),
     db.select().from(userItemProgress).where(eq(userItemProgress.userId, userId)),
@@ -152,6 +152,10 @@ export default async function DashboardPage() {
     db.select({ solvedAt: userCrosswordProgress.solvedAt })
       .from(userCrosswordProgress)
       .where(and(eq(userCrosswordProgress.userId, userId), eq(userCrosswordProgress.date, today)))
+      .get(),
+    db.select({ solvedAt: userWordMatchProgress.solvedAt })
+      .from(userWordMatchProgress)
+      .where(and(eq(userWordMatchProgress.userId, userId), eq(userWordMatchProgress.date, today)))
       .get(),
   ])
 
@@ -270,7 +274,7 @@ export default async function DashboardPage() {
               href="/games/word-match"
               emoji="🔗"
               name="Word Match"
-              solved={false}
+              solved={!!wordMatchProgress?.solvedAt}
             />
           </div>
         </div>

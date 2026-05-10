@@ -127,6 +127,22 @@ export const verbs = sqliteTable("verbs", {
     .$defaultFn(() => new Date()),
 })
 
+export const wordMatchPuzzles = sqliteTable("word_match_puzzles", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  date: text("date").notNull().unique(), // YYYY-MM-DD
+  wordsJson: text("words_json").notNull(), // [{id, serbian, english}]
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+})
+
+export const userWordMatchProgress = sqliteTable("user_word_match_progress", {
+  id: integer("id").primaryKey({ autoIncrement: true }),
+  userId: integer("user_id").notNull().references(() => users.id),
+  date: text("date").notNull(), // YYYY-MM-DD
+  solvedAt: integer("solved_at", { mode: "timestamp" }),
+})
+
 export type User = typeof users.$inferSelect
 export type Verb = typeof verbs.$inferSelect
 export type Category = typeof categories.$inferSelect

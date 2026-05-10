@@ -2,7 +2,7 @@
 
 import { signIn, signOut, auth } from "@/auth"
 import { db } from "@/db"
-import { users, categories, levels, userLevelConfig, words, sentences, userCrosswordProgress, verbs } from "@/db/schema"
+import { users, categories, levels, userLevelConfig, words, sentences, userCrosswordProgress, userWordMatchProgress, verbs } from "@/db/schema"
 import { eq, and, max } from "drizzle-orm"
 import bcrypt from "bcryptjs"
 import { redirect } from "next/navigation"
@@ -294,6 +294,46 @@ export async function saveCrosswordProgressAction(
       date,
       inputJson,
       solvedAt: solved ? new Date() : null,
+    })
+  }
+}
+
+// ─── Word Match progress ──────────────────────────────────────────────────────
+
+export async function saveWordMatchSolvedAction(date: string): Promise<void> {
+  const session = await auth()
+  if (!session) return
+
+  const userId = parseInt(session.user.id)
+
+  const existing = await db
+    .select()
+    .from(userWordMatchProgress)
+    .where(
+      and(
+        eq(userWordMatchProgress.userId, userId),
+        eq(userWordMatchProgress.date, date),
+      ),
+    )
+    .get()
+
+  if (existing) {
+    if (!existing.solvedAt) {
+      await db
+        .update(userWordMatchProgress)
+        .set({ solvedAt: new Date() })
+        .where(
+          and(
+            eq(userWordMatchProgress.userId, userId),
+            eq(userWordMatchProgress.date, date),
+          ),
+        )
+    }
+  } else {
+    await db.insert(userWordMatchProgress).values({
+      userId,
+      date,
+      solvedAt: new Date(),
     })
   }
 }
