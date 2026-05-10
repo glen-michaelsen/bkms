@@ -288,12 +288,28 @@ function CrosswordBoard({ puzzle, date, initialInput, initialSolvedAt }: Require
         <div className="flex flex-col lg:flex-row gap-8 items-start">
           {/* Grid */}
           <div className="flex-shrink-0">
-            {/* Hidden input to capture keyboard on mobile */}
+            {/*
+              Input must be visible to the browser (not sr-only / display:none)
+              for iOS to show the keyboard. We keep it on-screen but invisible.
+              readOnly removed so mobile keyboards activate.
+              onChange handles mobile character input; onKeyDown handles desktop.
+            */}
             <input
               ref={inputRef}
-              className="sr-only"
+              className="fixed opacity-0 top-1/2 left-1/2 w-px h-px pointer-events-none"
+              inputMode="text"
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="characters"
               onKeyDown={handleKey}
-              readOnly
+              onChange={e => {
+                const raw = e.target.value
+                if (!raw) return
+                const letter = raw.slice(-1).toUpperCase()
+                if (/[A-ZČĆĐŠŽ]/.test(letter)) insertLetter(letter)
+                // Reset so next keypress is always a fresh single character
+                if (inputRef.current) inputRef.current.value = ""
+              }}
             />
             <div
               className="inline-grid gap-px bg-slate-200 border border-slate-200 rounded-xl overflow-hidden shadow-sm"
@@ -325,6 +341,7 @@ function CrosswordBoard({ puzzle, date, initialInput, initialSolvedAt }: Require
                       key={key}
                       style={{ width: CELL_SIZE, height: CELL_SIZE }}
                       onClick={() => !solved && handleCellClick(r, c)}
+                      onTouchEnd={e => { if (!solved) { e.preventDefault(); handleCellClick(r, c); inputRef.current?.focus() } }}
                       className={`relative flex items-center justify-center select-none transition-colors
                         ${solved ? "cursor-default" : "cursor-pointer"}
                         ${isSelected ? "bg-violet-400"
