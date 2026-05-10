@@ -56,12 +56,14 @@ export default async function WordMatchPage() {
     .get()
 
   const initialSolved = !!userProgress?.solvedAt
+  const isAdmin = session.user.role === "admin"
 
   return (
     <WordMatch
       initialWords={puzzleWords}
       date={today}
       initialSolved={initialSolved}
+      isAdmin={isAdmin}
     />
   )
 }

@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react"
 import Link from "next/link"
-import { saveWordMatchSolvedAction } from "@/app/actions"
+import { saveWordMatchSolvedAction, clearWordMatchProgressAction } from "@/app/actions"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -91,10 +91,12 @@ export function WordMatch({
   initialWords,
   date,
   initialSolved,
+  isAdmin = false,
 }: {
   initialWords: Word[]
   date: string
   initialSolved: boolean
+  isAdmin?: boolean
 }) {
   const [words]    = useState(initialWords)
   const [shuffled] = useState(() => seededShuffle(initialWords, dateSeed(date)))
@@ -105,9 +107,10 @@ export function WordMatch({
   )
   const [drag, setDrag]             = useState<DragState | null>(null)
   const [solved, setSolved]         = useState(initialSolved)
-  const [justSolved, setJustSolved] = useState(false) // triggers the win modal only on first solve
-  const [, setTick]                 = useState(0)
-  const savedRef                    = useRef(false)
+  const [justSolved, setJustSolved]   = useState(false) // triggers the win modal only on first solve
+  const [resetting, setResetting]     = useState(false)
+  const [, setTick]                   = useState(0)
+  const savedRef                      = useRef(false)
 
   const containerRef = useRef<HTMLDivElement>(null)
   const leftRefs     = useRef<(HTMLDivElement | null)[]>([])
@@ -222,11 +225,24 @@ export function WordMatch({
       {/* Already-solved banner */}
       {initialSolved && (
         <div className="bg-emerald-50 border-b border-emerald-100">
-          <div className="max-w-2xl mx-auto px-5 py-2.5 flex items-center justify-center gap-2">
+          <div className="max-w-2xl mx-auto px-5 py-2.5 flex items-center justify-center gap-3">
             <span className="text-emerald-500 text-sm">✓</span>
             <p className="text-sm font-medium text-emerald-700">
               You solved today's puzzle — come back tomorrow for a new one!
             </p>
+            {isAdmin && (
+              <button
+                disabled={resetting}
+                onClick={async () => {
+                  setResetting(true)
+                  await clearWordMatchProgressAction(date)
+                  window.location.reload()
+                }}
+                className="ml-2 text-xs font-semibold text-violet-600 hover:text-violet-800 underline underline-offset-2 disabled:opacity-50 transition"
+              >
+                {resetting ? "Clearing…" : "Reset (admin)"}
+              </button>
+            )}
           </div>
         </div>
       )}

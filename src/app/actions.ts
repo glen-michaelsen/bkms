@@ -338,6 +338,21 @@ export async function saveWordMatchSolvedAction(date: string): Promise<void> {
   }
 }
 
+export async function clearWordMatchProgressAction(date: string): Promise<void> {
+  const session = await auth()
+  if (!session || session.user.role !== "admin") return
+
+  const userId = parseInt(session.user.id)
+  await db
+    .delete(userWordMatchProgress)
+    .where(
+      and(
+        eq(userWordMatchProgress.userId, userId),
+        eq(userWordMatchProgress.date, date),
+      ),
+    )
+}
+
 // ─── User level config ────────────────────────────────────────────────────────
 
 export async function saveLevelConfigAction(
