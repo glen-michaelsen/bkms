@@ -113,6 +113,9 @@ export function WordMatch({
   const leftRefs     = useRef<(HTMLDivElement | null)[]>([])
   const rightRefs    = useRef<(HTMLDivElement | null)[]>([])
 
+  // Force re-render after mount so refs are populated and SVG lines render
+  useEffect(() => { setTick(t => t + 1) }, [])
+
   // Force re-render on resize so SVG lines reposition
   useEffect(() => {
     const handler = () => setTick(t => t + 1)
