@@ -41,6 +41,14 @@ function dateSeed(date: string): number {
   return date.split("-").reduce((acc, part) => acc * 10000 + parseInt(part), 0)
 }
 
+/** Build the full set of correct connections for a solved puzzle */
+function buildSolvedConnections(words: Word[], shuffled: Word[]): Connection[] {
+  return words.map((word, leftIdx) => {
+    const rightIdx = shuffled.findIndex(s => s.id === word.id)
+    return { leftIdx, rightIdx, correct: true }
+  })
+}
+
 function rightEdge(el: HTMLElement, container: HTMLElement) {
   const r = el.getBoundingClientRect()
   const c = container.getBoundingClientRect()
@@ -90,16 +98,20 @@ export function WordMatch({
 }) {
   const [words]    = useState(initialWords)
   const [shuffled] = useState(() => seededShuffle(initialWords, dateSeed(date)))
-  const [connections, setConnections] = useState<Connection[]>([])
-  const [drag, setDrag]       = useState<DragState | null>(null)
-  const [solved, setSolved]   = useState(false)
-  const [alreadySolved]       = useState(initialSolved)
-  const [, setTick]           = useState(0)
-  const savedRef              = useRef(false)
 
-  const containerRef  = useRef<HTMLDivElement>(null)
-  const leftRefs      = useRef<(HTMLDivElement | null)[]>([])
-  const rightRefs     = useRef<(HTMLDivElement | null)[]>([])
+  // If already solved, pre-fill all correct connections so the solution is visible
+  const [connections, setConnections] = useState<Connection[]>(() =>
+    initialSolved ? buildSolvedConnections(initialWords, seededShuffle(initialWords, dateSeed(date))) : []
+  )
+  const [drag, setDrag]             = useState<DragState | null>(null)
+  const [solved, setSolved]         = useState(initialSolved)
+  const [justSolved, setJustSolved] = useState(false) // triggers the win modal only on first solve
+  const [, setTick]                 = useState(0)
+  const savedRef                    = useRef(false)
+
+  const containerRef = useRef<HTMLDivElement>(null)
+  const leftRefs     = useRef<(HTMLDivElement | null)[]>([])
+  const rightRefs    = useRef<(HTMLDivElement | null)[]>([])
 
   // Force re-render on resize so SVG lines reposition
   useEffect(() => {
@@ -108,20 +120,22 @@ export function WordMatch({
     return () => window.removeEventListener("resize", handler)
   }, [])
 
-  // Check win condition
+  // Check win condition (only for in-session solves, not revisits)
   useEffect(() => {
     if (
+      !initialSolved &&
+      !solved &&
       connections.length === words.length &&
-      connections.every(c => c.correct) &&
-      !solved
+      connections.every(c => c.correct)
     ) {
       setSolved(true)
+      setJustSolved(true)
       if (!savedRef.current) {
         savedRef.current = true
         saveWordMatchSolvedAction(date)
       }
     }
-  }, [connections, words.length, solved, date])
+  }, [connections, words.length, solved, initialSolved, date])
 
   // ── Drag handlers ──────────────────────────────────────────────────────────
 
@@ -186,38 +200,6 @@ export function WordMatch({
   const connectedLeft  = new Map(connections.map(c => [c.leftIdx,  c.correct]))
   const connectedRight = new Map(connections.map(c => [c.rightIdx, c.correct]))
 
-  // ── Already solved view ────────────────────────────────────────────────────
-
-  if (alreadySolved && !solved) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex flex-col">
-        <nav className="bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-10">
-          <div className="max-w-2xl mx-auto px-5 h-16 flex items-center justify-between">
-            <Link href="/dashboard" className="text-sm font-medium text-slate-500 hover:text-slate-900 transition">← Dashboard</Link>
-            <div className="flex items-center gap-2">
-              <span className="text-xl">🔗</span>
-              <span className="font-bold text-slate-900">Word Match</span>
-            </div>
-            <div />
-          </div>
-        </nav>
-        <main className="flex-1 flex items-center justify-center p-8">
-          <div className="bg-white rounded-3xl shadow-xl p-10 text-center max-w-sm w-full">
-            <div className="text-5xl mb-4">✅</div>
-            <h2 className="text-2xl font-extrabold text-slate-900 mb-2">Already solved!</h2>
-            <p className="text-slate-500 mb-6">You've completed today's Word Match. Come back tomorrow for a new puzzle.</p>
-            <Link
-              href="/dashboard"
-              className="block w-full py-3 rounded-2xl bg-violet-600 text-white font-semibold hover:bg-violet-700 transition"
-            >
-              Back to dashboard
-            </Link>
-          </div>
-        </main>
-      </div>
-    )
-  }
-
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
@@ -234,10 +216,24 @@ export function WordMatch({
         </div>
       </nav>
 
+      {/* Already-solved banner */}
+      {initialSolved && (
+        <div className="bg-emerald-50 border-b border-emerald-100">
+          <div className="max-w-2xl mx-auto px-5 py-2.5 flex items-center justify-center gap-2">
+            <span className="text-emerald-500 text-sm">✓</span>
+            <p className="text-sm font-medium text-emerald-700">
+              You solved today's puzzle — come back tomorrow for a new one!
+            </p>
+          </div>
+        </div>
+      )}
+
       <main className="flex-1 max-w-2xl mx-auto w-full px-5 py-10">
-        <p className="text-sm text-slate-500 text-center mb-8">
-          Draw a line from each Serbian word to its English translation
-        </p>
+        {!initialSolved && (
+          <p className="text-sm text-slate-500 text-center mb-8">
+            Draw a line from each Serbian word to its English translation
+          </p>
+        )}
 
         {shuffled.length > 0 && (
           <div
@@ -329,7 +325,7 @@ export function WordMatch({
           </div>
         )}
 
-        {/* Progress */}
+        {/* Progress bar while playing */}
         {!solved && connections.length > 0 && (
           <p className="text-center text-sm text-slate-400 mt-8">
             {connections.filter(c => c.correct).length} / {words.length} correct
@@ -337,19 +333,29 @@ export function WordMatch({
         )}
       </main>
 
-      {/* Solved overlay */}
-      {solved && (
+      {/* Win modal — only shown the moment the puzzle is first solved */}
+      {justSolved && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
           <div className="bg-white rounded-3xl shadow-2xl p-8 text-center max-w-sm w-full">
             <div className="text-5xl mb-4">🎉</div>
             <h2 className="text-2xl font-extrabold text-slate-900 mb-2">Perfect match!</h2>
-            <p className="text-slate-500 mb-6">You matched all {words.length} words correctly. Come back tomorrow for a new puzzle.</p>
-            <Link
-              href="/dashboard"
-              className="block w-full py-3 rounded-2xl bg-violet-600 text-white font-semibold hover:bg-violet-700 transition"
-            >
-              Back to dashboard
-            </Link>
+            <p className="text-slate-500 mb-6">
+              You matched all {words.length} words correctly. Come back tomorrow for a new puzzle.
+            </p>
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => setJustSolved(false)}
+                className="w-full py-3 rounded-2xl bg-slate-100 text-slate-700 font-semibold hover:bg-slate-200 transition"
+              >
+                See solution
+              </button>
+              <Link
+                href="/dashboard"
+                className="block w-full py-3 rounded-2xl bg-violet-600 text-white font-semibold hover:bg-violet-700 transition"
+              >
+                Back to dashboard
+              </Link>
+            </div>
           </div>
         </div>
       )}
