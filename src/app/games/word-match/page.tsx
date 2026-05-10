@@ -30,7 +30,7 @@ export default async function WordMatchPage() {
       .select({ id: words.id, serbian: words.serbian, english: words.english })
       .from(words)
       .orderBy(sql`RANDOM()`)
-      .limit(8)
+      .limit(5)
       .all()
 
     const [created] = await db
