@@ -86,7 +86,8 @@ function NoPuzzle() {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-const CELL_SIZE = 44 // px
+const CELL_MAX = 44  // px — max cell size (desktop)
+const CELL_MIN = 30  // px — minimum usable tap size
 const SAVE_DEBOUNCE_MS = 800
 const SPECIAL_CHARS = ["Č", "Ć", "Š", "Đ", "Ž"]
 
@@ -112,8 +113,22 @@ function CrosswordBoard({ puzzle, date, initialInput, initialSolvedAt }: Require
   const [input, setInput]       = useState<Map<string, string>>(() => new Map(Object.entries(initialInput)))
   const [selected, setSelected] = useState<{ row: number; col: number; dir: Direction } | null>(null)
   const [solved, setSolved]     = useState<boolean>(initialSolvedAt !== null)
+  const [cellSize, setCellSize] = useState(CELL_MAX)
   const inputRef  = useRef<HTMLInputElement>(null)
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  // ── Responsive cell size ───────────────────────────────────────────────────
+  useEffect(() => {
+    function update() {
+      const hPad = 40 // matches px-5 (20px) × 2
+      const available = window.innerWidth - hPad
+      const ideal = Math.floor(available / gridCols)
+      setCellSize(Math.max(CELL_MIN, Math.min(CELL_MAX, ideal)))
+    }
+    update()
+    window.addEventListener("resize", update)
+    return () => window.removeEventListener("resize", update)
+  }, [gridCols])
 
   // ── Auto-save (debounced) ──────────────────────────────────────────────────
   const saveProgress = useCallback((currentInput: Map<string, string>, isSolved: boolean) => {
@@ -313,7 +328,7 @@ function CrosswordBoard({ puzzle, date, initialInput, initialSolvedAt }: Require
             />
             <div
               className="inline-grid gap-px bg-slate-200 border border-slate-200 rounded-xl overflow-hidden shadow-sm"
-              style={{ gridTemplateColumns: `repeat(${gridCols}, ${CELL_SIZE}px)` }}
+              style={{ gridTemplateColumns: `repeat(${gridCols}, ${cellSize}px)` }}
               onClick={() => inputRef.current?.focus()}
             >
               {Array.from({ length: gridRows }, (_, r) =>
@@ -325,12 +340,14 @@ function CrosswordBoard({ puzzle, date, initialInput, initialSolvedAt }: Require
                   const isActive   = activeCells.has(key)
                   const isCorrect  = typed && typed.toUpperCase() === cell?.letter
                   const isWrong    = typed && typed.toUpperCase() !== cell?.letter
+                  const numPx = Math.max(7,  Math.round(cellSize * 9  / CELL_MAX))
+                  const letPx = Math.max(11, Math.round(cellSize * 16 / CELL_MAX))
 
                   if (!cell) {
                     return (
                       <div
                         key={key}
-                        style={{ width: CELL_SIZE, height: CELL_SIZE }}
+                        style={{ width: cellSize, height: cellSize }}
                         className="bg-slate-800"
                       />
                     )
@@ -339,7 +356,7 @@ function CrosswordBoard({ puzzle, date, initialInput, initialSolvedAt }: Require
                   return (
                     <div
                       key={key}
-                      style={{ width: CELL_SIZE, height: CELL_SIZE }}
+                      style={{ width: cellSize, height: cellSize }}
                       onClick={() => !solved && handleCellClick(r, c)}
                       onTouchEnd={e => { if (!solved) { e.preventDefault(); handleCellClick(r, c); inputRef.current?.focus() } }}
                       className={`relative flex items-center justify-center select-none transition-colors
@@ -350,11 +367,11 @@ function CrosswordBoard({ puzzle, date, initialInput, initialSolvedAt }: Require
                           : "bg-white hover:bg-slate-50"}`}
                     >
                       {cell.number && (
-                        <span className="absolute top-0.5 left-1 text-[9px] font-bold text-slate-500 leading-none">
+                        <span style={{ fontSize: numPx }} className="absolute top-0.5 left-0.5 font-bold text-slate-500 leading-none">
                           {cell.number}
                         </span>
                       )}
-                      <span className={`text-base font-bold leading-none
+                      <span style={{ fontSize: letPx }} className={`font-bold leading-none
                         ${isSelected ? "text-white"
                           : solved    ? "text-emerald-700"
                           : isCorrect ? "text-emerald-600"
