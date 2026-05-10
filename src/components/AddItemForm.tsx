@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { BookOpen, MessageSquare, Check } from "lucide-react"
 
 type Option = { id: number; name: string }
 
@@ -67,7 +68,7 @@ export function AddItemForm({
   return (
     <div className="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm">
       <div className="flex items-center gap-2.5 mb-5">
-        <span className="text-xl">{type === "words" ? "📖" : "💬"}</span>
+        {type === "words" ? <BookOpen className="w-5 h-5 text-slate-500" /> : <MessageSquare className="w-5 h-5 text-slate-500" />}
         <h3 className="font-bold text-slate-900">Add {label}</h3>
       </div>
       <form onSubmit={handleSubmit} className="space-y-3">
@@ -117,7 +118,7 @@ export function AddItemForm({
         </div>
 
         {status === "error" && <p className="text-xs text-rose-600 font-medium">{errorMsg}</p>}
-        {status === "success" && <p className="text-xs text-emerald-600 font-semibold">{label} added ✓</p>}
+        {status === "success" && <p className="text-xs text-emerald-600 font-semibold flex items-center gap-1"><Check className="w-3.5 h-3.5" />{label} added</p>}
 
         <button
           type="submit"

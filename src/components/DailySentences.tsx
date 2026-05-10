@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { Calendar } from "lucide-react"
 import { CurrentTime } from "./CurrentTime"
 
 const DAYS_SR = ["nedelja", "ponedeljak", "utorak", "sreda", "četvrtak", "petak", "subota"]
@@ -59,7 +60,7 @@ export function DailySentences() {
   if (!now) {
     return (
       <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 flex flex-col">
-        <div className="w-12 h-12 bg-violet-100 rounded-2xl flex items-center justify-center text-2xl mb-4">📅</div>
+        <div className="w-12 h-12 bg-violet-100 rounded-2xl flex items-center justify-center mb-4 text-violet-600"><Calendar className="w-6 h-6" /></div>
         <Skeleton />
       </div>
     )
@@ -78,8 +79,8 @@ export function DailySentences() {
 
   return (
     <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 flex flex-col">
-      <div className="w-12 h-12 bg-violet-100 rounded-2xl flex items-center justify-center text-2xl mb-4">
-        📅
+      <div className="w-12 h-12 bg-violet-100 rounded-2xl flex items-center justify-center mb-4 text-violet-600">
+        <Calendar className="w-6 h-6" />
       </div>
 
       <div className="space-y-4 flex-1">

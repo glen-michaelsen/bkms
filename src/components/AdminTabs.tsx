@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useActionState } from "react"
+import { Users, Activity, CheckCircle2, Flame, Tag, BarChart2, Search } from "lucide-react"
 import { AddItemForm } from "./AddItemForm"
 import { AddNamedItem } from "./AddNamedItem"
 import { CsvUpload } from "./CsvUpload"
@@ -67,13 +68,13 @@ function StatsPanel({ stats, userRows }: { stats: Stats; userRows: UserRow[] }) 
     <div className="space-y-6">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         {[
-          { icon: "👥", label: "Total users",   value: stats.totalUsers,                sub: `${stats.srCount} SR · ${stats.hrCount} HR` },
-          { icon: "🟢", label: "Active today",  value: stats.activeTodayCount,          sub: `${stats.activeWeekCount} this week` },
-          { icon: "✅", label: "Answers today", value: stats.answersToday.toLocaleString(), sub: `${stats.answersWeek.toLocaleString()} this week` },
-          { icon: "🔥", label: "Best streak",   value: `${stats.bestStreak}d`,          sub: `${stats.answersTotal.toLocaleString()} answers total` },
-        ].map(({ icon, label, value, sub }) => (
+          { icon: Users,        color: "text-violet-500 bg-violet-50", label: "Total users",   value: stats.totalUsers,                sub: `${stats.srCount} SR · ${stats.hrCount} HR` },
+          { icon: Activity,     color: "text-emerald-500 bg-emerald-50", label: "Active today",  value: stats.activeTodayCount,          sub: `${stats.activeWeekCount} this week` },
+          { icon: CheckCircle2, color: "text-sky-500 bg-sky-50",    label: "Answers today", value: stats.answersToday.toLocaleString(), sub: `${stats.answersWeek.toLocaleString()} this week` },
+          { icon: Flame,        color: "text-amber-500 bg-amber-50", label: "Best streak",   value: `${stats.bestStreak}d`,          sub: `${stats.answersTotal.toLocaleString()} answers total` },
+        ].map(({ icon: Icon, color, label, value, sub }) => (
           <div key={label} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex flex-col gap-1">
-            <span className="text-2xl">{icon}</span>
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${color}`}><Icon className="w-4.5 h-4.5" /></div>
             <p className="text-2xl font-extrabold text-slate-900 leading-none mt-2">{value}</p>
             <p className="text-xs font-semibold text-slate-500">{label}</p>
             <p className="text-xs text-slate-400">{sub}</p>
@@ -115,7 +116,7 @@ function StatsPanel({ stats, userRows }: { stats: Stats; userRows: UserRow[] }) 
                 </td>
                 <td className="px-5 py-3.5 text-right">
                   {u.streak > 0
-                    ? <span className="font-semibold text-amber-600">{u.streak}d 🔥</span>
+                    ? <span className="font-semibold text-amber-600 inline-flex items-center gap-0.5">{u.streak}d<Flame className="w-3.5 h-3.5" /></span>
                     : <span className="text-slate-300">—</span>}
                 </td>
                 <td className="px-5 py-3.5 text-right font-medium text-slate-700 tabular-nums">
@@ -135,7 +136,7 @@ function TaxonomiesPanel({ categories, levels, actions }: { categories: Category
     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
       <section className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
         <div className="flex items-center gap-2 mb-4">
-          <span className="text-xl">🏷️</span>
+          <Tag className="w-4.5 h-4.5 text-slate-500" />
           <h2 className="font-bold text-slate-900">Categories</h2>
           <span className="ml-auto text-sm text-slate-400">{categories.length}</span>
         </div>
@@ -161,7 +162,7 @@ function TaxonomiesPanel({ categories, levels, actions }: { categories: Category
 
       <section className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
         <div className="flex items-center gap-2 mb-4">
-          <span className="text-xl">📊</span>
+          <BarChart2 className="w-4.5 h-4.5 text-slate-500" />
           <h2 className="font-bold text-slate-900">Levels</h2>
           <span className="ml-auto text-sm text-slate-400">{levels.length}</span>
         </div>
@@ -204,7 +205,7 @@ function AddContentPanel({ categories, levels }: { categories: Category[]; level
 function SearchInput({ value, onChange, placeholder }: { value: string; onChange: (v: string) => void; placeholder: string }) {
   return (
     <div className="relative">
-      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 text-base pointer-events-none">🔍</span>
+      <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4 pointer-events-none" />
       <input
         type="search"
         value={value}

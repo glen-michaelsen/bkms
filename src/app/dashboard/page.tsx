@@ -1,3 +1,4 @@
+import React from "react"
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import Link from "next/link"
@@ -10,6 +11,7 @@ import { ActivityGraph } from "@/components/ActivityGraph"
 import { CategoryTags } from "@/components/CategoryTags"
 import { DailySentences } from "@/components/DailySentences"
 import { Greeting } from "@/components/Greeting"
+import { BookOpen, MessageSquare, Grid3x3, Shuffle, ArrowRight, Check } from "lucide-react"
 
 const languageInfo = {
   sr: { label: "Serbian", flag: "🇷🇸", native: "Srpski" },
@@ -103,17 +105,19 @@ function StatsBar({ stats }: { stats: ItemStats }) {
 
 // ── GameCard ──────────────────────────────────────────────────────────────────
 
-function GameCard({ href, emoji, name, solved }: { href: string; emoji: string; name: string; solved: boolean }) {
+function GameCard({ href, icon: Icon, name, solved }: { href: string; icon: React.ComponentType<{ className?: string }>; name: string; solved: boolean }) {
   return (
     <Link
       href={href}
       className="group flex items-center gap-3 bg-white border border-slate-100 rounded-2xl px-4 py-3 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 min-w-[160px]"
     >
-      <span className="text-2xl">{emoji}</span>
+      <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${solved ? "bg-emerald-100 text-emerald-600" : "bg-slate-100 text-slate-500 group-hover:bg-violet-100 group-hover:text-violet-600"} transition-colors`}>
+        <Icon className="w-4.5 h-4.5" />
+      </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-slate-800 leading-tight">{name}</p>
         {solved ? (
-          <p className="text-xs font-medium text-emerald-600 mt-0.5">Solved today ✓</p>
+          <p className="text-xs font-medium text-emerald-600 mt-0.5 flex items-center gap-1"><Check className="w-3 h-3" />Solved today</p>
         ) : (
           <p className="text-xs text-slate-400 mt-0.5">Play today's puzzle</p>
         )}
@@ -223,8 +227,8 @@ export default async function DashboardPage() {
           >
             <div className="absolute inset-0 bg-gradient-to-br from-violet-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="relative z-10">
-              <div className="w-12 h-12 bg-violet-100 rounded-2xl flex items-center justify-center text-2xl mb-5 group-hover:bg-violet-200 transition-colors">
-                📖
+              <div className="w-12 h-12 bg-violet-100 rounded-2xl flex items-center justify-center mb-5 group-hover:bg-violet-200 transition-colors text-violet-600">
+                <BookOpen className="w-6 h-6" />
               </div>
               <h2 className="text-xl font-bold text-slate-900 mb-1.5">Train Words</h2>
               <p className="text-sm text-slate-500 leading-relaxed">
@@ -233,7 +237,7 @@ export default async function DashboardPage() {
               <StatsBar stats={wordStats} />
               <div className="mt-4 flex items-center text-violet-600 text-sm font-semibold">
                 Start session
-                <span className="ml-1.5 group-hover:translate-x-1 transition-transform">→</span>
+                <ArrowRight className="ml-1.5 w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </div>
             </div>
           </Link>
@@ -244,8 +248,8 @@ export default async function DashboardPage() {
           >
             <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
             <div className="relative z-10">
-              <div className="w-12 h-12 bg-fuchsia-100 rounded-2xl flex items-center justify-center text-2xl mb-5 group-hover:bg-fuchsia-200 transition-colors">
-                💬
+              <div className="w-12 h-12 bg-fuchsia-100 rounded-2xl flex items-center justify-center mb-5 group-hover:bg-fuchsia-200 transition-colors text-fuchsia-600">
+                <MessageSquare className="w-6 h-6" />
               </div>
               <h2 className="text-xl font-bold text-slate-900 mb-1.5">Train Sentences</h2>
               <p className="text-sm text-slate-500 leading-relaxed">
@@ -254,7 +258,7 @@ export default async function DashboardPage() {
               <StatsBar stats={sentenceStats} />
               <div className="mt-4 flex items-center text-fuchsia-600 text-sm font-semibold">
                 Start session
-                <span className="ml-1.5 group-hover:translate-x-1 transition-transform">→</span>
+                <ArrowRight className="ml-1.5 w-4 h-4 group-hover:translate-x-1 transition-transform" />
               </div>
             </div>
           </Link>
@@ -266,13 +270,13 @@ export default async function DashboardPage() {
           <div className="flex flex-wrap gap-3">
             <GameCard
               href="/games/crossword"
-              emoji="🔤"
+              icon={Grid3x3}
               name="Crossword"
               solved={!!crosswordProgress?.solvedAt}
             />
             <GameCard
               href="/games/word-match"
-              emoji="🔗"
+              icon={Shuffle}
               name="Word Match"
               solved={!!wordMatchProgress?.solvedAt}
             />

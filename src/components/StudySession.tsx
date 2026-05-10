@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react"
 import type { Exercise } from "@/app/api/study/route"
 import { getItemStatus, STATUS_META } from "@/lib/progress"
 import { setHintEnabledAction } from "@/app/actions"
+import { AlertCircle, Sparkles, ThumbsUp, Zap, Lightbulb, Check, Star, Flame } from "lucide-react"
 
 type Phase = "loading" | "exercise" | "feedback" | "results"
 type Closeness = "very_close" | "close" | "wrong"
@@ -55,10 +56,10 @@ function getCloseness(given: string, correct: string): Closeness {
   return "wrong"
 }
 
-const CLOSENESS_META: Record<Closeness, { banner: string; title: string; emoji: string }> = {
-  very_close: { banner: "bg-amber-50 border border-amber-200",  title: "text-amber-700",  emoji: "😅", },
-  close:      { banner: "bg-orange-50 border border-orange-200", title: "text-orange-700", emoji: "💪", },
-  wrong:      { banner: "bg-rose-50 border border-rose-200",     title: "text-rose-700",   emoji: "😅", },
+const CLOSENESS_META: Record<Closeness, { banner: string; title: string }> = {
+  very_close: { banner: "bg-amber-50 border border-amber-200",  title: "text-amber-700" },
+  close:      { banner: "bg-orange-50 border border-orange-200", title: "text-orange-700" },
+  wrong:      { banner: "bg-rose-50 border border-rose-200",     title: "text-rose-700" },
 }
 
 function closenessLabel(c: Closeness): string {
@@ -209,7 +210,7 @@ export function StudySession({ type, hintEnabled: initialHint, categoryId }: { t
   if (error) {
     return (
       <div className="text-center py-20">
-        <div className="text-5xl mb-4">😕</div>
+        <div className="w-14 h-14 bg-slate-100 rounded-2xl flex items-center justify-center text-slate-400 mx-auto mb-4"><AlertCircle className="w-7 h-7" /></div>
         <p className="text-slate-600 mb-6">{error}</p>
         <Link
           href="/dashboard"
@@ -242,7 +243,8 @@ export function StudySession({ type, hintEnabled: initialHint, categoryId }: { t
     const score = results.filter(Boolean).length
     const total = results.length
     const pct = Math.round((score / total) * 100)
-    const emoji = pct >= 80 ? "🎉" : pct >= 50 ? "👍" : "💪"
+    const ResultIcon = pct >= 80 ? Sparkles : pct >= 50 ? ThumbsUp : Zap
+    const resultColor = pct >= 80 ? "text-violet-500 bg-violet-100" : pct >= 50 ? "text-emerald-500 bg-emerald-100" : "text-amber-500 bg-amber-100"
     const msg =
       pct >= 80
         ? "Excellent work!"
@@ -252,7 +254,7 @@ export function StudySession({ type, hintEnabled: initialHint, categoryId }: { t
 
     return (
       <div className="text-center py-12 px-4">
-        <div className="text-7xl mb-5">{emoji}</div>
+        <div className={`w-20 h-20 rounded-3xl flex items-center justify-center mx-auto mb-5 ${resultColor}`}><ResultIcon className="w-9 h-9" /></div>
         <div className="inline-flex items-baseline gap-2 mb-3">
           <span className="text-5xl font-extrabold text-slate-900">{score}</span>
           <span className="text-2xl text-slate-400 font-medium">/ {total}</span>
@@ -317,7 +319,7 @@ export function StudySession({ type, hintEnabled: initialHint, categoryId }: { t
                     : "bg-slate-100 text-slate-500 hover:bg-slate-200"
                 }`}
               >
-                💡 Hint
+                <Lightbulb className="w-3.5 h-3.5" /> Hint
               </button>
             )}
             <span
@@ -417,8 +419,8 @@ export function StudySession({ type, hintEnabled: initialHint, categoryId }: { t
           : cm?.banner ?? CLOSENESS_META.wrong.banner
         const titleCls = isCorrect ? "text-emerald-700" : cm?.title ?? CLOSENESS_META.wrong.title
         const headline = isCorrect
-          ? "Correct! 🎯"
-          : `${closenessLabel(closeness ?? "wrong")} ${cm?.emoji ?? "😅"}`
+          ? "Correct!"
+          : closenessLabel(closeness ?? "wrong")
 
         return (
           <div className={`rounded-2xl p-5 ${bannerCls}`}>
@@ -437,8 +439,8 @@ export function StudySession({ type, hintEnabled: initialHint, categoryId }: { t
                 const meta = STATUS_META[status]
                 return (
                   <span className={`shrink-0 text-xs font-semibold px-2.5 py-1 rounded-full ${meta.bg} ${meta.color}`}>
-                    {status === "known" ? "⭐ " : ""}{meta.label}
-                    {status !== "new" && progressUpdate.streak > 0 && ` · ${progressUpdate.streak}🔥`}
+                    {status === "known" && <Star className="w-3 h-3 inline mr-0.5" />}{meta.label}
+                    {status !== "new" && progressUpdate.streak > 0 && <>{` · ${progressUpdate.streak}`}<Flame className="w-3 h-3 inline ml-0.5" /></>}
                   </span>
                 )
               })()}

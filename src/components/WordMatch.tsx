@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useCallback } from "react"
 import Link from "next/link"
 import { saveWordMatchSolvedAction, clearWordMatchProgressAction } from "@/app/actions"
+import { Shuffle, Check, Sparkles } from "lucide-react"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -215,7 +216,7 @@ export function WordMatch({
         <div className="max-w-2xl mx-auto px-5 h-16 flex items-center justify-between">
           <Link href="/dashboard" className="text-sm font-medium text-slate-500 hover:text-slate-900 transition">← Dashboard</Link>
           <div className="flex items-center gap-2">
-            <span className="text-xl">🔗</span>
+            <Shuffle className="w-5 h-5 text-slate-600" />
             <span className="font-bold text-slate-900">Word Match</span>
           </div>
           <div className="text-xs text-slate-400 font-medium">{date}</div>
@@ -226,7 +227,7 @@ export function WordMatch({
       {initialSolved && (
         <div className="bg-emerald-50 border-b border-emerald-100">
           <div className="max-w-2xl mx-auto px-5 py-2.5 flex items-center justify-center gap-3">
-            <span className="text-emerald-500 text-sm">✓</span>
+            <Check className="w-4 h-4 text-emerald-500" />
             <p className="text-sm font-medium text-emerald-700">
               You solved today's puzzle — come back tomorrow for a new one!
             </p>
@@ -356,7 +357,7 @@ export function WordMatch({
       {justSolved && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
           <div className="bg-white rounded-3xl shadow-2xl p-8 text-center max-w-sm w-full">
-            <div className="text-5xl mb-4">🎉</div>
+            <div className="w-16 h-16 bg-violet-100 rounded-3xl flex items-center justify-center text-violet-500 mx-auto mb-4"><Sparkles className="w-8 h-8" /></div>
             <h2 className="text-2xl font-extrabold text-slate-900 mb-2">Perfect match!</h2>
             <p className="text-slate-500 mb-6">
               You matched all {words.length} words correctly. Come back tomorrow for a new puzzle.

@@ -1,6 +1,7 @@
 "use client"
 
 import { useActionState, useEffect, useState, useTransition } from "react"
+import { Check } from "lucide-react"
 import { useSession } from "next-auth/react"
 import {
   updateProfileAction,
@@ -46,7 +47,7 @@ function SaveButton({ pending, label = "Save changes" }: { pending: boolean; lab
 function StatusMessage({ state }: { state: { error?: string; success?: boolean } | undefined }) {
   if (!state) return null
   if (state.error) return <p className="text-sm text-rose-600 font-medium">{state.error}</p>
-  if (state.success) return <p className="text-sm text-emerald-600 font-semibold">Saved ✓</p>
+  if (state.success) return <p className="text-sm text-emerald-600 font-semibold flex items-center gap-1"><Check className="w-4 h-4" />Saved</p>
   return null
 }
 

@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
+import { BookOpen, MessageSquare } from "lucide-react"
 
 type Category = { id: number; name: string }
 
@@ -62,14 +63,14 @@ export function CategoryTags({ categories }: { categories: Category[] }) {
                 onClick={() => go("words")}
                 className="flex flex-col items-center gap-2 p-5 rounded-2xl border-2 border-violet-100 bg-violet-50 hover:border-violet-400 hover:bg-violet-100 transition-all active:scale-[0.97]"
               >
-                <span className="text-3xl">📖</span>
+                <BookOpen className="w-7 h-7 text-violet-500" />
                 <span className="font-bold text-violet-700 text-sm">Words</span>
               </button>
               <button
                 onClick={() => go("sentences")}
                 className="flex flex-col items-center gap-2 p-5 rounded-2xl border-2 border-fuchsia-100 bg-fuchsia-50 hover:border-fuchsia-400 hover:bg-fuchsia-100 transition-all active:scale-[0.97]"
               >
-                <span className="text-3xl">💬</span>
+                <MessageSquare className="w-7 h-7 text-fuchsia-500" />
                 <span className="font-bold text-fuchsia-700 text-sm">Sentences</span>
               </button>
             </div>

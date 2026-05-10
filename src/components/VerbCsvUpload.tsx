@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react"
 import { useRouter } from "next/navigation"
+import { ClipboardList, Check } from "lucide-react"
 
 type VerbRow = {
   infinitive: string
@@ -136,7 +137,7 @@ export function VerbCsvUpload() {
     <div className="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm space-y-4">
       {/* Header */}
       <div className="flex items-center gap-2.5">
-        <span className="text-xl">📋</span>
+        <ClipboardList className="w-5 h-5 text-slate-500" />
         <h3 className="font-bold text-slate-900">Import Verbs CSV</h3>
         <button type="button" onClick={downloadTemplate}
           className="ml-auto text-xs font-semibold text-violet-600 hover:underline">
@@ -226,7 +227,7 @@ export function VerbCsvUpload() {
       {/* Result */}
       {result && (
         <div className={`p-4 rounded-2xl ${result.errors.length === 0 ? "bg-emerald-50 border border-emerald-100" : "bg-amber-50 border border-amber-100"}`}>
-          {result.imported > 0 && <p className="text-sm font-semibold text-emerald-700">✓ {result.imported} verb{result.imported > 1 ? "s" : ""} imported</p>}
+          {result.imported > 0 && <p className="text-sm font-semibold text-emerald-700 flex items-center gap-1"><Check className="w-4 h-4" />{result.imported} verb{result.imported > 1 ? "s" : ""} imported</p>}
           {result.errors.slice(0, 4).map((e, i) => <p key={i} className="text-xs text-amber-600 mt-0.5">{e}</p>)}
           {result.errors.length > 4 && <p className="text-xs text-amber-500">…and {result.errors.length - 4} more errors</p>}
         </div>

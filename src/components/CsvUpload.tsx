@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react"
 import { useRouter } from "next/navigation"
+import { ClipboardList, FileText, Check } from "lucide-react"
 
 type Row = {
   english: string
@@ -139,7 +140,7 @@ export function CsvUpload({ type }: { type: "words" | "sentences" }) {
     <div className="bg-white rounded-3xl border border-slate-100 p-6 shadow-sm space-y-4">
       {/* Header */}
       <div className="flex items-center gap-2.5">
-        <span className="text-xl">{type === "words" ? "📋" : "📄"}</span>
+        {type === "words" ? <ClipboardList className="w-5 h-5 text-slate-500" /> : <FileText className="w-5 h-5 text-slate-500" />}
         <h3 className="font-bold text-slate-900">Import {label} CSV</h3>
         <button
           type="button"
@@ -274,7 +275,7 @@ export function CsvUpload({ type }: { type: "words" | "sentences" }) {
           }`}
         >
           {result.imported > 0 && (
-            <p className="text-sm font-semibold text-emerald-700">✓ {result.imported} rows imported</p>
+            <p className="text-sm font-semibold text-emerald-700 flex items-center gap-1"><Check className="w-4 h-4" />{result.imported} rows imported</p>
           )}
           {result.errors.slice(0, 4).map((e, i) => (
             <p key={i} className="text-xs text-amber-600 mt-0.5">{e}</p>

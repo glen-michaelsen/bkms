@@ -2,6 +2,7 @@
 
 import { useActionState, useState } from "react"
 import { saveLevelConfigAction } from "@/app/actions"
+import { Check } from "lucide-react"
 
 type Level = { id: number; name: string }
 type Config = { levelId: number; percentage: number }
@@ -81,12 +82,12 @@ export function LevelConfig({
             {total}%
           </span>
           <span className="text-sm text-slate-400">
-            {isValid ? "✓ Ready to save" : total < 100 ? `— ${100 - total}% remaining` : `— ${total - 100}% over`}
+            {isValid ? <><Check className="w-3.5 h-3.5 text-emerald-500 inline mr-0.5" />Ready to save</> : total < 100 ? `— ${100 - total}% remaining` : `— ${total - 100}% over`}
           </span>
         </div>
         <div className="flex items-center gap-3">
           {state?.error && <p className="text-sm text-rose-600 font-medium">{state.error}</p>}
-          {state?.success && <p className="text-sm text-emerald-600 font-semibold">Saved ✓</p>}
+          {state?.success && <p className="text-sm text-emerald-600 font-semibold flex items-center gap-1"><Check className="w-4 h-4" />Saved</p>}
           <button
             type="submit"
             disabled={pending || !isValid}

@@ -1,3 +1,5 @@
+import { Flame } from "lucide-react"
+
 type DayData = { date: string; count: number; isFuture: boolean }
 
 const DAY_LABELS = ["Mon", "", "Wed", "", "Fri", "", "Sun"]
@@ -34,8 +36,8 @@ export function ActivityGraph({
     <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
       {/* Header row */}
       <div className="flex items-start justify-between mb-4">
-        <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center text-2xl">
-          🔥
+        <div className="w-12 h-12 bg-amber-100 rounded-2xl flex items-center justify-center text-amber-500">
+          <Flame className="w-6 h-6" />
         </div>
         <div className="flex items-center gap-1.5 bg-amber-50 border border-amber-100 px-3 py-2 rounded-2xl">
           <span className="text-base font-extrabold text-amber-700 leading-none">{streak}</span>
