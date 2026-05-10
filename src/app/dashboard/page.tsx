@@ -266,7 +266,12 @@ export default async function DashboardPage() {
               name="Crossword"
               solved={!!crosswordProgress?.solvedAt}
             />
-            {/* Add more <GameCard /> here as new games are built */}
+            <GameCard
+              href="/games/word-match"
+              emoji="🔗"
+              name="Word Match"
+              solved={false}
+            />
           </div>
         </div>
 
