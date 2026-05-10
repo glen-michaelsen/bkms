@@ -40,6 +40,7 @@ export async function GET(req: Request) {
       id: users.id,
       email: users.email,
       firstName: users.firstName,
+      language: users.language,
       timezone: users.timezone,
       verbOfDayEnabledAt: users.verbOfDayEnabledAt,
       verbMailLastSentDate: users.verbMailLastSentDate,
@@ -69,7 +70,7 @@ export async function GET(req: Request) {
       const verb = allVerbs[verbIndex]
       const verbNumber = verbIndex + 1
 
-      await sendVerbOfDay({ to: user.email, firstName: user.firstName, verb, verbNumber })
+      await sendVerbOfDay({ to: user.email, firstName: user.firstName, verb, verbNumber, language: user.language })
       await db
         .update(users)
         .set({ verbMailLastSentDate: userLocalDate })

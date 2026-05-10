@@ -23,6 +23,7 @@ export async function GET(req: Request) {
       id: users.id,
       email: users.email,
       firstName: users.firstName,
+      language: users.language,
       timezone: users.timezone,
       streakMailHour: users.streakMailHour,
       streakMailLastSentDate: users.streakMailLastSentDate,
@@ -55,7 +56,7 @@ export async function GET(req: Request) {
 
       if (activity) { skipped++; continue } // Already trained — no nudge needed
 
-      await sendStreakReminder({ to: user.email, firstName: user.firstName })
+      await sendStreakReminder({ to: user.email, firstName: user.firstName, language: user.language })
       await db
         .update(users)
         .set({ streakMailLastSentDate: userLocalDate })

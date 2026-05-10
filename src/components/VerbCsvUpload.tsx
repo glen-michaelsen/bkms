@@ -13,7 +13,14 @@ type VerbRow = {
   mi: string
   vi: string
   oni: string
-  examples: { serbian: string; english: string }[]
+  infinitive_hr?: string
+  ja_hr?: string
+  ti_hr?: string
+  on_ona_hr?: string
+  mi_hr?: string
+  vi_hr?: string
+  oni_hr?: string
+  examples: { serbian: string; croatian?: string; english: string }[]
 }
 
 // RFC 4180-compliant CSV parser
@@ -62,23 +69,32 @@ function parseVerbCSV(text: string): { rows: VerbRow[]; errors: string[] } {
       return
     }
 
-    // Collect up to 3 example pairs
-    const examples: { serbian: string; english: string }[] = []
+    // Collect up to 3 example pairs (with optional Croatian sentence)
+    const nullIfEmpty = (v: string) => v || undefined
+    const examples: { serbian: string; croatian?: string; english: string }[] = []
     for (let i = 1; i <= 3; i++) {
       const sr = get(`example${i}_serbian`)
+      const hr = get(`example${i}_croatian`)
       const en = get(`example${i}_english`)
-      if (sr && en) examples.push({ serbian: sr, english: en })
+      if (sr && en) examples.push({ serbian: sr, ...(hr ? { croatian: hr } : {}), english: en })
     }
 
     rows.push({
-      infinitive:  get("infinitive"),
-      translation: get("translation"),
-      ja:          get("ja"),
-      ti:          get("ti"),
-      on_ona:      get("on_ona"),
-      mi:          get("mi"),
-      vi:          get("vi"),
-      oni:         get("oni"),
+      infinitive:    get("infinitive"),
+      translation:   get("translation"),
+      ja:            get("ja"),
+      ti:            get("ti"),
+      on_ona:        get("on_ona"),
+      mi:            get("mi"),
+      vi:            get("vi"),
+      oni:           get("oni"),
+      infinitive_hr: nullIfEmpty(get("infinitive_hr")),
+      ja_hr:         nullIfEmpty(get("ja_hr")),
+      ti_hr:         nullIfEmpty(get("ti_hr")),
+      on_ona_hr:     nullIfEmpty(get("on_ona_hr")),
+      mi_hr:         nullIfEmpty(get("mi_hr")),
+      vi_hr:         nullIfEmpty(get("vi_hr")),
+      oni_hr:        nullIfEmpty(get("oni_hr")),
       examples,
     })
   })
@@ -87,8 +103,8 @@ function parseVerbCSV(text: string): { rows: VerbRow[]; errors: string[] } {
 }
 
 function downloadTemplate() {
-  const headers = "infinitive,translation,ja,ti,on_ona,mi,vi,oni,example1_serbian,example1_english,example2_serbian,example2_english"
-  const sample  = "piti,to drink,pijem,piješ,pije,pijemo,pijete,piju,Volim da pijem kafu,I love to drink coffee,Hoćeš li da piješ vodu?,Do you want to drink water?"
+  const headers = "infinitive,translation,ja,ti,on_ona,mi,vi,oni,infinitive_hr,ja_hr,ti_hr,on_ona_hr,mi_hr,vi_hr,oni_hr,example1_serbian,example1_croatian,example1_english,example2_serbian,example2_croatian,example2_english"
+  const sample  = "piti,to drink,pijem,piješ,pije,pijemo,pijete,piju,,,,,,,,Volim da pijem kafu,,I love to drink coffee,Hoćeš li da piješ vodu?,,Do you want to drink water?"
   const blob = new Blob([`${headers}\n${sample}\n`], { type: "text/csv" })
   const url = URL.createObjectURL(blob)
   const a = document.createElement("a")
@@ -151,10 +167,13 @@ export function VerbCsvUpload() {
         {["infinitive","translation","ja","ti","on_ona","mi","vi","oni"].map(c => (
           <><code key={c} className="bg-slate-100 px-1 py-0.5 rounded text-slate-600">{c}</code>{" "}</>
         ))}
-        — optional:{" "}
-        <code className="bg-slate-100 px-1 py-0.5 rounded text-slate-600">example1_serbian</code>{" "}
-        <code className="bg-slate-100 px-1 py-0.5 rounded text-slate-600">example1_english</code>{" "}
-        (up to 3 pairs)
+        — Croatian overrides (optional):{" "}
+        {["infinitive_hr","ja_hr","ti_hr","on_ona_hr","mi_hr","vi_hr","oni_hr"].map(c => (
+          <><code key={c} className="bg-sky-50 px-1 py-0.5 rounded text-sky-600">{c}</code>{" "}</>
+        ))}
+        — examples (optional): <code className="bg-slate-100 px-1 py-0.5 rounded text-slate-600">example1_serbian</code>{" "}
+        <code className="bg-sky-50 px-1 py-0.5 rounded text-sky-600">example1_croatian</code>{" "}
+        <code className="bg-slate-100 px-1 py-0.5 rounded text-slate-600">example1_english</code>{" "}(up to 3)
       </p>
 
       {/* Drop zone */}

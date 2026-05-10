@@ -18,8 +18,8 @@ type Category  = { id: number; name: string }
 type Level     = { id: number; name: string }
 type Word      = { id: number; english: string; serbian: string; croatian: string; categoryId: number | null }
 type Sentence  = { id: number; english: string; serbian: string; croatian: string; categoryId: number | null; levelId: number | null }
-type VerbExample = { serbian: string; english: string }
-type Verb      = { id: number; infinitive: string; translation: string; ja: string; ti: string; onOna: string; mi: string; vi: string; oni: string; examplesJson: string; sortOrder: number }
+type VerbExample = { serbian: string; croatian?: string; english: string }
+type Verb      = { id: number; infinitive: string; translation: string; ja: string; ti: string; onOna: string; mi: string; vi: string; oni: string; infinitiveHr: string | null; jaHr: string | null; tiHr: string | null; onOnaHr: string | null; miHr: string | null; viHr: string | null; oniHr: string | null; examplesJson: string; sortOrder: number }
 type UserRow   = {
   id: number; email: string; firstName: string | null; language: string
   createdAt: Date | null; lastActive: string | null; streak: number; totalAnswers: number
@@ -701,9 +701,13 @@ function VerbsPanel({ verbs }: { verbs: Verb[] }) {
     setDeleteBusy(false)
   }
 
-  const conjFields: [keyof Verb, string][] = [
+  const srFields: [string, string][] = [
     ["ja", "Ja"], ["ti", "Ti"], ["onOna", "On / Ona"], ["mi", "Mi"], ["vi", "Vi"], ["oni", "Oni / One"],
   ]
+  const hrFields: [string, string][] = [
+    ["jaHr", "Ja"], ["tiHr", "Ti"], ["onOnaHr", "On / Ona"], ["miHr", "Mi"], ["viHr", "Vi"], ["oniHr", "Oni / One"],
+  ]
+  const inputCls = "w-full px-3 py-2 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-violet-500"
 
   return (
     <div className="space-y-8">
@@ -713,25 +717,46 @@ function VerbsPanel({ verbs }: { verbs: Verb[] }) {
       {/* Add form */}
       <div className="bg-white rounded-2xl border border-slate-100 p-6">
         <h3 className="font-bold text-slate-800 mb-4">Add verb manually</h3>
-        <form action={addAction} className="space-y-4">
+        <form action={addAction} className="space-y-5">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1">Infinitive</label>
-              <input name="infinitive" required placeholder="piti" className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-violet-500" />
+              <label className="block text-xs font-semibold text-slate-600 mb-1">Serbian infinitive</label>
+              <input name="infinitive" required placeholder="piti" className={inputCls} />
             </div>
             <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1">Croatian infinitive <span className="font-normal text-slate-400">(if different)</span></label>
+              <input name="infinitiveHr" placeholder="piti" className={inputCls} />
+            </div>
+            <div className="col-span-2">
               <label className="block text-xs font-semibold text-slate-600 mb-1">English</label>
-              <input name="translation" required placeholder="to drink" className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-violet-500" />
+              <input name="translation" required placeholder="to drink" className={inputCls} />
             </div>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-            {conjFields.map(([field, label]) => (
-              <div key={field}>
-                <label className="block text-xs font-semibold text-slate-500 mb-1">{label}</label>
-                <input name={field} required placeholder={label.toLowerCase()} className="w-full px-3 py-2 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-violet-500" />
+          {/* Conjugations side-by-side */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <p className="text-xs font-bold text-violet-600 uppercase tracking-wide mb-2">Serbian</p>
+              <div className="grid grid-cols-2 gap-2">
+                {srFields.map(([field, label]) => (
+                  <div key={field}>
+                    <label className="block text-xs font-semibold text-slate-500 mb-1">{label}</label>
+                    <input name={field} required placeholder={label.toLowerCase()} className={inputCls} />
+                  </div>
+                ))}
               </div>
-            ))}
+            </div>
+            <div>
+              <p className="text-xs font-bold text-sky-600 uppercase tracking-wide mb-2">Croatian <span className="font-normal normal-case text-slate-400">(leave blank if same)</span></p>
+              <div className="grid grid-cols-2 gap-2">
+                {hrFields.map(([field, label]) => (
+                  <div key={field}>
+                    <label className="block text-xs font-semibold text-slate-500 mb-1">{label}</label>
+                    <input name={field} placeholder={label.toLowerCase()} className={inputCls} />
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
           {/* Examples */}
@@ -743,8 +768,9 @@ function VerbsPanel({ verbs }: { verbs: Verb[] }) {
             </div>
             <div className="space-y-2">
               {examples.map((_, i) => (
-                <div key={i} className="grid grid-cols-2 gap-2">
+                <div key={i} className="grid grid-cols-3 gap-2">
                   <input name={`example_serbian_${i}`} placeholder="Serbian sentence" className="px-3 py-2 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-violet-500" />
+                  <input name={`example_croatian_${i}`} placeholder="Croatian (if different)" className="px-3 py-2 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-sky-400" />
                   <input name={`example_english_${i}`} placeholder="English translation" className="px-3 py-2 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-violet-500" />
                 </div>
               ))}
@@ -767,24 +793,41 @@ function VerbsPanel({ verbs }: { verbs: Verb[] }) {
         {items.length === 0 && <p className="text-sm text-slate-400">No verbs yet.</p>}
         {items.map((v, idx) => {
           const examples: VerbExample[] = JSON.parse(v.examplesJson || "[]")
+          const srConj = [["Ja", v.ja], ["Ti", v.ti], ["On/Ona", v.onOna], ["Mi", v.mi], ["Vi", v.vi], ["Oni", v.oni]]
+          const hrConj = [["Ja", v.jaHr], ["Ti", v.tiHr], ["On/Ona", v.onOnaHr], ["Mi", v.miHr], ["Vi", v.viHr], ["Oni", v.oniHr]]
+          const hasCroatian = hrConj.some(([, f]) => f)
           return (
             <div key={v.id} className="bg-white rounded-2xl border border-slate-100 p-4">
               <div className="flex items-start justify-between gap-4">
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-baseline gap-2 mb-1">
+                  <div className="flex items-baseline gap-2 mb-2">
                     <span className="text-xs font-bold text-slate-400">#{idx + 1}</span>
                     <span className="font-bold text-slate-900">{v.infinitive}</span>
+                    {v.infinitiveHr && <span className="text-sm text-sky-600 font-medium">/ {v.infinitiveHr}</span>}
                     <span className="text-sm text-slate-500">— {v.translation}</span>
                   </div>
-                  <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-slate-600">
-                    {[["Ja", v.ja], ["Ti", v.ti], ["On/Ona", v.onOna], ["Mi", v.mi], ["Vi", v.vi], ["Oni", v.oni]].map(([p, f]) => (
-                      <span key={p}><span className="text-slate-400">{p} </span>{f}</span>
-                    ))}
+                  <div className="space-y-1">
+                    <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-slate-600">
+                      <span className="text-xs font-semibold text-violet-500 mr-1">SR</span>
+                      {srConj.map(([p, f]) => (
+                        <span key={p}><span className="text-slate-400">{p} </span>{f}</span>
+                      ))}
+                    </div>
+                    {hasCroatian && (
+                      <div className="flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-slate-600">
+                        <span className="text-xs font-semibold text-sky-500 mr-1">HR</span>
+                        {hrConj.map(([p, f]) => (
+                          <span key={p}><span className="text-slate-400">{p} </span>{f || <span className="text-slate-300">= SR</span>}</span>
+                        ))}
+                      </div>
+                    )}
                   </div>
                   {examples.length > 0 && (
                     <div className="mt-2 space-y-0.5">
                       {examples.map((ex, i) => (
-                        <p key={i} className="text-xs text-slate-500 italic">"{ex.serbian}" — {ex.english}</p>
+                        <p key={i} className="text-xs text-slate-500 italic">
+                          "{ex.serbian}"{ex.croatian ? ` / "${ex.croatian}"` : ""} — {ex.english}
+                        </p>
                       ))}
                     </div>
                   )}

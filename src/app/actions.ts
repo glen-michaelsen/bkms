@@ -451,15 +451,26 @@ export async function addVerbAction(
   const oni         = (formData.get("oni") as string).trim()
 
   if (!infinitive || !translation || !ja || !ti || !onOna || !mi || !vi || !oni) {
-    return { error: "All conjugation fields are required" }
+    return { error: "All Serbian conjugation fields are required" }
   }
 
-  // Build examples from paired fields: example_serbian_0, example_english_0, ...
-  const examples: { serbian: string; english: string }[] = []
+  // Optional Croatian overrides
+  const nullIfEmpty = (key: string) => { const v = (formData.get(key) as string | null)?.trim(); return v || null }
+  const infinitiveHr = nullIfEmpty("infinitiveHr")
+  const jaHr         = nullIfEmpty("jaHr")
+  const tiHr         = nullIfEmpty("tiHr")
+  const onOnaHr      = nullIfEmpty("onOnaHr")
+  const miHr         = nullIfEmpty("miHr")
+  const viHr         = nullIfEmpty("viHr")
+  const oniHr        = nullIfEmpty("oniHr")
+
+  // Build examples from paired fields: example_serbian_0, example_croatian_0, example_english_0, ...
+  const examples: { serbian: string; croatian?: string; english: string }[] = []
   for (let i = 0; i < 10; i++) {
     const sr = (formData.get(`example_serbian_${i}`) as string | null)?.trim()
+    const hr = (formData.get(`example_croatian_${i}`) as string | null)?.trim()
     const en = (formData.get(`example_english_${i}`) as string | null)?.trim()
-    if (sr && en) examples.push({ serbian: sr, english: en })
+    if (sr && en) examples.push({ serbian: sr, ...(hr ? { croatian: hr } : {}), english: en })
   }
 
   // Sort order = current max + 1
@@ -469,6 +480,7 @@ export async function addVerbAction(
   try {
     await db.insert(verbs).values({
       infinitive, translation, ja, ti, onOna, mi, vi, oni,
+      infinitiveHr, jaHr, tiHr, onOnaHr, miHr, viHr, oniHr,
       examplesJson: JSON.stringify(examples),
       sortOrder,
     })

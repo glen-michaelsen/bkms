@@ -21,7 +21,14 @@ type VerbRow = {
   mi: string
   vi: string
   oni: string
-  examples: { serbian: string; english: string }[]
+  infinitive_hr?: string
+  ja_hr?: string
+  ti_hr?: string
+  on_ona_hr?: string
+  mi_hr?: string
+  vi_hr?: string
+  oni_hr?: string
+  examples: { serbian: string; croatian?: string; english: string }[]
 }
 
 async function findOrCreate(
@@ -61,6 +68,7 @@ export async function POST(req: NextRequest) {
         errors.push(`Row ${i + 1}: missing required fields`)
         continue
       }
+      const nullIfEmpty = (v?: string) => v?.trim() || null
       try {
         await db.insert(verbs).values({
           infinitive:   r.infinitive.trim(),
@@ -71,6 +79,13 @@ export async function POST(req: NextRequest) {
           mi:           r.mi.trim(),
           vi:           r.vi.trim(),
           oni:          r.oni.trim(),
+          infinitiveHr: nullIfEmpty(r.infinitive_hr),
+          jaHr:         nullIfEmpty(r.ja_hr),
+          tiHr:         nullIfEmpty(r.ti_hr),
+          onOnaHr:      nullIfEmpty(r.on_ona_hr),
+          miHr:         nullIfEmpty(r.mi_hr),
+          viHr:         nullIfEmpty(r.vi_hr),
+          oniHr:        nullIfEmpty(r.oni_hr),
           examplesJson: JSON.stringify(r.examples ?? []),
           sortOrder:    nextOrder++,
         })

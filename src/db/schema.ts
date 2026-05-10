@@ -112,15 +112,23 @@ export const userCrosswordProgress = sqliteTable("user_crossword_progress", {
 
 export const verbs = sqliteTable("verbs", {
   id: integer("id").primaryKey({ autoIncrement: true }),
-  infinitive: text("infinitive").notNull(),       // e.g. "piti"
-  translation: text("translation").notNull(),     // e.g. "to drink"
-  ja: text("ja").notNull(),                       // e.g. "pijem"
+  infinitive: text("infinitive").notNull(),       // Serbian infinitive, e.g. "piti"
+  translation: text("translation").notNull(),     // English, e.g. "to drink"
+  ja: text("ja").notNull(),                       // Serbian conjugations
   ti: text("ti").notNull(),
   onOna: text("on_ona").notNull(),
   mi: text("mi").notNull(),
   vi: text("vi").notNull(),
   oni: text("oni").notNull(),
-  examplesJson: text("examples_json").notNull().default("[]"), // [{serbian,english}]
+  // Croatian forms — null means same as Serbian
+  infinitiveHr: text("infinitive_hr"),
+  jaHr: text("ja_hr"),
+  tiHr: text("ti_hr"),
+  onOnaHr: text("on_ona_hr"),
+  miHr: text("mi_hr"),
+  viHr: text("vi_hr"),
+  oniHr: text("oni_hr"),
+  examplesJson: text("examples_json").notNull().default("[]"), // [{serbian, croatian?, english}]
   sortOrder: integer("sort_order").notNull().default(0),
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
