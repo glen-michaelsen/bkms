@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import Link from "next/link"
 import { saveCrosswordProgressAction } from "@/app/actions"
-import { AlertCircle, Grid3x3, Sparkles } from "lucide-react"
+import { AlertCircle, Grid3x3, Sparkles, Lightbulb } from "lucide-react"
 import type { GeneratedPuzzle, PuzzleWord } from "@/lib/crossword-generator"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -114,6 +114,7 @@ function CrosswordBoard({ puzzle, date, initialInput, initialSolvedAt }: Require
   const [input, setInput]       = useState<Map<string, string>>(() => new Map(Object.entries(initialInput)))
   const [selected, setSelected] = useState<{ row: number; col: number; dir: Direction } | null>(null)
   const [solved, setSolved]     = useState<boolean>(initialSolvedAt !== null)
+  const [hints, setHints]       = useState<Set<string>>(new Set())
   const [cellSize, setCellSize] = useState(CELL_MAX)
   const inputRef  = useRef<HTMLInputElement>(null)
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -257,6 +258,21 @@ function CrosswordBoard({ puzzle, date, initialInput, initialSolvedAt }: Require
     moveToNext(row, col, dir)
   }
 
+  function revealHint() {
+    if (!selected || solved) return
+    const key = `${selected.row},${selected.col}`
+    const cell = grid.get(key)
+    if (!cell) return
+    setHints(prev => new Set(prev).add(key))
+    setInput(prev => {
+      const m = new Map(prev)
+      m.set(key, cell.letter)
+      saveProgress(m, false)
+      return m
+    })
+    moveToNext(selected.row, selected.col, selected.dir)
+  }
+
   // ── Clue lists ─────────────────────────────────────────────────────────────
   const acrossClues = words.filter(w => w.direction === "across")
     .sort((a, b) => (wordNumMap.get(a.id) ?? 0) - (wordNumMap.get(b.id) ?? 0))
@@ -286,18 +302,29 @@ function CrosswordBoard({ puzzle, date, initialInput, initialSolvedAt }: Require
       <main className="flex-1 max-w-3xl mx-auto w-full px-5 py-8">
 
         {/* Active clue banner */}
-        <div className="h-12 mb-5 flex items-center">
+        <div className="h-12 mb-5 flex items-center gap-3">
           {activeWord ? (
-            <div className="flex items-center gap-3 bg-white border border-slate-100 rounded-2xl px-4 py-2.5 shadow-sm w-full">
+            <div className="flex items-center gap-3 bg-white border border-slate-100 rounded-2xl px-4 py-2.5 shadow-sm flex-1 min-w-0">
               <span className="text-xs font-bold text-violet-600 uppercase tracking-wider whitespace-nowrap">
                 {wordNumMap.get(activeWord.id)} {activeWord.direction === "across" ? "Across" : "Down"}
               </span>
-              <span className="text-sm font-semibold text-slate-800">{activeWord.clue}</span>
+              <span className="text-sm font-semibold text-slate-800 truncate">{activeWord.clue}</span>
             </div>
           ) : (
-            <p className="text-sm text-slate-400 px-1">
+            <p className="text-sm text-slate-400 px-1 flex-1">
               {solved ? "Puzzle solved!" : "Click a cell to start"}
             </p>
+          )}
+          {!solved && (
+            <button
+              onClick={revealHint}
+              disabled={!selected}
+              title="Reveal letter"
+              className="flex-shrink-0 flex items-center gap-1.5 px-3 py-2 rounded-2xl border border-amber-200 bg-amber-50 text-amber-600 text-xs font-semibold hover:bg-amber-100 disabled:opacity-30 disabled:cursor-not-allowed transition"
+            >
+              <Lightbulb className="w-3.5 h-3.5" />
+              Hint
+            </button>
           )}
         </div>
 
@@ -339,8 +366,9 @@ function CrosswordBoard({ puzzle, date, initialInput, initialSolvedAt }: Require
                   const typed = input.get(key) ?? ""
                   const isSelected = selected?.row === r && selected?.col === c
                   const isActive   = activeCells.has(key)
-                  const isCorrect  = typed && typed.toUpperCase() === cell?.letter
-                  const isWrong    = typed && typed.toUpperCase() !== cell?.letter
+                  const isHinted   = hints.has(key)
+                  const isCorrect  = !isHinted && typed && typed.toUpperCase() === cell?.letter
+                  const isWrong    = !isHinted && typed && typed.toUpperCase() !== cell?.letter
                   const numPx = Math.max(7,  Math.round(cellSize * 9  / CELL_MAX))
                   const letPx = Math.max(11, Math.round(cellSize * 16 / CELL_MAX))
 
@@ -363,7 +391,9 @@ function CrosswordBoard({ puzzle, date, initialInput, initialSolvedAt }: Require
                       className={`relative flex items-center justify-center select-none transition-colors
                         ${solved ? "cursor-default" : "cursor-pointer"}
                         ${isSelected ? "bg-violet-400"
+                          : isActive && isHinted ? "bg-amber-100"
                           : isActive  ? "bg-violet-100"
+                          : isHinted  ? "bg-amber-50"
                           : solved    ? "bg-emerald-50"
                           : "bg-white hover:bg-slate-50"}`}
                     >
@@ -375,6 +405,7 @@ function CrosswordBoard({ puzzle, date, initialInput, initialSolvedAt }: Require
                       <span style={{ fontSize: letPx }} className={`font-bold leading-none
                         ${isSelected ? "text-white"
                           : solved    ? "text-emerald-700"
+                          : isHinted  ? "text-amber-600"
                           : isCorrect ? "text-emerald-600"
                           : isWrong   ? "text-rose-500"
                           : "text-slate-900"}`}>
