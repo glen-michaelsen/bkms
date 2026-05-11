@@ -279,7 +279,7 @@ export function SettingsForm({
               <button
                 type="button"
                 onClick={() => setStreakEnabled(v => !v)}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${streakEnabled ? "bg-violet-600" : "bg-slate-200"}`}
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${streakEnabled ? "bg-violet-600" : "bg-slate-200"}`}
               >
                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${streakEnabled ? "translate-x-6" : "translate-x-1"}`} />
               </button>
@@ -304,18 +304,20 @@ export function SettingsForm({
           </div>
 
           {/* Verb of the day */}
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-semibold text-slate-700">Verb of the day</p>
-              <p className="text-xs text-slate-500 mt-0.5">Daily email at 8 AM with a verb, its conjugation and examples</p>
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold text-slate-700">Verb of the day</p>
+                <p className="text-xs text-slate-500 mt-0.5">Daily email at 8 AM with a verb, its conjugation and examples</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setVerbEnabled(v => !v)}
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${verbEnabled ? "bg-violet-600" : "bg-slate-200"}`}
+              >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${verbEnabled ? "translate-x-6" : "translate-x-1"}`} />
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={() => setVerbEnabled(v => !v)}
-              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${verbEnabled ? "bg-violet-600" : "bg-slate-200"}`}
-            >
-              <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${verbEnabled ? "translate-x-6" : "translate-x-1"}`} />
-            </button>
           </div>
 
           <div className="flex items-center justify-between pt-1">
