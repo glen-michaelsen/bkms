@@ -391,9 +391,9 @@ function CrosswordBoard({ puzzle, date, initialInput, initialSolvedAt }: Require
                       className={`relative flex items-center justify-center select-none transition-colors
                         ${solved ? "cursor-default" : "cursor-pointer"}
                         ${isSelected ? "bg-violet-400"
-                          : isActive && isHinted ? "bg-amber-100"
+                          : isActive && isHinted ? "bg-emerald-200"
                           : isActive  ? "bg-violet-100"
-                          : isHinted  ? "bg-amber-50"
+                          : isHinted  ? "bg-emerald-100"
                           : solved    ? "bg-emerald-50"
                           : "bg-white hover:bg-slate-50"}`}
                     >
@@ -405,7 +405,7 @@ function CrosswordBoard({ puzzle, date, initialInput, initialSolvedAt }: Require
                       <span style={{ fontSize: letPx }} className={`font-bold leading-none
                         ${isSelected ? "text-white"
                           : solved    ? "text-emerald-700"
-                          : isHinted  ? "text-amber-600"
+                          : isHinted  ? "text-emerald-700"
                           : isCorrect ? "text-emerald-600"
                           : isWrong   ? "text-rose-500"
                           : "text-slate-900"}`}>
