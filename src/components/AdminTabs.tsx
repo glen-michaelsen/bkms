@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useActionState } from "react"
-import { Users, Activity, CheckCircle2, Flame, Tag, BarChart2, Search } from "lucide-react"
+import { Users, Activity, CheckCircle2, Flame, Tag, BarChart2, Search, Mail, BookOpen as BookOpenIcon, SendHorizonal } from "lucide-react"
 import { AddItemForm } from "./AddItemForm"
 import { AddNamedItem } from "./AddNamedItem"
 import { CsvUpload } from "./CsvUpload"
@@ -10,6 +10,8 @@ import {
   updateWordAction, deleteWordAction,
   updateSentenceAction, deleteSentenceAction,
   addVerbAction, deleteVerbAction,
+  adminTriggerStreakMailAction, adminTriggerVerbOfDayAction,
+  type StreakMailResult,
 } from "@/app/actions"
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -62,6 +64,91 @@ function matches(q: string, ...fields: (string | null | undefined)[]): boolean {
 }
 
 // ── Sub-panels ───────────────────────────────────────────────────────────────
+
+function EmailToolsPanel() {
+  const [streakState, setStreakState] = useState<StreakMailResult | null>(null)
+  const [verbState, setVerbState]     = useState<boolean | null>(null)
+  const [streakBusy, setStreakBusy]   = useState(false)
+  const [verbBusy, setVerbBusy]       = useState(false)
+
+  async function triggerStreak() {
+    setStreakBusy(true)
+    setStreakState(null)
+    const res = await adminTriggerStreakMailAction()
+    setStreakState(res)
+    setStreakBusy(false)
+  }
+
+  async function triggerVerb() {
+    setVerbBusy(true)
+    setVerbState(null)
+    const res = await adminTriggerVerbOfDayAction()
+    setVerbState(res.sent)
+    setVerbBusy(false)
+  }
+
+  return (
+    <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
+      <div className="flex items-center gap-2 mb-5">
+        <Mail className="w-4.5 h-4.5 text-slate-500" />
+        <h2 className="font-bold text-slate-900">Email tools</h2>
+        <span className="text-xs text-slate-400 ml-1">— sends to your account only</span>
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+        {/* Streak mail */}
+        <div className="border border-slate-100 rounded-2xl p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <Flame className="w-4 h-4 text-amber-500" />
+            <p className="text-sm font-semibold text-slate-800">Streak reminder</p>
+          </div>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            Sends only if you haven't trained today — same logic as the real cron, without the time check.
+          </p>
+          <button
+            onClick={triggerStreak}
+            disabled={streakBusy}
+            className="flex items-center gap-1.5 px-4 py-2 bg-amber-50 border border-amber-200 text-amber-700 text-sm font-semibold rounded-xl hover:bg-amber-100 disabled:opacity-50 transition"
+          >
+            <SendHorizonal className="w-3.5 h-3.5" />
+            {streakBusy ? "Sending…" : "Send streak mail"}
+          </button>
+          {streakState && (
+            streakState.reason === "sent"
+              ? <p className="text-xs font-semibold text-emerald-600">✓ Streak mail sent</p>
+              : streakState.reason === "streak_done"
+              ? <p className="text-xs font-semibold text-sky-600">— Not sent · streak already done today</p>
+              : <p className="text-xs font-semibold text-slate-400">— Not sent · streak mail not enabled</p>
+          )}
+        </div>
+
+        {/* Verb of the day */}
+        <div className="border border-slate-100 rounded-2xl p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <BookOpenIcon className="w-4 h-4 text-violet-500" />
+            <p className="text-sm font-semibold text-slate-800">Verb of the day</p>
+          </div>
+          <p className="text-xs text-slate-400 leading-relaxed">
+            Always sends today's verb regardless of whether it was already sent today.
+          </p>
+          <button
+            onClick={triggerVerb}
+            disabled={verbBusy}
+            className="flex items-center gap-1.5 px-4 py-2 bg-violet-50 border border-violet-200 text-violet-700 text-sm font-semibold rounded-xl hover:bg-violet-100 disabled:opacity-50 transition"
+          >
+            <SendHorizonal className="w-3.5 h-3.5" />
+            {verbBusy ? "Sending…" : "Send verb mail"}
+          </button>
+          {verbState !== null && (
+            verbState
+              ? <p className="text-xs font-semibold text-emerald-600">✓ Verb of the day sent</p>
+              : <p className="text-xs font-semibold text-rose-500">✗ Failed — no verbs in database?</p>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 function StatsPanel({ stats, userRows }: { stats: Stats; userRows: UserRow[] }) {
   return (
@@ -127,6 +214,8 @@ function StatsPanel({ stats, userRows }: { stats: Stats; userRows: UserRow[] }) 
           </tbody>
         </table>
       </div>
+
+      <EmailToolsPanel />
     </div>
   )
 }

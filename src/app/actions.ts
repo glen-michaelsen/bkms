@@ -2,8 +2,9 @@
 
 import { signIn, signOut, auth } from "@/auth"
 import { db } from "@/db"
-import { users, categories, levels, userLevelConfig, words, sentences, userCrosswordProgress, userWordMatchProgress, verbs } from "@/db/schema"
-import { eq, and, max } from "drizzle-orm"
+import { users, categories, levels, userLevelConfig, words, sentences, userCrosswordProgress, userWordMatchProgress, verbs, userDailyActivity } from "@/db/schema"
+import { eq, and, max, asc } from "drizzle-orm"
+import { sendStreakReminder, sendVerbOfDay, localDateString } from "@/lib/resend"
 import bcrypt from "bcryptjs"
 import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
@@ -351,6 +352,67 @@ export async function clearWordMatchProgressAction(date: string): Promise<void> 
         eq(userWordMatchProgress.date, date),
       ),
     )
+}
+
+// ─── Admin: manual email triggers ────────────────────────────────────────────
+
+export type StreakMailResult = { sent: boolean; reason: "sent" | "streak_done" | "not_enabled" }
+export type VerbMailResult   = { sent: boolean }
+
+export async function adminTriggerStreakMailAction(): Promise<StreakMailResult> {
+  const session = await auth()
+  if (!session || session.user.role !== "admin") return { sent: false, reason: "not_enabled" }
+
+  const userId = parseInt(session.user.id)
+  const user = await db.select({
+    id: users.id, email: users.email, firstName: users.firstName,
+    language: users.language, timezone: users.timezone,
+    streakMailEnabled: users.streakMailEnabled,
+  }).from(users).where(eq(users.id, userId)).get()
+
+  if (!user?.streakMailEnabled) return { sent: false, reason: "not_enabled" }
+
+  // Check if admin has already trained today (UTC)
+  const today = new Date().toISOString().slice(0, 10)
+  const activity = await db
+    .select({ id: userDailyActivity.id })
+    .from(userDailyActivity)
+    .where(and(eq(userDailyActivity.userId, userId), eq(userDailyActivity.date, today)))
+    .get()
+
+  if (activity) return { sent: false, reason: "streak_done" }
+
+  await sendStreakReminder({ to: user.email, firstName: user.firstName, language: user.language })
+  await db.update(users).set({ streakMailLastSentDate: localDateString(user.timezone ?? "Europe/Belgrade") }).where(eq(users.id, userId))
+  return { sent: true, reason: "sent" }
+}
+
+export async function adminTriggerVerbOfDayAction(): Promise<VerbMailResult> {
+  const session = await auth()
+  if (!session || session.user.role !== "admin") return { sent: false }
+
+  const userId = parseInt(session.user.id)
+  const user = await db.select({
+    id: users.id, email: users.email, firstName: users.firstName,
+    language: users.language, timezone: users.timezone,
+    verbOfDayEnabled: users.verbOfDayEnabled, verbOfDayEnabledAt: users.verbOfDayEnabledAt,
+  }).from(users).where(eq(users.id, userId)).get()
+
+  if (!user) return { sent: false }
+
+  const allVerbs = await db.select().from(verbs).orderBy(asc(verbs.sortOrder), asc(verbs.id)).all()
+  if (allVerbs.length === 0) return { sent: false }
+
+  const tz = user.timezone ?? "Europe/Belgrade"
+  const userLocalDate = localDateString(tz)
+  const startDate = user.verbOfDayEnabledAt ?? userLocalDate
+  const msPerDay = 86_400_000
+  const dayIndex = Math.max(0, Math.round((new Date(userLocalDate).getTime() - new Date(startDate).getTime()) / msPerDay))
+  const verb = allVerbs[dayIndex % allVerbs.length]
+
+  await sendVerbOfDay({ to: user.email, firstName: user.firstName, verb, verbNumber: (dayIndex % allVerbs.length) + 1, language: user.language })
+  await db.update(users).set({ verbMailLastSentDate: userLocalDate }).where(eq(users.id, userId))
+  return { sent: true }
 }
 
 // ─── User level config ────────────────────────────────────────────────────────
