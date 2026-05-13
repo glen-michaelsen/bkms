@@ -478,12 +478,20 @@ function CrosswordBoard({ puzzle, date, initialInput, initialSolvedAt }: Require
             <div className="w-16 h-16 bg-violet-100 rounded-3xl flex items-center justify-center text-violet-500 mx-auto mb-4"><Sparkles className="w-8 h-8" /></div>
             <h2 className="text-2xl font-extrabold text-slate-900 mb-2">Odlično!</h2>
             <p className="text-slate-500 mb-6">You solved today's crossword!</p>
-            <Link
-              href="/dashboard"
-              className="block w-full py-3 rounded-2xl bg-violet-600 text-white font-semibold hover:bg-violet-700 transition"
-            >
-              Back to dashboard
-            </Link>
+            <div className="flex flex-col gap-3">
+              <Link
+                href={`/study/sentences?wordTexts=${puzzle.words.map(w => w.answer.toLowerCase()).join(",")}`}
+                className="block w-full py-3 rounded-2xl bg-violet-600 text-white font-semibold hover:bg-violet-700 transition"
+              >
+                Train sentences with these words
+              </Link>
+              <Link
+                href="/dashboard"
+                className="block w-full py-3 rounded-2xl bg-slate-100 text-slate-700 font-semibold hover:bg-slate-200 transition"
+              >
+                Back to dashboard
+              </Link>
+            </div>
           </div>
         </div>
       )}

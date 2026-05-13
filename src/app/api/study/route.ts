@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { db } from "@/db"
 import { words, sentences, userLevelConfig } from "@/db/schema"
-import { eq } from "drizzle-orm"
+import { eq, or, sql } from "drizzle-orm"
 
 export type Exercise = {
   id: number
@@ -48,6 +48,11 @@ export async function GET(req: NextRequest) {
   const categoryParam = req.nextUrl.searchParams.get("category")
   const categoryId = categoryParam ? parseInt(categoryParam) : null
 
+  const wordTextsParam = req.nextUrl.searchParams.get("wordTexts")
+  const wordTextList = wordTextsParam
+    ? wordTextsParam.split(",").map((t) => t.trim().toLowerCase()).filter(Boolean)
+    : null
+
   const language = session.user.language as "sr" | "hr"
   const userId = parseInt(session.user.id)
 
@@ -61,11 +66,20 @@ export async function GET(req: NextRequest) {
     )
   }
 
-  // Session pool: restrict to category when requested
-  const sessionPool =
-    categoryId !== null
-      ? allItems.filter((i) => i.categoryId === categoryId)
-      : allItems
+  // Session pool: word-text filter > category filter > all items
+  let sessionPool: typeof allItems
+
+  if (wordTextList && wordTextList.length > 0 && type === "sentences") {
+    const conditions = wordTextList.map((text) =>
+      sql`lower(${sentences.serbian}) LIKE ${"%" + text + "%"}`
+    )
+    const matched = await db.select().from(sentences).where(or(...conditions))
+    sessionPool = matched.length >= 4 ? matched : allItems
+  } else if (categoryId !== null) {
+    sessionPool = allItems.filter((i) => i.categoryId === categoryId)
+  } else {
+    sessionPool = allItems
+  }
 
   if (sessionPool.length === 0) {
     return NextResponse.json(
@@ -77,7 +91,7 @@ export async function GET(req: NextRequest) {
   const sessionSize = Math.min(10, sessionPool.length)
   let sessionItems = shuffle(sessionPool).slice(0, sessionSize)
 
-  if (type === "sentences" && categoryId === null) {
+  if (type === "sentences" && categoryId === null && !wordTextList) {
     // Level-distribution only applies to the full (non-category) flow
     const levelConfigs = await db
       .select()

@@ -108,7 +108,7 @@ function HintDisplay({ text }: { text: string }) {
   )
 }
 
-export function StudySession({ type, hintEnabled: initialHint, categoryId }: { type: "words" | "sentences"; hintEnabled: boolean; categoryId?: number }) {
+export function StudySession({ type, hintEnabled: initialHint, categoryId, wordTexts }: { type: "words" | "sentences"; hintEnabled: boolean; categoryId?: number; wordTexts?: string }) {
   const { update: updateSession } = useSession()
   const [exercises, setExercises] = useState<Exercise[]>([])
   const [current, setCurrent] = useState(0)
@@ -130,7 +130,7 @@ export function StudySession({ type, hintEnabled: initialHint, categoryId }: { t
   }, [hintEnabled, updateSession])
 
   useEffect(() => {
-    const url = `/api/study?type=${type}${categoryId ? `&category=${categoryId}` : ""}`
+    const url = `/api/study?type=${type}${categoryId ? `&category=${categoryId}` : ""}${wordTexts ? `&wordTexts=${encodeURIComponent(wordTexts)}` : ""}`
     fetch(url)
       .then((r) => r.json())
       .then((data) => {

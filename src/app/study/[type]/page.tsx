@@ -8,13 +8,13 @@ export default async function StudyPage({
   searchParams,
 }: {
   params: Promise<{ type: string }>
-  searchParams: Promise<{ category?: string }>
+  searchParams: Promise<{ category?: string; wordTexts?: string }>
 }) {
   const session = await auth()
   if (!session) redirect("/login")
 
   const { type } = await params
-  const { category } = await searchParams
+  const { category, wordTexts } = await searchParams
   const categoryId = category ? parseInt(category) : undefined
 
   if (type !== "words" && type !== "sentences") redirect("/dashboard")
@@ -35,7 +35,7 @@ export default async function StudyPage({
       </nav>
 
       <main className="flex-1 max-w-2xl mx-auto w-full px-5 py-10">
-        <StudySession type={type as "words" | "sentences"} hintEnabled={session.user.hintEnabled ?? false} categoryId={categoryId} />
+        <StudySession type={type as "words" | "sentences"} hintEnabled={session.user.hintEnabled ?? false} categoryId={categoryId} wordTexts={wordTexts} />
       </main>
     </div>
   )
