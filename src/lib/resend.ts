@@ -129,6 +129,16 @@ export async function sendVerbOfDay({
     ["Oni / One",  isCroatian ? hrOr(verb.oniHr,   verb.oni)   : verb.oni],
   ]
 
+  // All forms to search across (infinitive + all conjugations), deduped
+  const verbForms = [
+    ...new Set(
+      [infinitive, ...conjugationRows.map(([, form]) => form)]
+        .map((f) => (f as string).toLowerCase().trim())
+        .filter(Boolean)
+    ),
+  ]
+  const verbWordsParam = encodeURIComponent(verbForms.join(","))
+
   const conjugationHtml = conjugationRows.map(([pronoun, form]) => `
     <tr>
       <td style="padding:8px 12px;color:#64748b;font-size:14px;width:120px;">${pronoun}</td>
@@ -177,7 +187,7 @@ export async function sendVerbOfDay({
             <table cellpadding="0" cellspacing="0" width="100%" style="margin-top:28px;">
               <tr>
                 <td align="center" style="padding-bottom:12px;">
-                  <a href="https://cujemose.com/study/sentences?wordTexts=${encodeURIComponent(infinitive)}"
+                  <a href="https://cujemose.com/study/sentences?wordTexts=${verbWordsParam}"
                      style="display:inline-block;background:#7c3aed;color:#ffffff;font-weight:700;font-size:15px;text-decoration:none;padding:14px 32px;border-radius:14px;">
                     Practice sentences with this verb →
                   </a>
