@@ -109,7 +109,7 @@ function GameCard({ href, icon: Icon, name, solved, subtitle }: { href: string; 
   return (
     <Link
       href={href}
-      className="group flex items-center gap-3 bg-white border border-slate-100 rounded-2xl px-4 py-3 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 min-w-[160px]"
+      className="group flex items-center gap-3 bg-white border border-slate-100 rounded-2xl px-4 py-3 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
     >
       <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${solved ? "bg-emerald-100 text-emerald-600" : "bg-slate-100 text-slate-500 group-hover:bg-violet-100 group-hover:text-violet-600"} transition-colors`}>
         <Icon className="w-4.5 h-4.5" />
@@ -234,10 +234,7 @@ export default async function DashboardPage() {
                 <div className="w-12 h-12 bg-violet-100 rounded-2xl flex items-center justify-center mb-5 group-hover:bg-violet-200 transition-colors text-violet-600">
                   <BookOpen className="w-6 h-6" />
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-1.5">Train Words</h3>
-                <p className="text-sm text-slate-500 leading-relaxed">
-                  Practise vocabulary — translate single words between English and {lang.label}.
-                </p>
+                <h3 className="text-xl font-bold text-slate-900 mb-4">Train Words</h3>
                 <StatsBar stats={wordStats} />
                 <div className="mt-4 flex items-center text-violet-600 text-sm font-semibold">
                   Start session
@@ -255,10 +252,7 @@ export default async function DashboardPage() {
                 <div className="w-12 h-12 bg-fuchsia-100 rounded-2xl flex items-center justify-center mb-5 group-hover:bg-fuchsia-200 transition-colors text-fuchsia-600">
                   <MessageSquare className="w-6 h-6" />
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 mb-1.5">Train Sentences</h3>
-                <p className="text-sm text-slate-500 leading-relaxed">
-                  Build fluency with full phrases — common everyday sentences in {lang.label}.
-                </p>
+                <h3 className="text-xl font-bold text-slate-900 mb-4">Train Sentences</h3>
                 <StatsBar stats={sentenceStats} />
                 <div className="mt-4 flex items-center text-fuchsia-600 text-sm font-semibold">
                   Start session
@@ -272,7 +266,7 @@ export default async function DashboardPage() {
         {/* Standard Exercises */}
         <div>
           <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">Standard Exercises</h2>
-          <div className="flex flex-wrap gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <GameCard
               href="/study/introduction"
               icon={User}
@@ -286,7 +280,7 @@ export default async function DashboardPage() {
         {/* Daily Games */}
         <div>
           <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">Daily Games</h2>
-          <div className="flex flex-wrap gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <GameCard
               href="/games/crossword"
               icon={Grid3x3}
