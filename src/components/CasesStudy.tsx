@@ -21,22 +21,24 @@ export function CasesStudy({ language }: { language: "sr" | "hr" }) {
 
   return (
     <div>
-      {/* Tab bar */}
-      <div className="flex gap-2 overflow-x-auto pb-1 mb-6 scrollbar-hide">
-        {CASES.map((c, i) => (
-          <button
-            key={c.id}
-            onClick={() => setActiveIdx(i)}
-            className={`flex-shrink-0 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
-              i === activeIdx
-                ? "bg-violet-600 text-white shadow-sm"
-                : "bg-white border border-slate-200 text-slate-600 hover:border-violet-300 hover:text-violet-700"
-            }`}
-          >
-            <span className="opacity-60 mr-1.5 text-xs">{c.number}.</span>
-            {getCaseName(c, language)}
-          </button>
-        ))}
+      {/* Case selector dropdown */}
+      <div className="relative mb-6">
+        <select
+          value={activeIdx}
+          onChange={(e) => setActiveIdx(parseInt(e.target.value))}
+          className="w-full appearance-none bg-white border border-slate-200 rounded-2xl px-5 py-4 pr-12 text-base font-semibold text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition cursor-pointer shadow-sm"
+        >
+          {CASES.map((c, i) => (
+            <option key={c.id} value={i}>
+              {c.number}. {getCaseName(c, language)} — {c.englishName}
+            </option>
+          ))}
+        </select>
+        <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-slate-400">
+          <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+            <path fillRule="evenodd" d="M5.22 8.22a.75.75 0 0 1 1.06 0L10 11.94l3.72-3.72a.75.75 0 1 1 1.06 1.06l-4.25 4.25a.75.75 0 0 1-1.06 0L5.22 9.28a.75.75 0 0 1 0-1.06Z" clipRule="evenodd" />
+          </svg>
+        </div>
       </div>
 
       {/* Case content */}
