@@ -176,9 +176,17 @@ export async function sendVerbOfDay({
             ${examplesHtml}
             <table cellpadding="0" cellspacing="0" width="100%" style="margin-top:28px;">
               <tr>
+                <td align="center" style="padding-bottom:12px;">
+                  <a href="https://cujemose.com/study/sentences?wordTexts=${encodeURIComponent(infinitive)}"
+                     style="display:inline-block;background:#7c3aed;color:#ffffff;font-weight:700;font-size:15px;text-decoration:none;padding:14px 32px;border-radius:14px;">
+                    Practice sentences with this verb →
+                  </a>
+                </td>
+              </tr>
+              <tr>
                 <td align="center">
                   <a href="https://cujemose.com/study/words"
-                     style="display:inline-block;background:#7c3aed;color:#ffffff;font-weight:700;font-size:15px;text-decoration:none;padding:14px 32px;border-radius:14px;">
+                     style="display:inline-block;background:#ffffff;color:#7c3aed;font-weight:600;font-size:14px;text-decoration:none;padding:12px 28px;border-radius:14px;border:2px solid #e9d5ff;">
                     Practice words →
                   </a>
                 </td>
