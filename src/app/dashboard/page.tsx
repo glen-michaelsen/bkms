@@ -11,7 +11,7 @@ import { ActivityGraph } from "@/components/ActivityGraph"
 import { CategoryTags } from "@/components/CategoryTags"
 import { DailySentences } from "@/components/DailySentences"
 import { Greeting } from "@/components/Greeting"
-import { BookOpen, MessageSquare, Grid3x3, Shuffle, ArrowRight, Check, User } from "lucide-react"
+import { BookOpen, MessageSquare, Grid3x3, Shuffle, ArrowRight, Check, User, List } from "lucide-react"
 
 const languageInfo = {
   sr: { label: "Serbian", flag: "🇷🇸", native: "Srpski" },
@@ -273,6 +273,13 @@ export default async function DashboardPage() {
               name="My Introduction"
               solved={false}
               subtitle={profile ? "Practice your intro" : "Set up your profile"}
+            />
+            <GameCard
+              href="/study/cases"
+              icon={List}
+              name="Cases"
+              solved={false}
+              subtitle="All 7 cases"
             />
           </div>
         </div>
