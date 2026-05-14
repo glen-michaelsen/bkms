@@ -2,7 +2,7 @@
 
 import { signIn, signOut, auth } from "@/auth"
 import { db } from "@/db"
-import { users, categories, levels, userLevelConfig, words, sentences, userCrosswordProgress, userWordMatchProgress, verbs, userDailyActivity } from "@/db/schema"
+import { users, categories, levels, userLevelConfig, words, sentences, userCrosswordProgress, userWordMatchProgress, verbs, userDailyActivity, userProfile } from "@/db/schema"
 import { eq, and, max, asc } from "drizzle-orm"
 import { sendStreakReminder, sendVerbOfDay, localDateString } from "@/lib/resend"
 import bcrypt from "bcryptjs"
@@ -558,5 +558,36 @@ export async function deleteVerbAction(id: number): Promise<SimpleResult> {
   if (!session || session.user.role !== "admin") return { error: "Forbidden" }
   await db.delete(verbs).where(eq(verbs.id, id))
   revalidatePath("/admin")
+  return { success: true }
+}
+
+// ── Personal profile ──────────────────────────────────────────────────────────
+
+export async function updatePersonalProfileAction(
+  _prev: { error?: string; success?: boolean } | undefined,
+  formData: FormData
+): Promise<{ error?: string; success?: boolean }> {
+  const session = await auth()
+  if (!session) return { error: "Not authenticated" }
+
+  const userId = parseInt(session.user.id)
+
+  const birthday       = (formData.get("birthday")         as string) || null
+  const jobStatus      = (formData.get("jobStatus")        as string) || null
+  const jobTitle       = (formData.get("jobTitle")         as string)?.trim() || null
+  const studyLevel     = (formData.get("studyLevel")       as string) || null
+  const city           = (formData.get("city")             as string)?.trim() || null
+  const country        = (formData.get("country")          as string)?.trim() || null
+  const countryOfOrigin= (formData.get("countryOfOrigin")  as string)?.trim() || null
+
+  const values = { userId, birthday, jobStatus, jobTitle, studyLevel, city, country, countryOfOrigin }
+
+  const existing = await db.select({ userId: userProfile.userId }).from(userProfile).where(eq(userProfile.userId, userId)).get()
+  if (existing) {
+    await db.update(userProfile).set(values).where(eq(userProfile.userId, userId))
+  } else {
+    await db.insert(userProfile).values(values)
+  }
+
   return { success: true }
 }

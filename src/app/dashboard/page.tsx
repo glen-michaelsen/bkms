@@ -4,14 +4,14 @@ import { redirect } from "next/navigation"
 import Link from "next/link"
 import { logoutAction } from "@/app/actions"
 import { db } from "@/db"
-import { words, sentences, userItemProgress, userDailyActivity, categories, userCrosswordProgress, userWordMatchProgress } from "@/db/schema"
+import { words, sentences, userItemProgress, userDailyActivity, categories, userCrosswordProgress, userWordMatchProgress, userProfile } from "@/db/schema"
 import { eq, and, gte } from "drizzle-orm"
 import { buildStats, STATUS_META, type ItemStats } from "@/lib/progress"
 import { ActivityGraph } from "@/components/ActivityGraph"
 import { CategoryTags } from "@/components/CategoryTags"
 import { DailySentences } from "@/components/DailySentences"
 import { Greeting } from "@/components/Greeting"
-import { BookOpen, MessageSquare, Grid3x3, Shuffle, ArrowRight, Check } from "lucide-react"
+import { BookOpen, MessageSquare, Grid3x3, Shuffle, ArrowRight, Check, User } from "lucide-react"
 
 const languageInfo = {
   sr: { label: "Serbian", flag: "🇷🇸", native: "Srpski" },
@@ -145,7 +145,7 @@ export default async function DashboardPage() {
   graphStart.setUTCDate(graphStart.getUTCDate() - 12 * 7)
   const graphStartStr = graphStart.toISOString().slice(0, 10)
 
-  const [allWords, allSentences, allProgress, allActivity, allCategories, crosswordProgress, wordMatchProgress] = await Promise.all([
+  const [allWords, allSentences, allProgress, allActivity, allCategories, crosswordProgress, wordMatchProgress, profile] = await Promise.all([
     db.select({ id: words.id }).from(words),
     db.select({ id: sentences.id }).from(sentences),
     db.select().from(userItemProgress).where(eq(userItemProgress.userId, userId)),
@@ -161,6 +161,8 @@ export default async function DashboardPage() {
       .from(userWordMatchProgress)
       .where(and(eq(userWordMatchProgress.userId, userId), eq(userWordMatchProgress.date, today)))
       .get(),
+    db.select({ userId: userProfile.userId, jobStatus: userProfile.jobStatus, birthday: userProfile.birthday, city: userProfile.city, country: userProfile.country, countryOfOrigin: userProfile.countryOfOrigin })
+      .from(userProfile).where(eq(userProfile.userId, userId)).get(),
   ])
 
   const wordStats = buildStats(
@@ -280,6 +282,20 @@ export default async function DashboardPage() {
               name="Word Match"
               solved={!!wordMatchProgress?.solvedAt}
             />
+            <Link
+              href="/study/introduction"
+              className="group flex items-center gap-3 bg-white border border-slate-100 rounded-2xl px-4 py-3 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 min-w-[160px]"
+            >
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 bg-slate-100 text-slate-500 group-hover:bg-violet-100 group-hover:text-violet-600 transition-colors">
+                <User className="w-4.5 h-4.5" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-slate-800 leading-tight">My Introduction</p>
+                <p className="text-xs text-slate-400 mt-0.5">
+                  {profile ? "Practice your intro" : "Set up your profile"}
+                </p>
+              </div>
+            </Link>
           </div>
         </div>
 

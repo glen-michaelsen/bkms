@@ -3,7 +3,7 @@ import { redirect } from "next/navigation"
 import Link from "next/link"
 import { SettingsForm } from "@/components/SettingsForm"
 import { db } from "@/db"
-import { users, levels, userLevelConfig } from "@/db/schema"
+import { users, levels, userLevelConfig, userProfile } from "@/db/schema"
 import { eq } from "drizzle-orm"
 
 export default async function SettingsPage() {
@@ -12,7 +12,7 @@ export default async function SettingsPage() {
 
   const userId = parseInt(session.user.id)
 
-  const [allLevels, levelConfig, userRow] = await Promise.all([
+  const [allLevels, levelConfig, userRow, profile] = await Promise.all([
     db.select().from(levels).orderBy(levels.id),
     db.select().from(userLevelConfig).where(eq(userLevelConfig.userId, userId)),
     db.select({
@@ -21,6 +21,7 @@ export default async function SettingsPage() {
       streakMailHour: users.streakMailHour,
       verbOfDayEnabled: users.verbOfDayEnabled,
     }).from(users).where(eq(users.id, userId)).get(),
+    db.select().from(userProfile).where(eq(userProfile.userId, userId)).get(),
   ])
 
   return (
@@ -52,6 +53,7 @@ export default async function SettingsPage() {
           initialStreakMailEnabled={userRow?.streakMailEnabled ?? false}
           initialStreakMailHour={userRow?.streakMailHour ?? 20}
           initialVerbOfDayEnabled={userRow?.verbOfDayEnabled ?? false}
+          initialProfile={profile ?? null}
         />
       </main>
     </div>
