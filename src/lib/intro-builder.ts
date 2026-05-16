@@ -1,5 +1,6 @@
 import { findCountry } from "./countries"
 import { STUDY_LEVELS } from "./job-titles"
+import { toCardinal, toDayOrdinal } from "./number-words"
 
 export type ProfileData = {
   firstName?: string | null
@@ -77,10 +78,14 @@ export function buildIntro(profile: ProfileData, language: "sr" | "hr"): Bilingu
 
     parts.en.push(`I am ${age} years old and my birthday is the ${ordinal(day)} of ${EN_MONTHS[monthIdx]} ${year}.`)
 
+    const ageWords  = toCardinal(age, language)
+    const dayWords  = toDayOrdinal(day)
+    const yearWords = toCardinal(year, language)
+
     if (language === "sr") {
-      parts.tg.push(`Imam ${age} ${ageSuffix(age)} i moj rođendan je ${day}. ${SR_MONTHS_GEN[monthIdx]} ${year}. godine.`)
+      parts.tg.push(`Imam ${age} (${ageWords}) ${ageSuffix(age)} i moj rođendan je ${day}. (${dayWords}) ${SR_MONTHS_GEN[monthIdx]} ${year}. (${yearWords}) godine.`)
     } else {
-      parts.tg.push(`Imam ${age} ${ageSuffix(age)} i moj rođendan je ${day}. ${HR_MONTHS_GEN[monthIdx]} ${year}.`)
+      parts.tg.push(`Imam ${age} (${ageWords}) ${ageSuffix(age)} i moj rođendan je ${day}. (${dayWords}) ${HR_MONTHS_GEN[monthIdx]} ${year}. (${yearWords})`)
     }
   }
 
