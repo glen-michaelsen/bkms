@@ -266,7 +266,7 @@ export default async function DashboardPage() {
         {/* Standard Exercises */}
         <div>
           <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">Standard Exercises</h2>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <GameCard
               href="/study/introduction"
               icon={User}
@@ -287,7 +287,7 @@ export default async function DashboardPage() {
         {/* Daily Games */}
         <div>
           <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">Daily Games</h2>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <GameCard
               href="/games/crossword"
               icon={Grid3x3}
