@@ -1,4 +1,5 @@
 import Link from "next/link"
+import Image from "next/image"
 import { auth } from "@/auth"
 
 export default async function MarketingNav() {
@@ -9,7 +10,7 @@ export default async function MarketingNav() {
       <nav className="max-w-5xl mx-auto px-5 h-16 flex items-center justify-between gap-6">
         {/* Left: logo */}
         <Link href="/" className="flex-shrink-0">
-          <img src="/logo.svg" alt="Čujemo se" className="h-6" />
+          <Image src="/logo.svg" alt="Čujemo se" width={120} height={24} priority unoptimized />
         </Link>
 
         {/* Centre: nav links */}
