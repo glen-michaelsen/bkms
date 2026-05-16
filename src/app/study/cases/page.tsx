@@ -1,23 +1,14 @@
 import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import Link from "next/link"
-import { StudySession } from "@/components/StudySession"
+import { CasesStudy } from "@/components/CasesStudy"
 
-export default async function StudyPage({
-  params,
-  searchParams,
-}: {
-  params: Promise<{ type: string }>
-  searchParams: Promise<{ category?: string; wordTexts?: string }>
-}) {
+export default async function CasesPage() {
   const session = await auth()
   if (!session) redirect("/login")
 
-  const { type } = await params
-  const { category, wordTexts } = await searchParams
-  const categoryId = category ? parseInt(category) : undefined
-
-  if (type !== "words" && type !== "sentences") redirect("/dashboard")
+  const language = session.user.language as "sr" | "hr"
+  const langLabel = language === "hr" ? "Croatian" : "Serbian"
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
@@ -35,7 +26,12 @@ export default async function StudyPage({
       </nav>
 
       <main className="flex-1 max-w-2xl mx-auto w-full px-5 py-10">
-        <StudySession type={type as "words" | "sentences"} hintEnabled={session.user.hintEnabled ?? false} categoryId={categoryId} wordTexts={wordTexts} />
+        <div className="mb-8">
+          <h1 className="text-3xl font-extrabold text-slate-900">Grammatical Cases</h1>
+          <p className="text-slate-500 mt-1">All 7 {langLabel} cases — tap a tab to explore each one</p>
+        </div>
+
+        <CasesStudy language={language} />
       </main>
     </div>
   )

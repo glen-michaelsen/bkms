@@ -363,6 +363,12 @@ export function WordMatch({
               You matched all {words.length} words correctly. Come back tomorrow for a new puzzle.
             </p>
             <div className="flex flex-col gap-3">
+              <Link
+                href={`/study/sentences?wordTexts=${words.map(w => w.serbian).join(",")}`}
+                className="block w-full py-3 rounded-2xl bg-violet-600 text-white font-semibold hover:bg-violet-700 transition"
+              >
+                Train sentences with these words
+              </Link>
               <button
                 onClick={() => setJustSolved(false)}
                 className="w-full py-3 rounded-2xl bg-slate-100 text-slate-700 font-semibold hover:bg-slate-200 transition"
@@ -371,7 +377,7 @@ export function WordMatch({
               </button>
               <Link
                 href="/dashboard"
-                className="block w-full py-3 rounded-2xl bg-violet-600 text-white font-semibold hover:bg-violet-700 transition"
+                className="block w-full py-3 rounded-2xl bg-slate-200 text-slate-600 font-semibold hover:bg-slate-300 transition"
               >
                 Back to dashboard
               </Link>

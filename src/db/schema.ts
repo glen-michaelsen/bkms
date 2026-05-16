@@ -151,6 +151,17 @@ export const userWordMatchProgress = sqliteTable("user_word_match_progress", {
   solvedAt: integer("solved_at", { mode: "timestamp" }),
 })
 
+export const userProfile = sqliteTable("user_profile", {
+  userId: integer("user_id").primaryKey().references(() => users.id),
+  birthday: text("birthday"),        // YYYY-MM-DD
+  jobStatus: text("job_status"),     // "working" | "studying" | "between_jobs" | "retired"
+  jobTitle: text("job_title"),       // free text
+  studyLevel: text("study_level"),   // "primary" | "high_school" | "vocational" | "bachelor" | "master" | "phd" | "language_course"
+  city: text("city"),
+  country: text("country"),          // English name
+  countryOfOrigin: text("country_of_origin"),
+})
+
 export type User = typeof users.$inferSelect
 export type Verb = typeof verbs.$inferSelect
 export type Category = typeof categories.$inferSelect

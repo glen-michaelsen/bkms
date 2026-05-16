@@ -8,9 +8,13 @@ import {
   updateEmailAction,
   updatePasswordAction,
   updateEmailPrefsAction,
+  updatePersonalProfileAction,
 } from "@/app/actions"
 import { LevelConfig } from "@/components/LevelConfig"
 import { TIMEZONES } from "@/lib/timezones"
+import { COUNTRIES } from "@/lib/countries"
+import { JOB_TITLES, STUDY_LEVELS } from "@/lib/job-titles"
+import Link from "next/link"
 
 function SectionCard({
   title,
@@ -51,6 +55,16 @@ function StatusMessage({ state }: { state: { error?: string; success?: boolean }
   return null
 }
 
+type InitialProfile = {
+  birthday?: string | null
+  jobStatus?: string | null
+  jobTitle?: string | null
+  studyLevel?: string | null
+  city?: string | null
+  country?: string | null
+  countryOfOrigin?: string | null
+} | null
+
 export function SettingsForm({
   initialFirstName,
   initialEmail,
@@ -62,6 +76,7 @@ export function SettingsForm({
   initialStreakMailEnabled,
   initialStreakMailHour,
   initialVerbOfDayEnabled,
+  initialProfile,
 }: {
   initialFirstName: string
   initialEmail: string
@@ -73,6 +88,7 @@ export function SettingsForm({
   initialStreakMailEnabled: boolean
   initialStreakMailHour: number
   initialVerbOfDayEnabled: boolean
+  initialProfile: InitialProfile
 }) {
   const { update } = useSession()
   const [timezone, setTimezone]           = useState(initialTimezone)
@@ -80,9 +96,18 @@ export function SettingsForm({
   const [streakHour, setStreakHour]       = useState(initialStreakMailHour)
   const [verbEnabled, setVerbEnabled]     = useState(initialVerbOfDayEnabled)
 
-  const [profileState, profileAction, profilePending] = useActionState(updateProfileAction, undefined)
-  const [emailState, emailAction, emailPending]       = useActionState(updateEmailAction, undefined)
-  const [passwordState, passwordAction, passwordPending] = useActionState(updatePasswordAction, undefined)
+  const [profileState, profileAction, profilePending]           = useActionState(updateProfileAction, undefined)
+  const [emailState, emailAction, emailPending]                 = useActionState(updateEmailAction, undefined)
+  const [passwordState, passwordAction, passwordPending]        = useActionState(updatePasswordAction, undefined)
+  const [personalState, personalAction, personalPending]        = useActionState(updatePersonalProfileAction, undefined)
+
+  const [birthday,        setBirthday]        = useState(initialProfile?.birthday        ?? "")
+  const [jobStatus,       setJobStatus]       = useState(initialProfile?.jobStatus       ?? "")
+  const [jobTitle,        setJobTitle]        = useState(initialProfile?.jobTitle        ?? "")
+  const [studyLevel,      setStudyLevel]      = useState(initialProfile?.studyLevel      ?? "")
+  const [city,            setCity]            = useState(initialProfile?.city            ?? "")
+  const [country,         setCountry]         = useState(initialProfile?.country         ?? "")
+  const [countryOfOrigin, setCountryOfOrigin] = useState(initialProfile?.countryOfOrigin ?? "")
 
   // Email prefs: call the action directly to avoid Next.js router refresh remounting the component
   const [emailPrefsPending, startEmailPrefsTransition] = useTransition()
@@ -341,6 +366,154 @@ export function SettingsForm({
       >
         <LevelConfig levels={levels} initialConfig={levelConfig} />
       </SectionCard>
+
+      {/* About you */}
+      <SectionCard
+        title="About you"
+        description="Personal details used to build your introduction practice"
+      >
+        <form action={personalAction}>
+          <div className="space-y-4">
+            {/* Birthday */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1.5">Birthday</label>
+              <input
+                type="date"
+                name="birthday"
+                value={birthday}
+                onChange={(e) => setBirthday(e.target.value)}
+                className="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition text-sm"
+              />
+            </div>
+
+            {/* Job status */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1.5">Employment status</label>
+              <select
+                name="jobStatus"
+                value={jobStatus}
+                onChange={(e) => setJobStatus(e.target.value)}
+                className="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition appearance-none cursor-pointer text-sm"
+              >
+                <option value="">Select status…</option>
+                <option value="working">Working</option>
+                <option value="studying">Studying</option>
+                <option value="between_jobs">Between jobs</option>
+                <option value="retired">Retired</option>
+              </select>
+            </div>
+
+            {/* Job title — shown when working */}
+            {jobStatus === "working" && (
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1.5">Job title</label>
+                <input
+                  type="text"
+                  name="jobTitle"
+                  list="job-titles-list"
+                  value={jobTitle}
+                  onChange={(e) => setJobTitle(e.target.value)}
+                  placeholder="Type to search or enter your title…"
+                  className="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition text-sm"
+                />
+                <datalist id="job-titles-list">
+                  {JOB_TITLES.map((t) => <option key={t} value={t} />)}
+                </datalist>
+              </div>
+            )}
+
+            {/* Study level — shown when studying */}
+            {jobStatus === "studying" && (
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1.5">Level of study</label>
+                <select
+                  name="studyLevel"
+                  value={studyLevel}
+                  onChange={(e) => setStudyLevel(e.target.value)}
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition appearance-none cursor-pointer text-sm"
+                >
+                  <option value="">Select level…</option>
+                  {STUDY_LEVELS.map((l) => (
+                    <option key={l.value} value={l.value}>{l.label}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* City + Country */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1.5">City</label>
+                <input
+                  type="text"
+                  name="city"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                  placeholder="e.g. Copenhagen"
+                  className="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition text-sm"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1.5">Country (living in)</label>
+                <input
+                  type="text"
+                  name="country"
+                  list="countries-list"
+                  value={country}
+                  onChange={(e) => setCountry(e.target.value)}
+                  placeholder="Type to search…"
+                  className="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition text-sm"
+                />
+                <datalist id="countries-list">
+                  {COUNTRIES.map((c) => <option key={c.value} value={c.value} />)}
+                </datalist>
+              </div>
+            </div>
+
+            {/* Country of origin */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-600 mb-1.5">Country of origin</label>
+              <input
+                type="text"
+                name="countryOfOrigin"
+                list="countries-origin-list"
+                value={countryOfOrigin}
+                onChange={(e) => setCountryOfOrigin(e.target.value)}
+                placeholder="Type to search…"
+                className="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition text-sm"
+              />
+              <datalist id="countries-origin-list">
+                {COUNTRIES.map((c) => <option key={c.value} value={c.value} />)}
+              </datalist>
+            </div>
+
+            <div className="flex items-center justify-between pt-1">
+              <StatusMessage state={personalState} />
+              <SaveButton pending={personalPending} />
+            </div>
+          </div>
+        </form>
+      </SectionCard>
+
+      {/* Train Your Introduction — only shown when there's something to work with */}
+      {(birthday || jobStatus || city || country || countryOfOrigin) && (
+        <SectionCard
+          title="Train Your Introduction"
+          description="Practice introducing yourself in Serbian or Croatian"
+        >
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-slate-500">
+              Your bilingual introduction is ready — practice reading and speaking it aloud.
+            </p>
+            <Link
+              href="/study/introduction"
+              className="ml-4 flex-shrink-0 px-5 py-2.5 bg-violet-600 text-white text-sm font-semibold rounded-xl hover:bg-violet-700 transition-all active:scale-[0.98]"
+            >
+              Practice →
+            </Link>
+          </div>
+        </SectionCard>
+      )}
     </div>
   )
 }

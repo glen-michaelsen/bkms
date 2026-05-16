@@ -4,14 +4,14 @@ import { redirect } from "next/navigation"
 import Link from "next/link"
 import { logoutAction } from "@/app/actions"
 import { db } from "@/db"
-import { words, sentences, userItemProgress, userDailyActivity, categories, userCrosswordProgress, userWordMatchProgress } from "@/db/schema"
+import { words, sentences, userItemProgress, userDailyActivity, categories, userCrosswordProgress, userWordMatchProgress, userProfile } from "@/db/schema"
 import { eq, and, gte } from "drizzle-orm"
 import { buildStats, STATUS_META, type ItemStats } from "@/lib/progress"
 import { ActivityGraph } from "@/components/ActivityGraph"
 import { CategoryTags } from "@/components/CategoryTags"
 import { DailySentences } from "@/components/DailySentences"
 import { Greeting } from "@/components/Greeting"
-import { BookOpen, MessageSquare, Grid3x3, Shuffle, ArrowRight, Check } from "lucide-react"
+import { BookOpen, MessageSquare, Grid3x3, Shuffle, ArrowRight, Check, User, List } from "lucide-react"
 
 const languageInfo = {
   sr: { label: "Serbian", flag: "🇷🇸", native: "Srpski" },
@@ -105,11 +105,11 @@ function StatsBar({ stats }: { stats: ItemStats }) {
 
 // ── GameCard ──────────────────────────────────────────────────────────────────
 
-function GameCard({ href, icon: Icon, name, solved }: { href: string; icon: React.ComponentType<{ className?: string }>; name: string; solved: boolean }) {
+function GameCard({ href, icon: Icon, name, solved, subtitle }: { href: string; icon: React.ComponentType<{ className?: string }>; name: string; solved: boolean; subtitle?: string }) {
   return (
     <Link
       href={href}
-      className="group flex items-center gap-3 bg-white border border-slate-100 rounded-2xl px-4 py-3 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 min-w-[160px]"
+      className="group flex items-center gap-3 bg-white border border-slate-100 rounded-2xl px-4 py-3 hover:shadow-md hover:-translate-y-0.5 transition-all duration-200"
     >
       <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${solved ? "bg-emerald-100 text-emerald-600" : "bg-slate-100 text-slate-500 group-hover:bg-violet-100 group-hover:text-violet-600"} transition-colors`}>
         <Icon className="w-4.5 h-4.5" />
@@ -119,7 +119,7 @@ function GameCard({ href, icon: Icon, name, solved }: { href: string; icon: Reac
         {solved ? (
           <p className="text-xs font-medium text-emerald-600 mt-0.5 flex items-center gap-1"><Check className="w-3 h-3" />Solved today</p>
         ) : (
-          <p className="text-xs text-slate-400 mt-0.5">Play today's puzzle</p>
+          <p className="text-xs text-slate-400 mt-0.5">{subtitle ?? "Play today's puzzle"}</p>
         )}
       </div>
       <span className={`w-2 h-2 rounded-full flex-shrink-0 ${solved ? "bg-emerald-400" : "bg-slate-200"}`} />
@@ -145,7 +145,7 @@ export default async function DashboardPage() {
   graphStart.setUTCDate(graphStart.getUTCDate() - 12 * 7)
   const graphStartStr = graphStart.toISOString().slice(0, 10)
 
-  const [allWords, allSentences, allProgress, allActivity, allCategories, crosswordProgress, wordMatchProgress] = await Promise.all([
+  const [allWords, allSentences, allProgress, allActivity, allCategories, crosswordProgress, wordMatchProgress, profile] = await Promise.all([
     db.select({ id: words.id }).from(words),
     db.select({ id: sentences.id }).from(sentences),
     db.select().from(userItemProgress).where(eq(userItemProgress.userId, userId)),
@@ -161,6 +161,8 @@ export default async function DashboardPage() {
       .from(userWordMatchProgress)
       .where(and(eq(userWordMatchProgress.userId, userId), eq(userWordMatchProgress.date, today)))
       .get(),
+    db.select({ userId: userProfile.userId, jobStatus: userProfile.jobStatus, birthday: userProfile.birthday, city: userProfile.city, country: userProfile.country, countryOfOrigin: userProfile.countryOfOrigin })
+      .from(userProfile).where(eq(userProfile.userId, userId)).get(),
   ])
 
   const wordStats = buildStats(
@@ -200,7 +202,7 @@ export default async function DashboardPage() {
         </div>
       </nav>
 
-      <main className="flex-1 max-w-3xl mx-auto w-full px-5 py-10 space-y-6">
+      <main className="flex-1 max-w-3xl mx-auto w-full px-5 py-10 space-y-8">
         {/* Hero */}
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-violet-100 text-violet-700 text-xs font-semibold rounded-full mb-4">
@@ -219,55 +221,73 @@ export default async function DashboardPage() {
           <DailySentences />
         </div>
 
-        {/* Study cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          <Link
-            href="/study/words"
-            className="group relative overflow-hidden bg-white rounded-3xl border border-slate-100 p-7 hover:shadow-xl hover:-translate-y-1 transition-all duration-200"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-violet-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-            <div className="relative z-10">
-              <div className="w-12 h-12 bg-violet-100 rounded-2xl flex items-center justify-center mb-5 group-hover:bg-violet-200 transition-colors text-violet-600">
-                <BookOpen className="w-6 h-6" />
+        {/* Vocabulary Training */}
+        <div>
+          <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">Vocabulary Training</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <Link
+              href="/study/words"
+              className="group relative overflow-hidden bg-white rounded-3xl border border-slate-100 p-7 hover:shadow-xl hover:-translate-y-1 transition-all duration-200"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-violet-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="relative z-10">
+                <div className="w-12 h-12 bg-violet-100 rounded-2xl flex items-center justify-center mb-5 group-hover:bg-violet-200 transition-colors text-violet-600">
+                  <BookOpen className="w-6 h-6" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-4">Train Words</h3>
+                <StatsBar stats={wordStats} />
+                <div className="mt-4 flex items-center text-violet-600 text-sm font-semibold">
+                  Start session
+                  <ArrowRight className="ml-1.5 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </div>
               </div>
-              <h2 className="text-xl font-bold text-slate-900 mb-1.5">Train Words</h2>
-              <p className="text-sm text-slate-500 leading-relaxed">
-                Practise vocabulary — translate single words between English and {lang.label}.
-              </p>
-              <StatsBar stats={wordStats} />
-              <div className="mt-4 flex items-center text-violet-600 text-sm font-semibold">
-                Start session
-                <ArrowRight className="ml-1.5 w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </div>
-            </div>
-          </Link>
+            </Link>
 
-          <Link
-            href="/study/sentences"
-            className="group relative overflow-hidden bg-white rounded-3xl border border-slate-100 p-7 hover:shadow-xl hover:-translate-y-1 transition-all duration-200"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-            <div className="relative z-10">
-              <div className="w-12 h-12 bg-fuchsia-100 rounded-2xl flex items-center justify-center mb-5 group-hover:bg-fuchsia-200 transition-colors text-fuchsia-600">
-                <MessageSquare className="w-6 h-6" />
+            <Link
+              href="/study/sentences"
+              className="group relative overflow-hidden bg-white rounded-3xl border border-slate-100 p-7 hover:shadow-xl hover:-translate-y-1 transition-all duration-200"
+            >
+              <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+              <div className="relative z-10">
+                <div className="w-12 h-12 bg-fuchsia-100 rounded-2xl flex items-center justify-center mb-5 group-hover:bg-fuchsia-200 transition-colors text-fuchsia-600">
+                  <MessageSquare className="w-6 h-6" />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 mb-4">Train Sentences</h3>
+                <StatsBar stats={sentenceStats} />
+                <div className="mt-4 flex items-center text-fuchsia-600 text-sm font-semibold">
+                  Start session
+                  <ArrowRight className="ml-1.5 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                </div>
               </div>
-              <h2 className="text-xl font-bold text-slate-900 mb-1.5">Train Sentences</h2>
-              <p className="text-sm text-slate-500 leading-relaxed">
-                Build fluency with full phrases — common everyday sentences in {lang.label}.
-              </p>
-              <StatsBar stats={sentenceStats} />
-              <div className="mt-4 flex items-center text-fuchsia-600 text-sm font-semibold">
-                Start session
-                <ArrowRight className="ml-1.5 w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </div>
-            </div>
-          </Link>
+            </Link>
+          </div>
         </div>
 
-        {/* Games */}
+        {/* Standard Exercises */}
         <div>
-          <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 mb-3">Daily Games</h2>
-          <div className="flex flex-wrap gap-3">
+          <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">Standard Exercises</h2>
+          <div className="grid grid-cols-3 gap-3">
+            <GameCard
+              href="/study/introduction"
+              icon={User}
+              name="My Introduction"
+              solved={false}
+              subtitle={profile ? "Practice your intro" : "Set up your profile"}
+            />
+            <GameCard
+              href="/study/cases"
+              icon={List}
+              name="Cases"
+              solved={false}
+              subtitle="All 7 cases"
+            />
+          </div>
+        </div>
+
+        {/* Daily Games */}
+        <div>
+          <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">Daily Games</h2>
+          <div className="grid grid-cols-3 gap-3">
             <GameCard
               href="/games/crossword"
               icon={Grid3x3}
@@ -283,8 +303,11 @@ export default async function DashboardPage() {
           </div>
         </div>
 
-        {/* Category tags */}
-        <CategoryTags categories={allCategories} />
+        {/* Train by Category */}
+        <div>
+          <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">Train by Category</h2>
+          <CategoryTags categories={allCategories} />
+        </div>
 
         <p className="text-center text-xs text-slate-400">
           <span className="font-semibold">Known</span> = 3 correct in a row · each session is 10 items

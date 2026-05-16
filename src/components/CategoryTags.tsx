@@ -22,9 +22,6 @@ export function CategoryTags({ categories }: { categories: Category[] }) {
     <>
       {/* ── Tag list ─────────────────────────────────────────────────────── */}
       <div>
-        <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">
-          Train by category
-        </h2>
         <div className="flex flex-wrap gap-2">
           {categories.map((cat) => (
             <button
