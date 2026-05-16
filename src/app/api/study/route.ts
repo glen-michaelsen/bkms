@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { db } from "@/db"
-import { words, sentences, userLevelConfig } from "@/db/schema"
+import { words, sentences, userLevelConfig, categories } from "@/db/schema"
 import { eq, or, sql } from "drizzle-orm"
 
 export type Exercise = {
@@ -10,6 +10,7 @@ export type Exercise = {
   english: string
   correctAnswer: string
   options?: string[]
+  categoryName?: string
 }
 
 function shuffle<T>(arr: T[]): T[] {
@@ -56,8 +57,12 @@ export async function GET(req: NextRequest) {
   const language = session.user.language as "sr" | "hr"
   const userId = parseInt(session.user.id)
 
-  // Fetch all items (always needed for MC distractor generation)
-  const allItems = await db.select().from(type === "words" ? words : sentences)
+  // Fetch all items (always needed for MC distractor generation) + categories map
+  const [allItems, allCategories] = await Promise.all([
+    db.select().from(type === "words" ? words : sentences),
+    db.select({ id: categories.id, name: categories.name }).from(categories),
+  ])
+  const categoryMap = new Map(allCategories.map((c) => [c.id, c.name]))
 
   if (allItems.length < 4) {
     return NextResponse.json(
@@ -127,6 +132,8 @@ export async function GET(req: NextRequest) {
     const exerciseType = index % 2 === 0 ? "multiple_choice" : "type_in"
     const correctAnswer = language === "sr" ? item.serbian : item.croatian
 
+    const categoryName = item.categoryId ? categoryMap.get(item.categoryId) : undefined
+
     if (exerciseType === "multiple_choice") {
       const distractors = shuffle(allItems.filter((i) => i.id !== item.id))
         .slice(0, 3)
@@ -137,10 +144,11 @@ export async function GET(req: NextRequest) {
         english: item.english,
         correctAnswer,
         options: shuffle([correctAnswer, ...distractors]),
+        categoryName,
       }
     }
 
-    return { id: item.id, exerciseType, english: item.english, correctAnswer }
+    return { id: item.id, exerciseType, english: item.english, correctAnswer, categoryName }
   })
 
   return NextResponse.json({ exercises })

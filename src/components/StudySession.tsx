@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react"
 import type { Exercise } from "@/app/api/study/route"
 import { getItemStatus, STATUS_META } from "@/lib/progress"
 import { setHintEnabledAction } from "@/app/actions"
-import { AlertCircle, Sparkles, ThumbsUp, Zap, Lightbulb, Check, Star, Flame } from "lucide-react"
+import { AlertCircle, Sparkles, ThumbsUp, Zap, Lightbulb, Check, Star, Flame, Tag } from "lucide-react"
 
 type Phase = "loading" | "exercise" | "feedback" | "results"
 type Closeness = "very_close" | "close" | "wrong"
@@ -313,7 +313,7 @@ export function StudySession({ type, hintEnabled: initialHint, categoryId, wordT
             {exercise.exerciseType === "type_in" && (
               <button
                 onClick={toggleHint}
-                className={`text-xs font-semibold px-2.5 py-1 rounded-full transition-colors ${
+                className={`inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full transition-colors ${
                   hintEnabled
                     ? "bg-violet-600 text-white"
                     : "bg-slate-100 text-slate-500 hover:bg-slate-200"
@@ -322,15 +322,12 @@ export function StudySession({ type, hintEnabled: initialHint, categoryId, wordT
                 <Lightbulb className="w-3.5 h-3.5" /> Hint
               </button>
             )}
-            <span
-              className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                exercise.exerciseType === "multiple_choice"
-                  ? "bg-violet-100 text-violet-700"
-                  : "bg-fuchsia-100 text-fuchsia-700"
-              }`}
-            >
-              {exercise.exerciseType === "multiple_choice" ? "Choose" : "Type"}
-            </span>
+            {exercise.categoryName && (
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1 rounded-full bg-slate-100 text-slate-500">
+                <Tag className="w-3 h-3" />
+                {exercise.categoryName}
+              </span>
+            )}
           </div>
         </div>
         <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
