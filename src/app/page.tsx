@@ -67,20 +67,28 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen bg-white">
-      <MarketingNav />
+      {/* ── Hero (gradient panel) ──────────────────────────────────────── */}
+      <div className="relative overflow-hidden bg-violet-600">
+        {/* Radial overlays — same as login left panel */}
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_#a78bfa_0%,_transparent_60%)] opacity-50" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_#ec4899_0%,_transparent_60%)] opacity-30" />
 
-      <main>
+        {/* Nav sits inside the gradient so it blends in */}
+        <div className="relative z-10">
+          <MarketingNav variant="dark" />
+        </div>
+
         {/* ── Hero ───────────────────────────────────────────────────── */}
-        <section className="max-w-5xl mx-auto px-5 py-24 text-center">
+        <section className="relative z-10 max-w-5xl mx-auto px-5 pt-16 pb-28 text-center">
           {/* Badge */}
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-violet-100 text-violet-700 mb-6">
+          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white/15 text-white mb-6">
             Free to use
           </span>
 
-          <h1 className="text-5xl sm:text-6xl font-extrabold text-slate-900 leading-tight tracking-tight">
+          <h1 className="text-5xl sm:text-6xl font-extrabold text-white leading-tight tracking-tight">
             Learn Serbian &amp; Croatian
           </h1>
-          <p className="mt-5 text-lg sm:text-xl text-slate-500 max-w-xl mx-auto leading-relaxed">
+          <p className="mt-5 text-lg sm:text-xl text-white/75 max-w-xl mx-auto leading-relaxed">
             Build real vocabulary, master grammar, and practise daily — all in one place.
           </p>
 
@@ -89,13 +97,13 @@ export default async function HomePage() {
               <>
                 <Link
                   href="/dashboard"
-                  className="px-6 py-3 bg-violet-600 text-white font-semibold rounded-full hover:bg-violet-700 transition-colors shadow-sm"
+                  className="px-6 py-3 bg-white text-violet-700 font-bold rounded-full hover:bg-violet-50 transition-colors shadow-lg"
                 >
                   Go to dashboard →
                 </Link>
                 <Link
                   href="/words"
-                  className="px-6 py-3 border border-slate-200 text-slate-700 font-semibold rounded-full hover:border-slate-300 hover:bg-slate-50 transition-colors"
+                  className="px-6 py-3 border border-white/30 text-white font-semibold rounded-full hover:bg-white/10 transition-colors"
                 >
                   Explore words
                 </Link>
@@ -104,13 +112,13 @@ export default async function HomePage() {
               <>
                 <Link
                   href="/register"
-                  className="px-6 py-3 bg-violet-600 text-white font-semibold rounded-full hover:bg-violet-700 transition-colors shadow-sm"
+                  className="px-6 py-3 bg-white text-violet-700 font-bold rounded-full hover:bg-violet-50 transition-colors shadow-lg"
                 >
                   Start learning free →
                 </Link>
                 <Link
                   href="/login"
-                  className="text-sm font-medium text-slate-500 hover:text-slate-900 transition-colors px-4 py-3"
+                  className="px-6 py-3 border border-white/30 text-white font-semibold rounded-full hover:bg-white/10 transition-colors"
                 >
                   Log in
                 </Link>
@@ -118,7 +126,9 @@ export default async function HomePage() {
             )}
           </div>
         </section>
+      </div>{/* end gradient hero wrapper */}
 
+      <main>
         {/* ── Stats row ──────────────────────────────────────────────── */}
         <section className="border-y border-slate-100 bg-slate-50">
           <div className="max-w-5xl mx-auto px-5 py-10 grid grid-cols-3 divide-x divide-slate-200">
