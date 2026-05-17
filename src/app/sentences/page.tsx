@@ -14,6 +14,10 @@ export const metadata: Metadata = {
     "Real phrases from everyday situations. Learn how words combine in context and start speaking with confidence sooner than you think.",
 }
 
+function toSlug(name: string): string {
+  return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")
+}
+
 const FEATURED_NAMES = [
   "Greetings",
   "People and family",
@@ -92,7 +96,11 @@ export default async function SentencesPage() {
           const catSentences = (sentencesByCategory.get(cat.id) ?? []).slice(0, 6)
           return (
             <section key={cat.id}>
-              <h2 className="text-xl font-extrabold text-slate-900 mb-1">{cat.name}</h2>
+              <h2 className="text-xl font-extrabold text-slate-900 mb-1">
+                <Link href={`/categories/${toSlug(cat.name)}`} className="hover:text-violet-600 transition-colors">
+                  {cat.name}
+                </Link>
+              </h2>
               <p className="text-sm text-slate-500 mb-5">{INTROS[cat.name]}</p>
               {catSentences.length > 0 && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -123,12 +131,13 @@ export default async function SentencesPage() {
           <p className="text-sm text-slate-500 mb-5">Sign up to practise all categories in the app.</p>
           <div className="flex flex-wrap gap-2">
             {otherCategories.map((cat) => (
-              <span
+              <Link
                 key={cat.id}
-                className="px-3 py-1.5 bg-slate-100 text-slate-600 text-sm font-medium rounded-full"
+                href={`/categories/${toSlug(cat.name)}`}
+                className="px-3 py-1.5 bg-slate-100 text-slate-600 text-sm font-medium rounded-full hover:bg-violet-100 hover:text-violet-700 transition-colors"
               >
                 {cat.name}
-              </span>
+              </Link>
             ))}
           </div>
         </section>

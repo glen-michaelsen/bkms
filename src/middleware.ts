@@ -5,7 +5,7 @@ export default auth((req) => {
   const isLoggedIn = !!req.auth
 
   const publicRoutes = ["/login", "/register"]
-  const publicPrefixes = ["/words", "/sentences", "/cases"]
+  const publicPrefixes = ["/words", "/sentences", "/cases", "/categories"]
   const isPublic =
     publicRoutes.includes(pathname) ||
     publicPrefixes.some((p) => pathname === p || pathname.startsWith(p + "/")) ||
