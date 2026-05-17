@@ -52,36 +52,38 @@ export default async function CasePage({
 
   return (
     <div className="min-h-screen bg-white">
-      {/* Sticky light nav */}
-      <MarketingNav />
+      {/* ── Gradient hero ──────────────────────────────────────────────── */}
+      <div className="relative overflow-hidden bg-violet-600">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_#a78bfa_0%,_transparent_60%)] opacity-50" />
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_#ec4899_0%,_transparent_60%)] opacity-30" />
 
-      <main className="max-w-5xl mx-auto px-5 py-16">
-        {/* Back link */}
-        <Link
-          href="/cases"
-          className="mb-8 inline-flex text-sm text-slate-500 hover:text-violet-600 transition-colors"
-        >
-          ← All cases
-        </Link>
-
-        {/* Header */}
-        <div className="mb-10">
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-violet-100 text-violet-700 mb-4">
-            Case {c.number} of 7
-          </span>
-          <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 leading-tight tracking-tight">
-            Learn {c.englishName} in Serbian &amp; Croatian
-          </h1>
-          <p className="mt-2 text-slate-500 text-sm">
-            {c.srName === c.hrName
-              ? c.srName
-              : `Serbian: ${c.srName} · Croatian: ${c.hrName}`}
-          </p>
-          {intro && (
-            <p className="mt-5 text-slate-600 leading-relaxed max-w-2xl">{intro}</p>
-          )}
+        <div className="relative z-10">
+          <MarketingNav variant="dark" />
         </div>
 
+        <div className="relative z-10 max-w-5xl mx-auto px-5 pt-14 pb-24">
+          <Link
+            href="/cases"
+            className="inline-flex items-center gap-1.5 text-white/60 hover:text-white text-sm font-medium transition-colors mb-6"
+          >
+            ← All cases
+          </Link>
+          <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-white/15 text-white mb-5 ml-4">
+            Case {c.number} of 7
+          </div>
+          <h1 className="text-4xl sm:text-5xl font-extrabold text-white leading-tight tracking-tight">
+            Learn {c.englishName} in Serbian &amp; Croatian
+          </h1>
+          <p className="mt-2 text-white/60 text-sm font-medium">
+            {c.srName === c.hrName ? c.srName : `Serbian: ${c.srName} · Croatian: ${c.hrName}`}
+          </p>
+          {intro && (
+            <p className="mt-5 text-white/75 leading-relaxed max-w-2xl text-lg">{intro}</p>
+          )}
+        </div>
+      </div>
+
+      <main className="max-w-5xl mx-auto px-5 py-16">
         {/* Case card */}
         <div className="bg-white border border-slate-100 rounded-3xl shadow-sm overflow-hidden mb-12">
           {/* Card header */}

@@ -83,7 +83,7 @@ export default function CasesPage() {
                     <td className="px-6 py-3 text-right">
                       <Link
                         href={`/cases/${c.id}`}
-                        className="text-violet-600 font-semibold text-sm hover:text-violet-700 transition-colors"
+                        className="inline-flex items-center gap-1 text-violet-600 font-semibold text-sm hover:text-violet-700 transition-colors whitespace-nowrap"
                       >
                         Learn →
                       </Link>
