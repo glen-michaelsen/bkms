@@ -2,7 +2,7 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { auth } from "@/auth"
 import MarketingNav from "@/components/MarketingNav"
-import { BookOpen, MessageSquare, List, Gamepad2, User } from "lucide-react"
+import { BookOpen, MessageSquare, List, Gamepad2 } from "lucide-react"
 import { db } from "@/db"
 import { words, sentences } from "@/db/schema"
 import { sql } from "drizzle-orm"
@@ -163,9 +163,13 @@ export default async function HomePage() {
         {/* ── Built with love ────────────────────────────────────────── */}
         <section className="max-w-5xl mx-auto px-5 py-20">
           <div className="flex flex-col sm:flex-row items-center gap-10 sm:gap-14">
-            {/* Photo placeholder */}
-            <div className="flex-shrink-0 w-44 h-44 sm:w-52 sm:h-52 rounded-3xl bg-slate-100 flex items-center justify-center overflow-hidden shadow-inner">
-              <User className="w-20 h-20 text-slate-300" />
+            {/* Photo */}
+            <div className="flex-shrink-0 w-44 h-44 sm:w-52 sm:h-52 rounded-3xl overflow-hidden shadow-md">
+              <img
+                src="/glen-randelovic-michaelsen.jpg"
+                alt="Glen Ranđelović Michaelsen"
+                className="w-full h-full object-cover object-top"
+              />
             </div>
 
             {/* Text */}
