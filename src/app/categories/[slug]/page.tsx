@@ -94,7 +94,7 @@ export default async function CategoryPage({
             ← All categories
           </Link>
           <h1 className="text-4xl sm:text-5xl font-extrabold text-white leading-tight tracking-tight">
-            Learn {cat.name} in Serbian &amp; Croatian
+            Learn {cat.name}{" "}in Serbian &amp; Croatian
           </h1>
           <p className="mt-5 text-white/75 leading-relaxed max-w-2xl text-lg">{intro}</p>
         </div>
