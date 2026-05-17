@@ -89,13 +89,13 @@ export default async function SentencesPage() {
       <main className="max-w-5xl mx-auto px-5 py-16 space-y-20">
         {/* Featured category sections */}
         {featuredCategories.map((cat) => {
-          const catSentences = (sentencesByCategory.get(cat.id) ?? []).slice(0, 5)
+          const catSentences = (sentencesByCategory.get(cat.id) ?? []).slice(0, 6)
           return (
             <section key={cat.id}>
               <h2 className="text-xl font-extrabold text-slate-900 mb-1">{cat.name}</h2>
               <p className="text-sm text-slate-500 mb-5">{INTROS[cat.name]}</p>
               {catSentences.length > 0 && (
-                <div className="space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   {catSentences.map((sentence) => (
                     <div
                       key={sentence.id}

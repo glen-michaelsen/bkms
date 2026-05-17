@@ -88,7 +88,7 @@ export default async function WordsPage() {
       <main className="max-w-5xl mx-auto px-5 py-16 space-y-20">
         {/* Featured category sections */}
         {featuredCategories.map((cat) => {
-          const catWords = (wordsByCategory.get(cat.id) ?? []).slice(0, 5)
+          const catWords = (wordsByCategory.get(cat.id) ?? []).slice(0, 6)
           return (
             <section key={cat.id}>
               <h2 className="text-xl font-extrabold text-slate-900 mb-1">{cat.name}</h2>
