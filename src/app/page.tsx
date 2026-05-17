@@ -3,6 +3,9 @@ import Link from "next/link"
 import { auth } from "@/auth"
 import MarketingNav from "@/components/MarketingNav"
 import { BookOpen, MessageSquare, List, Gamepad2 } from "lucide-react"
+import { db } from "@/db"
+import { words, sentences } from "@/db/schema"
+import { sql } from "drizzle-orm"
 
 export const dynamic = "force-dynamic"
 
@@ -63,7 +66,14 @@ const CATEGORY_COLORS: Record<string, string> = {
 }
 
 export default async function HomePage() {
-  const session = await auth()
+  const [session, wordCountRow, sentenceCountRow] = await Promise.all([
+    auth(),
+    db.select({ count: sql<number>`count(*)` }).from(words).get(),
+    db.select({ count: sql<number>`count(*)` }).from(sentences).get(),
+  ])
+
+  const wordCount = wordCountRow?.count ?? 0
+  const sentenceCount = sentenceCountRow?.count ?? 0
 
   return (
     <div className="min-h-screen bg-white">
@@ -131,17 +141,19 @@ export default async function HomePage() {
       <main>
         {/* ── Stats row ──────────────────────────────────────────────── */}
         <section className="border-y border-slate-100 bg-slate-50">
-          <div className="max-w-5xl mx-auto px-5 py-10 grid grid-cols-3 divide-x divide-slate-200">
-            {[
-              { value: "7", label: "Grammatical cases" },
-              { value: "Daily", label: "Practice sessions" },
-              { value: "2 languages", label: "Serbian & Croatian" },
-            ].map(({ value, label }) => (
-              <div key={label} className="text-center px-6">
-                <p className="text-2xl sm:text-3xl font-extrabold text-slate-900">{value}</p>
-                <p className="text-sm text-slate-500 mt-1">{label}</p>
-              </div>
-            ))}
+          <div className="max-w-5xl mx-auto px-5 py-12 grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-slate-200 gap-0">
+            <div className="text-center px-6 py-6 sm:py-0">
+              <p className="text-3xl sm:text-4xl font-extrabold text-slate-900">{wordCount.toLocaleString()} words</p>
+              <p className="text-sm text-slate-500 mt-2 max-w-xs mx-auto">Build a solid vocabulary from the ground up</p>
+            </div>
+            <div className="text-center px-6 py-6 sm:py-0">
+              <p className="text-3xl sm:text-4xl font-extrabold text-slate-900">{sentenceCount.toLocaleString()} sentences</p>
+              <p className="text-sm text-slate-500 mt-2 max-w-xs mx-auto">Real phrases to help you start speaking naturally</p>
+            </div>
+            <div className="text-center px-6 py-6 sm:py-0">
+              <p className="text-3xl sm:text-4xl font-extrabold text-slate-900">Endless training</p>
+              <p className="text-sm text-slate-500 mt-2 max-w-xs mx-auto">Go at your own pace — practise as much or as little as you like</p>
+            </div>
           </div>
         </section>
 
