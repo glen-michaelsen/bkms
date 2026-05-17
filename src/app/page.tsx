@@ -2,10 +2,13 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { auth } from "@/auth"
 import MarketingNav from "@/components/MarketingNav"
-import { BookOpen, MessageSquare, List, Gamepad2 } from "lucide-react"
+import { BookOpen, MessageSquare, List, Gamepad2, User } from "lucide-react"
 import { db } from "@/db"
 import { words, sentences } from "@/db/schema"
 import { sql } from "drizzle-orm"
+import { Dancing_Script } from "next/font/google"
+
+const signature = Dancing_Script({ subsets: ["latin"], weight: "700" })
 
 export const dynamic = "force-dynamic"
 
@@ -153,6 +156,29 @@ export default async function HomePage() {
             <div className="text-center px-6 py-6 sm:py-0">
               <p className="text-2xl sm:text-3xl font-extrabold text-slate-900">Endless training</p>
               <p className="text-sm text-slate-500 mt-2 max-w-xs mx-auto">Go at your own pace — practise as much or as little as you like</p>
+            </div>
+          </div>
+        </section>
+
+        {/* ── Built with love ────────────────────────────────────────── */}
+        <section className="max-w-5xl mx-auto px-5 py-20">
+          <div className="flex flex-col sm:flex-row items-center gap-10 sm:gap-14">
+            {/* Photo placeholder */}
+            <div className="flex-shrink-0 w-44 h-44 sm:w-52 sm:h-52 rounded-3xl bg-slate-100 flex items-center justify-center overflow-hidden shadow-inner">
+              <User className="w-20 h-20 text-slate-300" />
+            </div>
+
+            {/* Text */}
+            <div className="text-center sm:text-left">
+              <h2 className="text-2xl font-extrabold text-slate-900 mb-3">Built with love ♥</h2>
+              <p className="text-slate-500 leading-relaxed max-w-md">
+                This started as a personal project — one person stumbling through Serbian, frustrated by the lack
+                of good tools. Čujemo se was built to change that. Whether you have roots in the region, a partner
+                who speaks the language, or simply fell in love with the culture, this is for you.
+              </p>
+              <p className={`mt-6 text-3xl text-violet-600 ${signature.className}`}>
+                Glen Ranđelović Michaelsen
+              </p>
             </div>
           </div>
         </section>
