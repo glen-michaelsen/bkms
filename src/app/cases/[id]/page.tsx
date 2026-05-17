@@ -72,7 +72,7 @@ export default async function CasePage({
             Case {c.number} of 7
           </div>
           <h1 className="text-4xl sm:text-5xl font-extrabold text-white leading-tight tracking-tight">
-            Learn {c.englishName} in Serbian &amp; Croatian
+            Learn {c.englishName}{" "}in Serbian &amp; Croatian
           </h1>
           <p className="mt-2 text-white/60 text-sm font-medium">
             {c.srName === c.hrName ? c.srName : `Serbian: ${c.srName} · Croatian: ${c.hrName}`}
