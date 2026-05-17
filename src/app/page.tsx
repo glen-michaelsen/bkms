@@ -171,7 +171,7 @@ export default async function HomePage() {
             {/* Text */}
             <div className="text-center sm:text-left">
               <h2 className="text-2xl font-extrabold text-slate-900 mb-3">Built with love ♥</h2>
-              <p className="text-slate-500 leading-relaxed max-w-md">
+              <p className="text-slate-500 leading-relaxed">
                 This started as a personal project — one person stumbling through Serbian, frustrated by the lack
                 of good tools. Čujemo se was built to change that. Whether you have roots in the region, a partner
                 who speaks the language, or simply fell in love with the culture, this is for you.
