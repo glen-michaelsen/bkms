@@ -78,6 +78,8 @@ export default async function HomePage() {
   const wordCount = wordCountRow?.count ?? 0
   const sentenceCount = sentenceCountRow?.count ?? 0
 
+  const fmt = (n: number) => "+" + (Math.floor(n / 100) * 100).toLocaleString()
+
   return (
     <div className="min-h-screen bg-white">
       {/* ── Hero (gradient panel) ──────────────────────────────────────── */}
@@ -146,11 +148,11 @@ export default async function HomePage() {
         <section className="border-y border-slate-100 bg-slate-50">
           <div className="max-w-5xl mx-auto px-5 py-12 grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-slate-200 gap-0">
             <div className="text-center px-6 py-6 sm:py-0">
-              <p className="text-2xl sm:text-3xl font-extrabold text-slate-900">{wordCount.toLocaleString()} words</p>
+              <p className="text-2xl sm:text-3xl font-extrabold text-slate-900">{fmt(wordCount)} words</p>
               <p className="text-sm text-slate-500 mt-2 max-w-xs mx-auto">Build a solid vocabulary from the ground up</p>
             </div>
             <div className="text-center px-6 py-6 sm:py-0">
-              <p className="text-2xl sm:text-3xl font-extrabold text-slate-900">{sentenceCount.toLocaleString()} sentences</p>
+              <p className="text-2xl sm:text-3xl font-extrabold text-slate-900">{fmt(sentenceCount)} sentences</p>
               <p className="text-sm text-slate-500 mt-2 max-w-xs mx-auto">Real phrases to help you start speaking naturally</p>
             </div>
             <div className="text-center px-6 py-6 sm:py-0">
