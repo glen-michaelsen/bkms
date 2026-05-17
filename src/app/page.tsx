@@ -95,7 +95,7 @@ export default async function HomePage() {
             Free to use
           </span>
 
-          <h1 className="text-5xl sm:text-6xl font-extrabold text-white leading-tight tracking-tight">
+          <h1 className="text-4xl sm:text-5xl font-extrabold text-white leading-tight tracking-tight">
             Learn Serbian &amp; Croatian
           </h1>
           <p className="mt-5 text-lg sm:text-xl text-white/75 max-w-xl mx-auto leading-relaxed">
