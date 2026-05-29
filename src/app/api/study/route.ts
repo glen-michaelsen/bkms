@@ -19,6 +19,85 @@ function shuffle<T>(arr: T[]): T[] {
   return [...arr].sort(() => Math.random() - 0.5)
 }
 
+type DistractorItem = {
+  id: number
+  categoryId: number | null
+  serbian: string
+  croatian: string
+}
+
+/**
+ * Pick `count` distractor answers that are as confusable as possible with the
+ * correct answer, using different strategies for words vs sentences.
+ *
+ * Words  — category is the primary signal (semantically confusable vocab),
+ *          text length within ±50 % as a tiebreaker.
+ * Sentences — length similarity is the primary filter (a wildly different
+ *          length is a dead giveaway), category is preferred within that.
+ */
+function pickDistractors(
+  correct: DistractorItem,
+  allItems: DistractorItem[],
+  language: "sr" | "hr",
+  itemType: "words" | "sentences",
+  count = 3,
+): string[] {
+  const correctText = language === "sr" ? correct.serbian : correct.croatian
+  const correctLen = correctText.length
+  const getText = (i: DistractorItem) => language === "sr" ? i.serbian : i.croatian
+
+  // Exclude correct item and any accidental duplicates
+  const pool = allItems.filter(i => i.id !== correct.id && getText(i) !== correctText)
+
+  const lenSim = (text: string) =>
+    Math.min(text.length, correctLen) / Math.max(text.length, correctLen)
+
+  const withinLen = (text: string, tol: number) => lenSim(text) >= 1 - tol
+
+  /** Shuffle pool, de-dupe by text, take `count`. */
+  const pick = (candidates: DistractorItem[]): string[] => {
+    const seen = new Set<string>()
+    const result: string[] = []
+    for (const item of shuffle(candidates)) {
+      const t = getText(item)
+      if (!seen.has(t)) { seen.add(t); result.push(t) }
+      if (result.length === count) break
+    }
+    return result
+  }
+
+  if (itemType === "words") {
+    // Tier 1 — same category + similar length (±50 %)
+    const t1 = pool.filter(i => i.categoryId === correct.categoryId && withinLen(getText(i), 0.5))
+    if (t1.length >= count) return pick(t1)
+
+    // Tier 2 — same category, any length
+    const t2 = pool.filter(i => i.categoryId === correct.categoryId)
+    if (t2.length >= count) return pick(t2)
+
+    // Tier 3 — full pool, sorted by length similarity (best match first)
+    const t3 = [...pool].sort((a, b) => lenSim(getText(b)) - lenSim(getText(a)))
+    return pick(t3.slice(0, count * 4))
+
+  } else {
+    // Tier 1 — same category + length within ±35 %
+    const t1 = pool.filter(i => i.categoryId === correct.categoryId && withinLen(getText(i), 0.35))
+    if (t1.length >= count) return pick(t1)
+
+    // Tier 2 — any category + length within ±35 %
+    const t2 = pool.filter(i => withinLen(getText(i), 0.35))
+    if (t2.length >= count) return pick(t2)
+
+    // Tier 3 — any category + length within ±60 %
+    const t3 = pool.filter(i => withinLen(getText(i), 0.60))
+    if (t3.length >= count) return pick(t3)
+
+    // Tier 4 — full pool sorted by length similarity
+    const t4 = [...pool].sort((a, b) => lenSim(getText(b)) - lenSim(getText(a)))
+    return pick(t4.slice(0, count * 4))
+  }
+}
+
 /** Distribute `total` items across configs using largest-remainder method. */
 function distribute(total: number, configs: { levelId: number; percentage: number }[]) {
   const raw = configs.map((c) => ({
@@ -137,9 +216,7 @@ export async function GET(req: NextRequest) {
     const categoryName = item.categoryId ? categoryMap.get(item.categoryId) : undefined
 
     if (exerciseType === "multiple_choice") {
-      const distractors = shuffle(allItems.filter((i) => i.id !== item.id))
-        .slice(0, 3)
-        .map((i) => (language === "sr" ? i.serbian : i.croatian))
+      const distractors = pickDistractors(item as DistractorItem, allItems as DistractorItem[], language, type)
       return {
         id: item.id,
         exerciseType,
