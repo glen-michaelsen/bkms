@@ -218,7 +218,7 @@ export async function addLevelAction(
 
 // ─── Admin: edit & delete words / sentences ───────────────────────────────────
 
-type WordData = { english: string; serbian: string; croatian: string; categoryId: number | null }
+type WordData = { english: string; serbian: string; croatian: string; serbianFemale: string | null; croatianFemale: string | null; categoryId: number | null }
 type SentenceData = WordData & { levelId: number | null }
 
 export async function updateWordAction(id: number, data: WordData): Promise<SimpleResult> {
