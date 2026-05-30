@@ -10,7 +10,8 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "dotenv -e .env.local -- tsx scripts/migrate.ts",
     "db:seed-from-prod": "dotenv -e .env.local -- tsx scripts/seed-from-prod.ts",
-    "db:female-forms": "dotenv -e .env.local -- tsx scripts/populate-female-forms.ts"
+    "db:female-forms": "dotenv -e .env.local -- tsx scripts/populate-female-forms.ts",
+    "db:female-forms:direct": "tsx scripts/populate-female-forms.ts"
   },
   "dependencies": {
     "@libsql/client": "^0.17.2",
