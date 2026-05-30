@@ -11,6 +11,7 @@ export type Exercise = {
   exerciseType: "type_in" | "multiple_choice"
   english: string
   correctAnswer: string
+  alternateAnswer?: string  // opposite-gender form, shown in feedback and accepted as correct on type-in
   options?: string[]
   categoryName?: string
 }
@@ -223,6 +224,10 @@ export async function GET(req: NextRequest) {
     const base = language === "sr" ? item.serbian : item.croatian
     const female = language === "sr" ? item.serbianFemale : item.croatianFemale
     const correctAnswer = (isFemale && female) ? female : base
+    // alternateAnswer: the other gender's form (only when they actually differ)
+    const alternateAnswer = female && female !== base
+      ? (isFemale ? base : female)
+      : undefined
 
     const categoryName = item.categoryId ? categoryMap.get(item.categoryId) : undefined
 
@@ -233,12 +238,13 @@ export async function GET(req: NextRequest) {
         exerciseType,
         english: item.english,
         correctAnswer,
+        alternateAnswer,
         options: shuffle([correctAnswer, ...distractors]),
         categoryName,
       }
     }
 
-    return { id: item.id, exerciseType, english: item.english, correctAnswer, categoryName }
+    return { id: item.id, exerciseType, english: item.english, correctAnswer, alternateAnswer, categoryName }
   })
 
   return NextResponse.json({ exercises })

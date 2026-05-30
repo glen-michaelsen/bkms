@@ -147,7 +147,10 @@ export function StudySession({ type, hintEnabled: initialHint, categoryId, wordT
 
   const checkAnswer = useCallback(
     (answer: string) => {
-      const correct = normalize(answer) === normalize(exercise.correctAnswer)
+      const normAnswer = normalize(answer)
+      const correct =
+        normAnswer === normalize(exercise.correctAnswer) ||
+        (exercise.alternateAnswer ? normAnswer === normalize(exercise.alternateAnswer) : false)
       setIsCorrect(correct)
       setCloseness(
         correct || exercise.exerciseType === "multiple_choice"
@@ -428,6 +431,17 @@ export function StudySession({ type, hintEnabled: initialHint, categoryId, wordT
                   <p className="text-sm text-slate-600 mt-1">
                     Correct answer:{" "}
                     <span className="font-semibold text-slate-800">{exercise.correctAnswer}</span>
+                    {exercise.alternateAnswer && (
+                      <span className="text-slate-500"> / <span className="font-semibold text-slate-700">{exercise.alternateAnswer}</span></span>
+                    )}
+                  </p>
+                )}
+                {isCorrect && exercise.alternateAnswer && (
+                  <p className="text-sm text-slate-600 mt-1">
+                    Also accepted:{" "}
+                    <span className="font-semibold text-slate-700">{exercise.correctAnswer}</span>
+                    {" / "}
+                    <span className="font-semibold text-slate-700">{exercise.alternateAnswer}</span>
                   </p>
                 )}
               </div>
