@@ -44,6 +44,8 @@ export const words = sqliteTable("words", {
   english: text("english").notNull(),
   serbian: text("serbian").notNull(),
   croatian: text("croatian").notNull(),
+  serbianFemale: text("serbian_female"),
+  croatianFemale: text("croatian_female"),
   categoryId: integer("category_id").references(() => categories.id),
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
@@ -55,6 +57,8 @@ export const sentences = sqliteTable("sentences", {
   english: text("english").notNull(),
   serbian: text("serbian").notNull(),
   croatian: text("croatian").notNull(),
+  serbianFemale: text("serbian_female"),
+  croatianFemale: text("croatian_female"),
   categoryId: integer("category_id").references(() => categories.id),
   levelId: integer("level_id").references(() => levels.id),
   createdAt: integer("created_at", { mode: "timestamp" })

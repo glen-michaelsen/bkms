@@ -24,6 +24,8 @@ type DistractorItem = {
   categoryId: number | null
   serbian: string
   croatian: string
+  serbianFemale?: string | null
+  croatianFemale?: string | null
 }
 
 /**
@@ -40,11 +42,17 @@ function pickDistractors(
   allItems: DistractorItem[],
   language: "sr" | "hr",
   itemType: "words" | "sentences",
+  isFemale: boolean,
   count = 3,
 ): string[] {
-  const correctText = language === "sr" ? correct.serbian : correct.croatian
+  const resolveText = (i: DistractorItem) => {
+    const base = language === "sr" ? i.serbian : i.croatian
+    const female = language === "sr" ? i.serbianFemale : i.croatianFemale
+    return (isFemale && female) ? female : base
+  }
+  const correctText = resolveText(correct)
   const correctLen = correctText.length
-  const getText = (i: DistractorItem) => language === "sr" ? i.serbian : i.croatian
+  const getText = resolveText
 
   // Exclude correct item and any accidental duplicates
   const pool = allItems.filter(i => i.id !== correct.id && getText(i) !== correctText)
@@ -136,6 +144,7 @@ export async function GET(req: NextRequest) {
     : null
 
   const language = session.user.language as "sr" | "hr"
+  const isFemale = session.user.gender === "female"
   const userId = parseInt(session.user.id)
 
   // Fetch all items (always needed for MC distractor generation) + categories map
@@ -211,12 +220,14 @@ export async function GET(req: NextRequest) {
 
   const exercises: Exercise[] = sessionItems.map((item, index) => {
     const exerciseType = index % 2 === 0 ? "multiple_choice" : "type_in"
-    const correctAnswer = language === "sr" ? item.serbian : item.croatian
+    const base = language === "sr" ? item.serbian : item.croatian
+    const female = language === "sr" ? item.serbianFemale : item.croatianFemale
+    const correctAnswer = (isFemale && female) ? female : base
 
     const categoryName = item.categoryId ? categoryMap.get(item.categoryId) : undefined
 
     if (exerciseType === "multiple_choice") {
-      const distractors = pickDistractors(item as DistractorItem, allItems as DistractorItem[], language, type)
+      const distractors = pickDistractors(item as DistractorItem, allItems as DistractorItem[], language, type, isFemale)
       return {
         id: item.id,
         exerciseType,
