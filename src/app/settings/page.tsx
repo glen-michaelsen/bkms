@@ -20,6 +20,7 @@ export default async function SettingsPage() {
       streakMailEnabled: users.streakMailEnabled,
       streakMailHour: users.streakMailHour,
       verbOfDayEnabled: users.verbOfDayEnabled,
+      multipleChoiceRatio: users.multipleChoiceRatio,
     }).from(users).where(eq(users.id, userId)).get(),
     db.select().from(userProfile).where(eq(userProfile.userId, userId)).get(),
   ])
@@ -53,6 +54,7 @@ export default async function SettingsPage() {
           initialStreakMailEnabled={userRow?.streakMailEnabled ?? false}
           initialStreakMailHour={userRow?.streakMailHour ?? 20}
           initialVerbOfDayEnabled={userRow?.verbOfDayEnabled ?? false}
+          initialMultipleChoiceRatio={userRow?.multipleChoiceRatio ?? 50}
           initialProfile={profile ?? null}
         />
       </main>

@@ -9,6 +9,7 @@ import {
   updatePasswordAction,
   updateEmailPrefsAction,
   updatePersonalProfileAction,
+  updateStudyPrefsAction,
 } from "@/app/actions"
 import { LevelConfig } from "@/components/LevelConfig"
 import { TIMEZONES } from "@/lib/timezones"
@@ -76,6 +77,7 @@ export function SettingsForm({
   initialStreakMailEnabled,
   initialStreakMailHour,
   initialVerbOfDayEnabled,
+  initialMultipleChoiceRatio,
   initialProfile,
 }: {
   initialFirstName: string
@@ -88,6 +90,7 @@ export function SettingsForm({
   initialStreakMailEnabled: boolean
   initialStreakMailHour: number
   initialVerbOfDayEnabled: boolean
+  initialMultipleChoiceRatio: number
   initialProfile: InitialProfile
 }) {
   const { update } = useSession()
@@ -95,11 +98,24 @@ export function SettingsForm({
   const [streakEnabled, setStreakEnabled] = useState(initialStreakMailEnabled)
   const [streakHour, setStreakHour]       = useState(initialStreakMailHour)
   const [verbEnabled, setVerbEnabled]     = useState(initialVerbOfDayEnabled)
+  const [mcRatio, setMcRatio]             = useState(initialMultipleChoiceRatio)
 
   const [profileState, profileAction, profilePending]           = useActionState(updateProfileAction, undefined)
   const [emailState, emailAction, emailPending]                 = useActionState(updateEmailAction, undefined)
   const [passwordState, passwordAction, passwordPending]        = useActionState(updatePasswordAction, undefined)
   const [personalState, personalAction, personalPending]        = useActionState(updatePersonalProfileAction, undefined)
+
+  const [studyPrefsPending, startStudyPrefsTransition] = useTransition()
+  const [studyPrefsState, setStudyPrefsState] = useState<{ error?: string; success?: boolean } | undefined>()
+
+  function saveStudyPrefs() {
+    startStudyPrefsTransition(async () => {
+      const fd = new FormData()
+      fd.set("multipleChoiceRatio", mcRatio.toString())
+      const res = await updateStudyPrefsAction(undefined, fd)
+      setStudyPrefsState(res)
+    })
+  }
 
   const [birthday,        setBirthday]        = useState(initialProfile?.birthday        ?? "")
   const [jobStatus,       setJobStatus]       = useState(initialProfile?.jobStatus       ?? "")
@@ -354,6 +370,79 @@ export function SettingsForm({
               className="px-5 py-2.5 bg-violet-600 text-white text-sm font-semibold rounded-xl hover:bg-violet-700 disabled:opacity-50 transition-all active:scale-[0.98]"
             >
               {emailPrefsPending ? "Saving…" : "Save changes"}
+            </button>
+          </div>
+        </div>
+      </SectionCard>
+
+      {/* Study mode */}
+      <SectionCard
+        title="Study mode split"
+        description="Choose how often multiple choice vs. typing appears in your sessions"
+      >
+        <div className="space-y-5">
+          {/* Visual split bar */}
+          <div>
+            <div className="flex justify-between text-xs font-semibold text-slate-500 mb-2">
+              <span>Multiple choice</span>
+              <span>Type the answer</span>
+            </div>
+            <div className="flex rounded-xl overflow-hidden h-7 text-xs font-bold select-none">
+              {mcRatio > 0 && (
+                <div
+                  className="flex items-center justify-center bg-violet-500 text-white transition-all duration-200"
+                  style={{ width: `${mcRatio}%` }}
+                >
+                  {mcRatio >= 20 && `${mcRatio}%`}
+                </div>
+              )}
+              {mcRatio < 100 && (
+                <div
+                  className="flex items-center justify-center bg-emerald-500 text-white transition-all duration-200"
+                  style={{ width: `${100 - mcRatio}%` }}
+                >
+                  {(100 - mcRatio) >= 20 && `${100 - mcRatio}%`}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Slider */}
+          <div>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              step={10}
+              value={mcRatio}
+              onChange={e => setMcRatio(parseInt(e.target.value))}
+              className="w-full accent-violet-600 cursor-pointer"
+            />
+            <div className="flex justify-between text-[10px] text-slate-400 mt-1 px-0.5">
+              {[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].map(v => (
+                <span key={v} className={v === mcRatio ? "text-violet-600 font-bold" : ""}>{v}</span>
+              ))}
+            </div>
+          </div>
+
+          {/* Description */}
+          <p className="text-sm text-slate-500">
+            {mcRatio === 0
+              ? "Every exercise will ask you to type the answer."
+              : mcRatio === 100
+              ? "Every exercise will show multiple choice options."
+              : `In a 10-question session: ${mcRatio / 10} multiple choice and ${(100 - mcRatio) / 10} type-in.`}
+          </p>
+
+          <div className="flex items-center justify-between pt-1">
+            <StatusMessage state={studyPrefsState} />
+            <button
+              type="button"
+              onClick={saveStudyPrefs}
+              disabled={studyPrefsPending}
+              className="px-5 py-2.5 bg-violet-600 text-white text-sm font-semibold rounded-xl hover:bg-violet-700 disabled:opacity-50 transition-all active:scale-[0.98]"
+            >
+              {studyPrefsPending ? "Saving…" : "Save changes"}
             </button>
           </div>
         </div>

@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic"
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { db } from "@/db"
-import { words, sentences, userLevelConfig, categories } from "@/db/schema"
+import { words, sentences, userLevelConfig, categories, users } from "@/db/schema"
 import { eq, or, sql } from "drizzle-orm"
 
 export type Exercise = {
@@ -148,12 +148,14 @@ export async function GET(req: NextRequest) {
   const isFemale = session.user.gender === "female"
   const userId = parseInt(session.user.id)
 
-  // Fetch all items (always needed for MC distractor generation) + categories map
-  const [allItems, allCategories] = await Promise.all([
+  // Fetch all items (always needed for MC distractor generation) + categories map + user prefs
+  const [allItems, allCategories, userRow] = await Promise.all([
     db.select().from(type === "words" ? words : sentences),
     db.select({ id: categories.id, name: categories.name }).from(categories),
+    db.select({ multipleChoiceRatio: users.multipleChoiceRatio }).from(users).where(eq(users.id, userId)).get(),
   ])
   const categoryMap = new Map(allCategories.map((c) => [c.id, c.name]))
+  const mcRatio = userRow?.multipleChoiceRatio ?? 50  // 0–100, default 50/50
 
   if (allItems.length < 4) {
     return NextResponse.json(
@@ -219,8 +221,15 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // Build a shuffled array of exercise types matching the user's MC ratio
+  const mcCount = Math.round(sessionItems.length * mcRatio / 100)
+  const exerciseTypes = shuffle([
+    ...Array(mcCount).fill("multiple_choice"),
+    ...Array(sessionItems.length - mcCount).fill("type_in"),
+  ]) as ("multiple_choice" | "type_in")[]
+
   const exercises: Exercise[] = sessionItems.map((item, index) => {
-    const exerciseType = index % 2 === 0 ? "multiple_choice" : "type_in"
+    const exerciseType = exerciseTypes[index]
     const base = language === "sr" ? item.serbian : item.croatian
     const female = language === "sr" ? item.serbianFemale : item.croatianFemale
     const correctAnswer = (isFemale && female) ? female : base

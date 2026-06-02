@@ -15,6 +15,8 @@ export const users = sqliteTable("users", {
   streakMailHour: integer("streak_mail_hour").notNull().default(20),
   verbOfDayEnabled: integer("verb_of_day_enabled", { mode: "boolean" }).notNull().default(false),
   verbOfDayEnabledAt: text("verb_of_day_enabled_at"), // YYYY-MM-DD, set when first enabled
+  // Study preferences
+  multipleChoiceRatio: integer("multiple_choice_ratio").notNull().default(50),
   // Idempotency guards for cron mailers
   streakMailLastSentDate: text("streak_mail_last_sent_date"),
   verbMailLastSentDate: text("verb_mail_last_sent_date"),
