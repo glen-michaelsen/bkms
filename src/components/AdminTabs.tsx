@@ -18,8 +18,8 @@ import {
 
 type Category  = { id: number; name: string }
 type Level     = { id: number; name: string }
-type Word      = { id: number; english: string; serbian: string; croatian: string; categoryId: number | null }
-type Sentence  = { id: number; english: string; serbian: string; croatian: string; categoryId: number | null; levelId: number | null }
+type Word      = { id: number; english: string; serbian: string; croatian: string; serbianFemale: string | null; croatianFemale: string | null; categoryId: number | null }
+type Sentence  = { id: number; english: string; serbian: string; croatian: string; serbianFemale: string | null; croatianFemale: string | null; categoryId: number | null; levelId: number | null }
 type VerbExample = { serbian: string; croatian?: string; english: string }
 type Verb      = { id: number; infinitive: string; translation: string; ja: string; ti: string; onOna: string; mi: string; vi: string; oni: string; infinitiveHr: string | null; jaHr: string | null; tiHr: string | null; onOnaHr: string | null; miHr: string | null; viHr: string | null; oniHr: string | null; examplesJson: string; sortOrder: number }
 type UserRow   = {
@@ -409,7 +409,7 @@ function DeleteModal({
 
 // ── Edit modal & confirm diff ─────────────────────────────────────────────────
 
-type WordForm     = { english: string; serbian: string; croatian: string; categoryId: string }
+type WordForm     = { english: string; serbian: string; croatian: string; serbianFemale: string; croatianFemale: string; categoryId: string }
 type SentenceForm = WordForm & { levelId: string }
 
 function DiffRow({ label, before, after }: { label: string; before: string; after: string }) {
@@ -438,6 +438,7 @@ function EditWordModal({
   const catMap = Object.fromEntries(categories.map(c => [c.id, c.name]))
   const [form, setForm] = useState<WordForm>({
     english: item.english, serbian: item.serbian, croatian: item.croatian,
+    serbianFemale: item.serbianFemale ?? "", croatianFemale: item.croatianFemale ?? "",
     categoryId: item.categoryId != null ? String(item.categoryId) : "",
   })
   const [confirming, setConfirming] = useState(false)
@@ -449,6 +450,8 @@ function EditWordModal({
     setBusy(true)
     const data = {
       english: form.english.trim(), serbian: form.serbian.trim(), croatian: form.croatian.trim(),
+      serbianFemale: form.serbianFemale.trim() || null,
+      croatianFemale: form.croatianFemale.trim() || null,
       categoryId: form.categoryId ? parseInt(form.categoryId) : null,
     }
     await updateWordAction(item.id, data)
@@ -460,7 +463,7 @@ function EditWordModal({
 
   return (
     <ModalBackdrop onClose={onCancel}>
-      <div className="p-7">
+      <div className="p-7 max-h-[90vh] overflow-y-auto">
         {!confirming ? (
           <>
             <p className="text-xs font-semibold uppercase tracking-widest text-violet-400 mb-1">Edit word</p>
@@ -472,6 +475,19 @@ function EditWordModal({
                   <input value={form[k]} onChange={set(k)} className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-violet-300 focus:border-violet-400 transition" />
                 </div>
               ))}
+              <div className="border-t border-slate-100 pt-3">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-rose-400 mb-2">Female forms <span className="text-slate-400 font-normal normal-case">(optional — leave blank if same as above)</span></p>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 block">Serbian ♀</label>
+                    <input value={form.serbianFemale} onChange={set("serbianFemale")} placeholder="e.g. umorna" className="w-full px-4 py-2.5 rounded-2xl border border-rose-100 bg-rose-50/30 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-300 transition placeholder:text-slate-300" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 block">Croatian ♀</label>
+                    <input value={form.croatianFemale} onChange={set("croatianFemale")} placeholder="e.g. umorna" className="w-full px-4 py-2.5 rounded-2xl border border-rose-100 bg-rose-50/30 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-300 transition placeholder:text-slate-300" />
+                  </div>
+                </div>
+              </div>
               <div>
                 <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 block">Category</label>
                 <select value={form.categoryId} onChange={set("categoryId")} className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-violet-300 focus:border-violet-400 transition appearance-none">
@@ -490,10 +506,12 @@ function EditWordModal({
             <p className="text-xs font-semibold uppercase tracking-widest text-violet-400 mb-1">Confirm changes</p>
             <h3 className="text-xl font-extrabold text-slate-900 mb-5">Review before saving</h3>
             <div className="space-y-2 mb-6">
-              <DiffRow label="English"  before={item.english}  after={form.english.trim()} />
-              <DiffRow label="Serbian"  before={item.serbian}  after={form.serbian.trim()} />
-              <DiffRow label="Croatian" before={item.croatian} after={form.croatian.trim()} />
-              <DiffRow label="Category" before={oldCatLabel}   after={newCatLabel} />
+              <DiffRow label="English"        before={item.english}              after={form.english.trim()} />
+              <DiffRow label="Serbian"        before={item.serbian}              after={form.serbian.trim()} />
+              <DiffRow label="Serbian ♀"      before={item.serbianFemale ?? ""}  after={form.serbianFemale.trim()} />
+              <DiffRow label="Croatian"       before={item.croatian}             after={form.croatian.trim()} />
+              <DiffRow label="Croatian ♀"     before={item.croatianFemale ?? ""} after={form.croatianFemale.trim()} />
+              <DiffRow label="Category"       before={oldCatLabel}               after={newCatLabel} />
             </div>
             <div className="flex gap-3">
               <button onClick={() => setConfirming(false)} className="flex-1 py-2.5 rounded-2xl border border-slate-200 text-sm font-semibold text-slate-500 hover:bg-slate-50 transition">← Back</button>
@@ -516,6 +534,7 @@ function EditSentenceModal({
   const levelMap = Object.fromEntries(levels.map(l => [l.id, l.name]))
   const [form, setForm] = useState<SentenceForm>({
     english: item.english, serbian: item.serbian, croatian: item.croatian,
+    serbianFemale: item.serbianFemale ?? "", croatianFemale: item.croatianFemale ?? "",
     categoryId: item.categoryId != null ? String(item.categoryId) : "",
     levelId:    item.levelId    != null ? String(item.levelId)    : "",
   })
@@ -528,6 +547,8 @@ function EditSentenceModal({
     setBusy(true)
     const data = {
       english: form.english.trim(), serbian: form.serbian.trim(), croatian: form.croatian.trim(),
+      serbianFemale: form.serbianFemale.trim() || null,
+      croatianFemale: form.croatianFemale.trim() || null,
       categoryId: form.categoryId ? parseInt(form.categoryId) : null,
       levelId:    form.levelId    ? parseInt(form.levelId)    : null,
     }
@@ -554,6 +575,19 @@ function EditSentenceModal({
                   <input value={form[k]} onChange={set(k)} className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-violet-300 focus:border-violet-400 transition" />
                 </div>
               ))}
+              <div className="border-t border-slate-100 pt-3">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-rose-400 mb-2">Female forms <span className="text-slate-400 font-normal normal-case">(optional — leave blank if same as above)</span></p>
+                <div className="grid grid-cols-1 gap-3">
+                  <div>
+                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 block">Serbian ♀</label>
+                    <input value={form.serbianFemale} onChange={set("serbianFemale")} placeholder="Female version of the Serbian sentence…" className="w-full px-4 py-2.5 rounded-2xl border border-rose-100 bg-rose-50/30 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-300 transition placeholder:text-slate-300" />
+                  </div>
+                  <div>
+                    <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 block">Croatian ♀</label>
+                    <input value={form.croatianFemale} onChange={set("croatianFemale")} placeholder="Female version of the Croatian sentence…" className="w-full px-4 py-2.5 rounded-2xl border border-rose-100 bg-rose-50/30 text-sm focus:outline-none focus:ring-2 focus:ring-rose-200 focus:border-rose-300 transition placeholder:text-slate-300" />
+                  </div>
+                </div>
+              </div>
               <div>
                 <label className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-1 block">Category</label>
                 <select value={form.categoryId} onChange={set("categoryId")} className="w-full px-4 py-2.5 rounded-2xl border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-violet-300 focus:border-violet-400 transition appearance-none">
@@ -579,11 +613,13 @@ function EditSentenceModal({
             <p className="text-xs font-semibold uppercase tracking-widest text-violet-400 mb-1">Confirm changes</p>
             <h3 className="text-xl font-extrabold text-slate-900 mb-5">Review before saving</h3>
             <div className="space-y-2 mb-6">
-              <DiffRow label="English"  before={item.english}  after={form.english.trim()} />
-              <DiffRow label="Serbian"  before={item.serbian}  after={form.serbian.trim()} />
-              <DiffRow label="Croatian" before={item.croatian} after={form.croatian.trim()} />
-              <DiffRow label="Category" before={oldCatLabel}   after={newCatLabel} />
-              <DiffRow label="Level"    before={oldLevelLabel} after={newLevelLabel} />
+              <DiffRow label="English"    before={item.english}              after={form.english.trim()} />
+              <DiffRow label="Serbian"    before={item.serbian}              after={form.serbian.trim()} />
+              <DiffRow label="Serbian ♀"  before={item.serbianFemale ?? ""}  after={form.serbianFemale.trim()} />
+              <DiffRow label="Croatian"   before={item.croatian}             after={form.croatian.trim()} />
+              <DiffRow label="Croatian ♀" before={item.croatianFemale ?? ""} after={form.croatianFemale.trim()} />
+              <DiffRow label="Category"   before={oldCatLabel}               after={newCatLabel} />
+              <DiffRow label="Level"      before={oldLevelLabel}             after={newLevelLabel} />
             </div>
             <div className="flex gap-3">
               <button onClick={() => setConfirming(false)} className="flex-1 py-2.5 rounded-2xl border border-slate-200 text-sm font-semibold text-slate-500 hover:bg-slate-50 transition">← Back</button>
@@ -647,8 +683,14 @@ function WordsPanel({ words: initialWords, categories }: { words: Word[]; catego
             ) : filtered.map(w => (
               <tr key={w.id} className="hover:bg-slate-50/50 transition-colors group">
                 <td className="px-5 py-3.5 font-medium text-slate-900">{w.english}</td>
-                <td className="px-5 py-3.5 text-slate-600">{w.serbian}</td>
-                <td className="px-5 py-3.5 text-slate-600">{w.croatian}</td>
+                <td className="px-5 py-3.5 text-slate-600">
+                  {w.serbian}
+                  {w.serbianFemale && <span className="ml-1.5 text-[10px] font-bold text-rose-400 bg-rose-50 px-1 py-0.5 rounded" title={`Female: ${w.serbianFemale}`}>♀</span>}
+                </td>
+                <td className="px-5 py-3.5 text-slate-600">
+                  {w.croatian}
+                  {w.croatianFemale && <span className="ml-1.5 text-[10px] font-bold text-rose-400 bg-rose-50 px-1 py-0.5 rounded" title={`Female: ${w.croatianFemale}`}>♀</span>}
+                </td>
                 <td className="px-5 py-3.5">
                   {w.categoryId
                     ? <span className="px-2.5 py-1 bg-violet-50 text-violet-700 text-xs font-medium rounded-full">{catMap[w.categoryId] ?? "—"}</span>
@@ -734,8 +776,14 @@ function SentencesPanel({ sentences: initialSentences, categories, levels }: { s
             ) : filtered.map(s => (
               <tr key={s.id} className="hover:bg-slate-50/50 transition-colors group">
                 <td className="px-5 py-3.5 font-medium text-slate-900">{s.english}</td>
-                <td className="px-5 py-3.5 text-slate-600">{s.serbian}</td>
-                <td className="px-5 py-3.5 text-slate-600">{s.croatian}</td>
+                <td className="px-5 py-3.5 text-slate-600">
+                  {s.serbian}
+                  {s.serbianFemale && <span className="ml-1.5 text-[10px] font-bold text-rose-400 bg-rose-50 px-1 py-0.5 rounded" title={`Female: ${s.serbianFemale}`}>♀</span>}
+                </td>
+                <td className="px-5 py-3.5 text-slate-600">
+                  {s.croatian}
+                  {s.croatianFemale && <span className="ml-1.5 text-[10px] font-bold text-rose-400 bg-rose-50 px-1 py-0.5 rounded" title={`Female: ${s.croatianFemale}`}>♀</span>}
+                </td>
                 <td className="px-5 py-3.5">
                   {s.categoryId
                     ? <span className="px-2.5 py-1 bg-violet-50 text-violet-700 text-xs font-medium rounded-full">{catMap[s.categoryId] ?? "—"}</span>

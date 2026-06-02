@@ -15,6 +15,8 @@ export const users = sqliteTable("users", {
   streakMailHour: integer("streak_mail_hour").notNull().default(20),
   verbOfDayEnabled: integer("verb_of_day_enabled", { mode: "boolean" }).notNull().default(false),
   verbOfDayEnabledAt: text("verb_of_day_enabled_at"), // YYYY-MM-DD, set when first enabled
+  // Study preferences
+  multipleChoiceRatio: integer("multiple_choice_ratio").notNull().default(50),
   // Idempotency guards for cron mailers
   streakMailLastSentDate: text("streak_mail_last_sent_date"),
   verbMailLastSentDate: text("verb_mail_last_sent_date"),
@@ -44,6 +46,8 @@ export const words = sqliteTable("words", {
   english: text("english").notNull(),
   serbian: text("serbian").notNull(),
   croatian: text("croatian").notNull(),
+  serbianFemale: text("serbian_female"),
+  croatianFemale: text("croatian_female"),
   categoryId: integer("category_id").references(() => categories.id),
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
@@ -55,6 +59,8 @@ export const sentences = sqliteTable("sentences", {
   english: text("english").notNull(),
   serbian: text("serbian").notNull(),
   croatian: text("croatian").notNull(),
+  serbianFemale: text("serbian_female"),
+  croatianFemale: text("croatian_female"),
   categoryId: integer("category_id").references(() => categories.id),
   levelId: integer("level_id").references(() => levels.id),
   createdAt: integer("created_at", { mode: "timestamp" })

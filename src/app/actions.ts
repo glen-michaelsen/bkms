@@ -218,7 +218,7 @@ export async function addLevelAction(
 
 // ─── Admin: edit & delete words / sentences ───────────────────────────────────
 
-type WordData = { english: string; serbian: string; croatian: string; categoryId: number | null }
+type WordData = { english: string; serbian: string; croatian: string; serbianFemale: string | null; croatianFemale: string | null; categoryId: number | null }
 type SentenceData = WordData & { levelId: number | null }
 
 export async function updateWordAction(id: number, data: WordData): Promise<SimpleResult> {
@@ -485,6 +485,21 @@ export async function updateEmailPrefsAction(
     ...((!verbEnabled) ? { verbOfDayEnabledAt: null } : {}),
   }).where(eq(users.id, userId))
 
+  return { success: true }
+}
+
+export async function updateStudyPrefsAction(
+  _prev: SimpleResult | undefined,
+  formData: FormData
+): Promise<SimpleResult> {
+  const session = await auth()
+  if (!session) return { error: "Not authenticated" }
+
+  const userId = parseInt(session.user.id)
+  const raw = parseInt(formData.get("multipleChoiceRatio") as string)
+  const multipleChoiceRatio = isNaN(raw) ? 50 : Math.min(100, Math.max(0, Math.round(raw / 10) * 10))
+
+  await db.update(users).set({ multipleChoiceRatio }).where(eq(users.id, userId))
   return { success: true }
 }
 

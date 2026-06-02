@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic"
 import { NextRequest, NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { db } from "@/db"
-import { words, sentences, userLevelConfig, categories } from "@/db/schema"
+import { words, sentences, userLevelConfig, categories, users } from "@/db/schema"
 import { eq, or, sql } from "drizzle-orm"
 
 export type Exercise = {
@@ -11,12 +11,100 @@ export type Exercise = {
   exerciseType: "type_in" | "multiple_choice"
   english: string
   correctAnswer: string
+  alternateAnswer?: string  // opposite-gender form, shown in feedback and accepted as correct on type-in
   options?: string[]
   categoryName?: string
 }
 
 function shuffle<T>(arr: T[]): T[] {
   return [...arr].sort(() => Math.random() - 0.5)
+}
+
+type DistractorItem = {
+  id: number
+  categoryId: number | null
+  serbian: string
+  croatian: string
+  serbianFemale?: string | null
+  croatianFemale?: string | null
+}
+
+/**
+ * Pick `count` distractor answers that are as confusable as possible with the
+ * correct answer, using different strategies for words vs sentences.
+ *
+ * Words  — category is the primary signal (semantically confusable vocab),
+ *          text length within ±50 % as a tiebreaker.
+ * Sentences — length similarity is the primary filter (a wildly different
+ *          length is a dead giveaway), category is preferred within that.
+ */
+function pickDistractors(
+  correct: DistractorItem,
+  allItems: DistractorItem[],
+  language: "sr" | "hr",
+  itemType: "words" | "sentences",
+  isFemale: boolean,
+  count = 3,
+): string[] {
+  const resolveText = (i: DistractorItem) => {
+    const base = language === "sr" ? i.serbian : i.croatian
+    const female = language === "sr" ? i.serbianFemale : i.croatianFemale
+    return (isFemale && female) ? female : base
+  }
+  const correctText = resolveText(correct)
+  const correctLen = correctText.length
+  const getText = resolveText
+
+  // Exclude correct item and any accidental duplicates
+  const pool = allItems.filter(i => i.id !== correct.id && getText(i) !== correctText)
+
+  const lenSim = (text: string) =>
+    Math.min(text.length, correctLen) / Math.max(text.length, correctLen)
+
+  const withinLen = (text: string, tol: number) => lenSim(text) >= 1 - tol
+
+  /** Shuffle pool, de-dupe by text, take `count`. */
+  const pick = (candidates: DistractorItem[]): string[] => {
+    const seen = new Set<string>()
+    const result: string[] = []
+    for (const item of shuffle(candidates)) {
+      const t = getText(item)
+      if (!seen.has(t)) { seen.add(t); result.push(t) }
+      if (result.length === count) break
+    }
+    return result
+  }
+
+  if (itemType === "words") {
+    // Tier 1 — same category + similar length (±50 %)
+    const t1 = pool.filter(i => i.categoryId === correct.categoryId && withinLen(getText(i), 0.5))
+    if (t1.length >= count) return pick(t1)
+
+    // Tier 2 — same category, any length
+    const t2 = pool.filter(i => i.categoryId === correct.categoryId)
+    if (t2.length >= count) return pick(t2)
+
+    // Tier 3 — full pool, sorted by length similarity (best match first)
+    const t3 = [...pool].sort((a, b) => lenSim(getText(b)) - lenSim(getText(a)))
+    return pick(t3.slice(0, count * 4))
+
+  } else {
+    // Tier 1 — same category + length within ±35 %
+    const t1 = pool.filter(i => i.categoryId === correct.categoryId && withinLen(getText(i), 0.35))
+    if (t1.length >= count) return pick(t1)
+
+    // Tier 2 — any category + length within ±35 %
+    const t2 = pool.filter(i => withinLen(getText(i), 0.35))
+    if (t2.length >= count) return pick(t2)
+
+    // Tier 3 — any category + length within ±60 %
+    const t3 = pool.filter(i => withinLen(getText(i), 0.60))
+    if (t3.length >= count) return pick(t3)
+
+    // Tier 4 — full pool sorted by length similarity
+    const t4 = [...pool].sort((a, b) => lenSim(getText(b)) - lenSim(getText(a)))
+    return pick(t4.slice(0, count * 4))
+  }
 }
 
 /** Distribute `total` items across configs using largest-remainder method. */
@@ -57,14 +145,17 @@ export async function GET(req: NextRequest) {
     : null
 
   const language = session.user.language as "sr" | "hr"
+  const isFemale = session.user.gender === "female"
   const userId = parseInt(session.user.id)
 
-  // Fetch all items (always needed for MC distractor generation) + categories map
-  const [allItems, allCategories] = await Promise.all([
+  // Fetch all items (always needed for MC distractor generation) + categories map + user prefs
+  const [allItems, allCategories, userRow] = await Promise.all([
     db.select().from(type === "words" ? words : sentences),
     db.select({ id: categories.id, name: categories.name }).from(categories),
+    db.select({ multipleChoiceRatio: users.multipleChoiceRatio }).from(users).where(eq(users.id, userId)).get(),
   ])
   const categoryMap = new Map(allCategories.map((c) => [c.id, c.name]))
+  const mcRatio = userRow?.multipleChoiceRatio ?? 50  // 0–100, default 50/50
 
   if (allItems.length < 4) {
     return NextResponse.json(
@@ -130,27 +221,39 @@ export async function GET(req: NextRequest) {
     }
   }
 
+  // Build a shuffled array of exercise types matching the user's MC ratio
+  const mcCount = Math.round(sessionItems.length * mcRatio / 100)
+  const exerciseTypes = shuffle([
+    ...Array(mcCount).fill("multiple_choice"),
+    ...Array(sessionItems.length - mcCount).fill("type_in"),
+  ]) as ("multiple_choice" | "type_in")[]
+
   const exercises: Exercise[] = sessionItems.map((item, index) => {
-    const exerciseType = index % 2 === 0 ? "multiple_choice" : "type_in"
-    const correctAnswer = language === "sr" ? item.serbian : item.croatian
+    const exerciseType = exerciseTypes[index]
+    const base = language === "sr" ? item.serbian : item.croatian
+    const female = language === "sr" ? item.serbianFemale : item.croatianFemale
+    const correctAnswer = (isFemale && female) ? female : base
+    // alternateAnswer: the other gender's form (only when they actually differ)
+    const alternateAnswer = female && female !== base
+      ? (isFemale ? base : female)
+      : undefined
 
     const categoryName = item.categoryId ? categoryMap.get(item.categoryId) : undefined
 
     if (exerciseType === "multiple_choice") {
-      const distractors = shuffle(allItems.filter((i) => i.id !== item.id))
-        .slice(0, 3)
-        .map((i) => (language === "sr" ? i.serbian : i.croatian))
+      const distractors = pickDistractors(item as DistractorItem, allItems as DistractorItem[], language, type, isFemale)
       return {
         id: item.id,
         exerciseType,
         english: item.english,
         correctAnswer,
+        alternateAnswer,
         options: shuffle([correctAnswer, ...distractors]),
         categoryName,
       }
     }
 
-    return { id: item.id, exerciseType, english: item.english, correctAnswer, categoryName }
+    return { id: item.id, exerciseType, english: item.english, correctAnswer, alternateAnswer, categoryName }
   })
 
   return NextResponse.json({ exercises })
