@@ -76,71 +76,50 @@ export default async function IntroductionPage() {
           </div>
         ) : (
           <div className="space-y-5">
-            {isEnglishLearner ? (
-              <>
-                {/* English learners: Slavic first (the question/prompt), then English (the answer to produce) */}
-                <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-                  <div className="px-6 py-4 border-b border-slate-50 flex items-center gap-2">
-                    <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
-                      {slavicLabel} — reference
-                    </span>
-                  </div>
-                  <div className="px-6 py-6">
-                    <p className="text-xl font-medium text-slate-900 leading-relaxed">{intro!.target}</p>
-                  </div>
-                </div>
+            {(() => {
+              // Always: learning language first, reference second
+              const learningLabel  = isEnglishLearner ? "English"    : slavicLabel
+              const referenceLabel = isEnglishLearner ? slavicLabel  : "English"
+              const learningText   = isEnglishLearner ? intro!.english : intro!.target
+              const referenceText  = isEnglishLearner ? intro!.target  : intro!.english
 
-                <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-                  <div className="px-6 py-4 border-b border-slate-50">
-                    <span className="text-xs font-bold uppercase tracking-widest text-violet-600">English</span>
+              return (
+                <>
+                  {/* Learning language — primary */}
+                  <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+                    <div className="px-6 py-4 border-b border-slate-50">
+                      <span className="text-xs font-bold uppercase tracking-widest text-violet-600">
+                        {learningLabel}
+                      </span>
+                    </div>
+                    <div className="px-6 py-6">
+                      <p className="text-xl font-medium text-slate-900 leading-relaxed">{learningText}</p>
+                    </div>
                   </div>
-                  <div className="px-6 py-6">
-                    <p className="text-xl font-medium text-slate-900 leading-relaxed">{intro!.english}</p>
-                  </div>
-                </div>
 
-                <div className="bg-violet-50 rounded-3xl border border-violet-100 px-6 py-5">
-                  <h3 className="text-sm font-bold text-violet-800 mb-2">How to practice</h3>
-                  <ul className="text-sm text-violet-700 space-y-1 list-disc list-inside">
-                    <li>Read the {slavicLabel} version to understand the content</li>
-                    <li>Cover it and try to say the English version from memory</li>
-                    <li>Record yourself and listen back</li>
-                  </ul>
-                </div>
-              </>
-            ) : (
-              <>
-                {/* Slavic learners: Slavic is the target, English is the reference */}
-                <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-                  <div className="px-6 py-4 border-b border-slate-50 flex items-center gap-2">
-                    <span className="text-xs font-bold uppercase tracking-widest text-violet-600">
-                      {slavicLabel}
-                    </span>
+                  {/* Reference language — secondary */}
+                  <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+                    <div className="px-6 py-4 border-b border-slate-50">
+                      <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                        {referenceLabel} — reference
+                      </span>
+                    </div>
+                    <div className="px-6 py-6">
+                      <p className="text-lg text-slate-600 leading-relaxed">{referenceText}</p>
+                    </div>
                   </div>
-                  <div className="px-6 py-6">
-                    <p className="text-xl font-medium text-slate-900 leading-relaxed">{intro!.target}</p>
-                  </div>
-                </div>
 
-                <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-                  <div className="px-6 py-4 border-b border-slate-50">
-                    <span className="text-xs font-bold uppercase tracking-widest text-slate-400">English</span>
+                  <div className="bg-violet-50 rounded-3xl border border-violet-100 px-6 py-5">
+                    <h3 className="text-sm font-bold text-violet-800 mb-2">How to practice</h3>
+                    <ul className="text-sm text-violet-700 space-y-1 list-disc list-inside">
+                      <li>Read the {learningLabel} version aloud several times</li>
+                      <li>Cover it and try to say it from memory using the {referenceLabel} as a prompt</li>
+                      <li>Record yourself and listen back</li>
+                    </ul>
                   </div>
-                  <div className="px-6 py-6">
-                    <p className="text-lg text-slate-600 leading-relaxed">{intro!.english}</p>
-                  </div>
-                </div>
-
-                <div className="bg-violet-50 rounded-3xl border border-violet-100 px-6 py-5">
-                  <h3 className="text-sm font-bold text-violet-800 mb-2">How to practice</h3>
-                  <ul className="text-sm text-violet-700 space-y-1 list-disc list-inside">
-                    <li>Read the {slavicLabel} version aloud several times</li>
-                    <li>Cover it and try to say it from memory using the English as a prompt</li>
-                    <li>Record yourself and listen back</li>
-                  </ul>
-                </div>
-              </>
-            )}
+                </>
+              )
+            })()}
 
             <div className="flex justify-end">
               <Link
