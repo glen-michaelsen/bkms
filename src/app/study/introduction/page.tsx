@@ -28,7 +28,7 @@ export default async function IntroductionPage() {
   }
 
   const hasContent = profile && isProfileComplete(profile)
-  const intro = hasContent ? buildIntro(profileData, language) : null
+  const intro = hasContent ? buildIntro(profileData, language, studyDirection) : null
 
   // Labels and order depend on direction
   const slavicLabel = LANG_LABELS[language] ?? language
