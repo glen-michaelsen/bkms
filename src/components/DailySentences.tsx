@@ -17,11 +17,22 @@ const ORDINALS_SR = [
   "dvadeset deveti", "trideseti", "trideset prvi",
 ]
 
+// Simple numeric ordinals — used as reference language
 const ORDINALS_EN = [
   "", "1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th",
   "10th", "11th", "12th", "13th", "14th", "15th", "16th", "17th", "18th", "19th",
   "20th", "21st", "22nd", "23rd", "24th", "25th", "26th", "27th", "28th", "29th",
   "30th", "31st",
+]
+
+// Spelled-out ordinals — used as learning language
+const ORDINALS_EN_SPELLED = [
+  "", "first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth",
+  "tenth", "eleventh", "twelfth", "thirteenth", "fourteenth", "fifteenth",
+  "sixteenth", "seventeenth", "eighteenth", "nineteenth", "twentieth",
+  "twenty-first", "twenty-second", "twenty-third", "twenty-fourth",
+  "twenty-fifth", "twenty-sixth", "twenty-seventh", "twenty-eighth",
+  "twenty-ninth", "thirtieth", "thirty-first",
 ]
 
 const MONTHS_SR = [
@@ -89,10 +100,27 @@ export function DailySentences({
   const slavicSeason = language === "hr" ? season.hr : season.sr
   const slavicOrdinal = ORDINALS_SR[day]  // ordinals same structure both languages
 
-  const srSentences = [
-    { slavic: `Danas je ${slavicDay}.`,                         en: `Today is ${DAYS_EN[dow]}` },
-    { slavic: `Datum je ${slavicOrdinal} ${slavicMonth}.`,      en: `The date is ${MONTHS_EN[month]} ${ORDINALS_EN[day]}` },
-    { slavic: `Godišnje doba je ${slavicSeason}.`,              en: `The season is ${season.en}` },
+  // Each sentence has: slavicSpelled (learning for Slavic), slavicSimple (reference for English learners),
+  // enSpelled (learning for English), enSimple (reference for Slavic learners)
+  const sentenceItems = [
+    {
+      slavicSpelled: `Danas je ${slavicDay}.`,
+      slavicSimple:  `${slavicDay.charAt(0).toUpperCase() + slavicDay.slice(1)}, ${day}. ${slavicMonth}`,
+      enSpelled:     `Today is ${DAYS_EN[dow]}`,
+      enSimple:      `${DAYS_EN[dow]}, ${MONTHS_EN[month]} ${ORDINALS_EN[day]}`,
+    },
+    {
+      slavicSpelled: `Datum je ${slavicOrdinal} ${slavicMonth}.`,
+      slavicSimple:  `${day}. ${slavicMonth}`,
+      enSpelled:     `The date is ${MONTHS_EN[month]} ${ORDINALS_EN_SPELLED[day]}`,
+      enSimple:      `${MONTHS_EN[month]} ${ORDINALS_EN[day]}`,
+    },
+    {
+      slavicSpelled: `Godišnje doba je ${slavicSeason}.`,
+      slavicSimple:  slavicSeason.charAt(0).toUpperCase() + slavicSeason.slice(1),
+      enSpelled:     `The season is ${season.en}`,
+      enSimple:      season.en.charAt(0).toUpperCase() + season.en.slice(1),
+    },
   ]
 
   return (
@@ -103,21 +131,16 @@ export function DailySentences({
 
       <div className="space-y-4 flex-1">
         <CurrentTime studyDirection={studyDirection} />
-        {srSentences.map(({ slavic, en }, i) => (
-          <div key={i} className="flex flex-col gap-0.5">
-            {isEnglishLearner ? (
-              <>
-                <p className="font-semibold text-slate-800 leading-snug">{en}</p>
-                <p className="text-xs text-slate-400">{slavic}</p>
-              </>
-            ) : (
-              <>
-                <p className="font-semibold text-slate-800 leading-snug">{slavic}</p>
-                <p className="text-xs text-slate-400">{en}</p>
-              </>
-            )}
-          </div>
-        ))}
+        {sentenceItems.map(({ slavicSpelled, slavicSimple, enSpelled, enSimple }, i) => {
+          const primary   = isEnglishLearner ? enSpelled   : slavicSpelled
+          const secondary = isEnglishLearner ? slavicSimple : enSimple
+          return (
+            <div key={i} className="flex flex-col gap-0.5">
+              <p className="font-semibold text-slate-800 leading-snug">{primary}</p>
+              <p className="text-xs text-slate-400">{secondary}</p>
+            </div>
+          )
+        })}
       </div>
     </div>
   )
