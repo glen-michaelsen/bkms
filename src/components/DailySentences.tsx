@@ -105,21 +105,21 @@ export function DailySentences({
   const sentenceItems = [
     {
       slavicSpelled: `Danas je ${slavicDay}.`,
-      slavicSimple:  `${slavicDay.charAt(0).toUpperCase() + slavicDay.slice(1)}, ${day}. ${slavicMonth}`,
+      slavicSimple:  `Danas je ${slavicDay}.`,
       enSpelled:     `Today is ${DAYS_EN[dow]}`,
-      enSimple:      `${DAYS_EN[dow]}, ${MONTHS_EN[month]} ${ORDINALS_EN[day]}`,
+      enSimple:      `Today is ${DAYS_EN[dow]}`,
     },
     {
       slavicSpelled: `Datum je ${slavicOrdinal} ${slavicMonth}.`,
-      slavicSimple:  `${day}. ${slavicMonth}`,
+      slavicSimple:  `Datum je ${day}. ${slavicMonth}.`,
       enSpelled:     `The date is ${MONTHS_EN[month]} ${ORDINALS_EN_SPELLED[day]}`,
-      enSimple:      `${MONTHS_EN[month]} ${ORDINALS_EN[day]}`,
+      enSimple:      `The date is ${MONTHS_EN[month]} ${ORDINALS_EN[day]}`,
     },
     {
       slavicSpelled: `Godišnje doba je ${slavicSeason}.`,
-      slavicSimple:  slavicSeason.charAt(0).toUpperCase() + slavicSeason.slice(1),
+      slavicSimple:  `Godišnje doba je ${slavicSeason}.`,
       enSpelled:     `The season is ${season.en}`,
-      enSimple:      season.en.charAt(0).toUpperCase() + season.en.slice(1),
+      enSimple:      `The season is ${season.en}`,
     },
   ]
 
