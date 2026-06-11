@@ -9,7 +9,8 @@ import { eq, or, sql } from "drizzle-orm"
 export type Exercise = {
   id: number
   exerciseType: "type_in" | "multiple_choice"
-  english: string
+  /** The question prompt shown to the user (English for Slavic learners; Slavic for English learners) */
+  prompt: string
   correctAnswer: string
   alternateAnswer?: string  // opposite-gender form, shown in feedback and accepted as correct on type-in
   options?: string[]
@@ -23,6 +24,7 @@ function shuffle<T>(arr: T[]): T[] {
 type DistractorItem = {
   id: number
   categoryId: number | null
+  english: string
   serbian: string
   croatian: string
   serbianFemale?: string | null
@@ -37,6 +39,8 @@ type DistractorItem = {
  *          text length within ±50 % as a tiebreaker.
  * Sentences — length similarity is the primary filter (a wildly different
  *          length is a dead giveaway), category is preferred within that.
+ *
+ * For English-learning direction, all text resolution uses item.english.
  */
 function pickDistractors(
   correct: DistractorItem,
@@ -44,9 +48,11 @@ function pickDistractors(
   language: "sr" | "hr",
   itemType: "words" | "sentences",
   isFemale: boolean,
+  isEnglishLearner: boolean,
   count = 3,
 ): string[] {
   const resolveText = (i: DistractorItem) => {
+    if (isEnglishLearner) return i.english
     const base = language === "sr" ? i.serbian : i.croatian
     const female = language === "sr" ? i.serbianFemale : i.croatianFemale
     return (isFemale && female) ? female : base
@@ -146,6 +152,7 @@ export async function GET(req: NextRequest) {
 
   const language = session.user.language as "sr" | "hr"
   const isFemale = session.user.gender === "female"
+  const isEnglishLearner = (session.user.studyDirection ?? "to_slavic") === "to_english"
   const userId = parseInt(session.user.id)
 
   // Fetch all items (always needed for MC distractor generation) + categories map + user prefs + level config
@@ -247,22 +254,36 @@ export async function GET(req: NextRequest) {
 
   const exercises: Exercise[] = sessionItems.map((item, index) => {
     const exerciseType = exerciseTypes[index]
-    const base = language === "sr" ? item.serbian : item.croatian
-    const female = language === "sr" ? item.serbianFemale : item.croatianFemale
-    const correctAnswer = (isFemale && female) ? female : base
-    // alternateAnswer: the other gender's form (only when they actually differ)
-    const alternateAnswer = female && female !== base
-      ? (isFemale ? base : female)
-      : undefined
-
     const categoryName = item.categoryId ? categoryMap.get(item.categoryId) : undefined
 
+    let prompt: string
+    let correctAnswer: string
+    let alternateAnswer: string | undefined
+
+    if (isEnglishLearner) {
+      // Prompt = Slavic (gender-matched for female users), answer = English
+      const slavicBase = language === "sr" ? item.serbian : item.croatian
+      const slavicFemale = language === "sr" ? item.serbianFemale : item.croatianFemale
+      prompt = (isFemale && slavicFemale) ? slavicFemale : slavicBase
+      correctAnswer = item.english
+      // No alternateAnswer — English has no grammatical gender
+    } else {
+      // Prompt = English, answer = Slavic (with optional female form)
+      prompt = item.english
+      const base = language === "sr" ? item.serbian : item.croatian
+      const female = language === "sr" ? item.serbianFemale : item.croatianFemale
+      correctAnswer = (isFemale && female) ? female : base
+      alternateAnswer = female && female !== base
+        ? (isFemale ? base : female)
+        : undefined
+    }
+
     if (exerciseType === "multiple_choice") {
-      const distractors = pickDistractors(item as DistractorItem, allItems as DistractorItem[], language, type, isFemale)
+      const distractors = pickDistractors(item as DistractorItem, allItems as DistractorItem[], language, type, isFemale, isEnglishLearner)
       return {
         id: item.id,
         exerciseType,
-        english: item.english,
+        prompt,
         correctAnswer,
         alternateAnswer,
         options: shuffle([correctAnswer, ...distractors]),
@@ -270,7 +291,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    return { id: item.id, exerciseType, english: item.english, correctAnswer, alternateAnswer, categoryName }
+    return { id: item.id, exerciseType, prompt, correctAnswer, alternateAnswer, categoryName }
   })
 
   return NextResponse.json({ exercises })

@@ -14,6 +14,8 @@ export default async function IntroductionPage() {
 
   const userId = parseInt(session.user.id)
   const language = session.user.language as "sr" | "hr"
+  const studyDirection = (session.user.studyDirection ?? "to_slavic") as "to_slavic" | "to_english"
+  const isEnglishLearner = studyDirection === "to_english"
 
   const [profile, userRow] = await Promise.all([
     db.select().from(userProfile).where(eq(userProfile.userId, userId)).get(),
@@ -27,6 +29,13 @@ export default async function IntroductionPage() {
 
   const hasContent = profile && isProfileComplete(profile)
   const intro = hasContent ? buildIntro(profileData, language) : null
+
+  // Labels and order depend on direction
+  const slavicLabel = LANG_LABELS[language] ?? language
+  const primaryLabel    = isEnglishLearner ? slavicLabel : slavicLabel
+  const secondaryLabel  = isEnglishLearner ? "English" : "English"
+  // For English learners: Slavic is the prompt they read, English is what they practice producing
+  // For Slavic learners: Slavic is what they practice producing, English is the reference prompt
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
@@ -46,7 +55,13 @@ export default async function IntroductionPage() {
       <main className="flex-1 max-w-2xl mx-auto w-full px-5 py-10">
         <div className="mb-8">
           <h1 className="text-3xl font-extrabold text-slate-900">My Introduction</h1>
-          <p className="text-slate-500 mt-1">Practice introducing yourself in {LANG_LABELS[language] ?? language}</p>
+          {isEnglishLearner ? (
+            <p className="text-slate-500 mt-1">
+              Practice introducing yourself in English using {slavicLabel} as your reference
+            </p>
+          ) : (
+            <p className="text-slate-500 mt-1">Practice introducing yourself in {slavicLabel}</p>
+          )}
         </div>
 
         {!hasContent ? (
@@ -61,37 +76,71 @@ export default async function IntroductionPage() {
           </div>
         ) : (
           <div className="space-y-5">
-            {/* Target language — primary */}
-            <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-              <div className="px-6 py-4 border-b border-slate-50 flex items-center gap-2">
-                <span className="text-xs font-bold uppercase tracking-widest text-violet-600">
-                  {LANG_LABELS[language] ?? language}
-                </span>
-              </div>
-              <div className="px-6 py-6">
-                <p className="text-xl font-medium text-slate-900 leading-relaxed">{intro!.target}</p>
-              </div>
-            </div>
+            {isEnglishLearner ? (
+              <>
+                {/* English learners: Slavic first (the question/prompt), then English (the answer to produce) */}
+                <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+                  <div className="px-6 py-4 border-b border-slate-50 flex items-center gap-2">
+                    <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
+                      {slavicLabel} — reference
+                    </span>
+                  </div>
+                  <div className="px-6 py-6">
+                    <p className="text-xl font-medium text-slate-900 leading-relaxed">{intro!.target}</p>
+                  </div>
+                </div>
 
-            {/* English — reference */}
-            <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
-              <div className="px-6 py-4 border-b border-slate-50">
-                <span className="text-xs font-bold uppercase tracking-widest text-slate-400">English</span>
-              </div>
-              <div className="px-6 py-6">
-                <p className="text-lg text-slate-600 leading-relaxed">{intro!.english}</p>
-              </div>
-            </div>
+                <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+                  <div className="px-6 py-4 border-b border-slate-50">
+                    <span className="text-xs font-bold uppercase tracking-widest text-violet-600">English</span>
+                  </div>
+                  <div className="px-6 py-6">
+                    <p className="text-xl font-medium text-slate-900 leading-relaxed">{intro!.english}</p>
+                  </div>
+                </div>
 
-            {/* Practice tips */}
-            <div className="bg-violet-50 rounded-3xl border border-violet-100 px-6 py-5">
-              <h3 className="text-sm font-bold text-violet-800 mb-2">How to practice</h3>
-              <ul className="text-sm text-violet-700 space-y-1 list-disc list-inside">
-                <li>Read the {LANG_LABELS[language] ?? language} version aloud several times</li>
-                <li>Cover it and try to say it from memory using the English as a prompt</li>
-                <li>Record yourself and listen back</li>
-              </ul>
-            </div>
+                <div className="bg-violet-50 rounded-3xl border border-violet-100 px-6 py-5">
+                  <h3 className="text-sm font-bold text-violet-800 mb-2">How to practice</h3>
+                  <ul className="text-sm text-violet-700 space-y-1 list-disc list-inside">
+                    <li>Read the {slavicLabel} version to understand the content</li>
+                    <li>Cover it and try to say the English version from memory</li>
+                    <li>Record yourself and listen back</li>
+                  </ul>
+                </div>
+              </>
+            ) : (
+              <>
+                {/* Slavic learners: Slavic is the target, English is the reference */}
+                <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+                  <div className="px-6 py-4 border-b border-slate-50 flex items-center gap-2">
+                    <span className="text-xs font-bold uppercase tracking-widest text-violet-600">
+                      {slavicLabel}
+                    </span>
+                  </div>
+                  <div className="px-6 py-6">
+                    <p className="text-xl font-medium text-slate-900 leading-relaxed">{intro!.target}</p>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
+                  <div className="px-6 py-4 border-b border-slate-50">
+                    <span className="text-xs font-bold uppercase tracking-widest text-slate-400">English</span>
+                  </div>
+                  <div className="px-6 py-6">
+                    <p className="text-lg text-slate-600 leading-relaxed">{intro!.english}</p>
+                  </div>
+                </div>
+
+                <div className="bg-violet-50 rounded-3xl border border-violet-100 px-6 py-5">
+                  <h3 className="text-sm font-bold text-violet-800 mb-2">How to practice</h3>
+                  <ul className="text-sm text-violet-700 space-y-1 list-disc list-inside">
+                    <li>Read the {slavicLabel} version aloud several times</li>
+                    <li>Cover it and try to say it from memory using the English as a prompt</li>
+                    <li>Record yourself and listen back</li>
+                  </ul>
+                </div>
+              </>
+            )}
 
             <div className="flex justify-end">
               <Link

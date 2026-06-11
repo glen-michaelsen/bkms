@@ -17,6 +17,7 @@ export const users = sqliteTable("users", {
   verbOfDayEnabledAt: text("verb_of_day_enabled_at"), // YYYY-MM-DD, set when first enabled
   // Study preferences
   multipleChoiceRatio: integer("multiple_choice_ratio").notNull().default(50),
+  studyDirection: text("study_direction", { enum: ["to_slavic", "to_english"] }).notNull().default("to_slavic"),
   // Idempotency guards for cron mailers
   streakMailLastSentDate: text("streak_mail_last_sent_date"),
   verbMailLastSentDate: text("verb_mail_last_sent_date"),

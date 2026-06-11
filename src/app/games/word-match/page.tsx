@@ -9,7 +9,7 @@ function todayUtc(): string {
   return new Date().toISOString().slice(0, 10)
 }
 
-type MatchWord = { id: number; serbian: string; english: string }
+type MatchWord = { id: number; serbian: string; croatian: string; english: string }
 
 export default async function WordMatchPage() {
   const session = await auth()
@@ -17,6 +17,8 @@ export default async function WordMatchPage() {
 
   const today = todayUtc()
   const userId = parseInt(session.user.id)
+  const language = session.user.language as "sr" | "hr"
+  const studyDirection = (session.user.studyDirection ?? "to_slavic") as "to_slavic" | "to_english"
 
   // Fetch or generate today's puzzle
   let existing = await db
@@ -27,7 +29,7 @@ export default async function WordMatchPage() {
 
   if (!existing) {
     const picked = await db
-      .select({ id: words.id, serbian: words.serbian, english: words.english })
+      .select({ id: words.id, serbian: words.serbian, croatian: words.croatian, english: words.english })
       .from(words)
       .orderBy(sql`RANDOM()`)
       .limit(5)
@@ -64,6 +66,8 @@ export default async function WordMatchPage() {
       date={today}
       initialSolved={initialSolved}
       isAdmin={isAdmin}
+      language={language}
+      studyDirection={studyDirection}
     />
   )
 }

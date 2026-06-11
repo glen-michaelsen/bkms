@@ -1,11 +1,20 @@
 "use client"
 
-import { useActionState } from "react"
+import { useActionState, useState } from "react"
 import { registerAction } from "@/app/actions"
 import Link from "next/link"
 
 export default function RegisterPage() {
   const [state, action, pending] = useActionState(registerAction, undefined)
+
+  // "en" means learning English; "sr"/"hr" means learning that Slavic language
+  const [learnTarget, setLearnTarget] = useState<"" | "en" | "sr" | "hr">("")
+  // Reference language — only relevant when learnTarget === "en"
+  const [refLanguage, setRefLanguage] = useState<"sr" | "hr">("sr")
+
+  // Derived values submitted to the server
+  const language: "sr" | "hr" = learnTarget === "en" ? refLanguage : (learnTarget as "sr" | "hr") || "sr"
+  const studyDirection = learnTarget === "en" ? "to_english" : "to_slavic"
 
   return (
     <div className="min-h-screen flex">
@@ -17,6 +26,10 @@ export default function RegisterPage() {
           <img src="/logo.svg" alt="Čujemo se" className="h-7 brightness-0 invert" />
         </div>
         <div className="relative z-10 space-y-4">
+          <div className="flex items-center gap-3 text-white/90">
+            <span className="text-2xl">🇬🇧</span>
+            <span className="font-medium">English</span>
+          </div>
           <div className="flex items-center gap-3 text-white/90">
             <span className="text-2xl">🇷🇸</span>
             <span className="font-medium">Serbian — Srpski</span>
@@ -47,6 +60,10 @@ export default function RegisterPage() {
           </div>
 
           <form action={action} className="space-y-4">
+            {/* Hidden fields derived from the interactive picker */}
+            <input type="hidden" name="language" value={language} />
+            <input type="hidden" name="studyDirection" value={studyDirection} />
+
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-1.5">Email</label>
               <input
@@ -72,23 +89,65 @@ export default function RegisterPage() {
               />
             </div>
 
+            {/* Step 1: What are you learning? */}
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-1.5">
                 I want to learn
               </label>
-              <select
-                name="language"
-                required
-                defaultValue=""
-                className="w-full px-4 py-3 border border-slate-200 rounded-xl bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition appearance-none cursor-pointer"
-              >
-                <option value="" disabled>
-                  Choose a language…
-                </option>
-                <option value="sr">🇷🇸 Serbian (Srpski)</option>
-                <option value="hr">🇭🇷 Croatian (Hrvatski)</option>
-              </select>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { value: "en", flag: "🇬🇧", label: "English" },
+                  { value: "sr", flag: "🇷🇸", label: "Serbian" },
+                  { value: "hr", flag: "🇭🇷", label: "Croatian" },
+                ].map(({ value, flag, label }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setLearnTarget(value as "en" | "sr" | "hr")}
+                    className={`flex flex-col items-center gap-1 py-3 px-2 rounded-xl border-2 text-sm font-semibold transition-all ${
+                      learnTarget === value
+                        ? "border-violet-500 bg-violet-50 text-violet-700"
+                        : "border-slate-200 text-slate-600 hover:border-violet-300 hover:bg-violet-50"
+                    }`}
+                  >
+                    <span className="text-xl">{flag}</span>
+                    <span>{label}</span>
+                  </button>
+                ))}
+              </div>
             </div>
+
+            {/* Step 2: Reference language (only when learning English) */}
+            {learnTarget === "en" && (
+              <div>
+                <label className="block text-sm font-semibold text-slate-700 mb-1.5">
+                  My reference language
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { value: "sr", flag: "🇷🇸", label: "Serbian" },
+                    { value: "hr", flag: "🇭🇷", label: "Croatian" },
+                  ].map(({ value, flag, label }) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setRefLanguage(value as "sr" | "hr")}
+                      className={`flex flex-col items-center gap-1 py-3 px-2 rounded-xl border-2 text-sm font-semibold transition-all ${
+                        refLanguage === value
+                          ? "border-violet-500 bg-violet-50 text-violet-700"
+                          : "border-slate-200 text-slate-600 hover:border-violet-300 hover:bg-violet-50"
+                      }`}
+                    >
+                      <span className="text-xl">{flag}</span>
+                      <span>{label}</span>
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-slate-400 mt-1.5">
+                  Exercises will show Serbian or Croatian as the question, and you type the English answer.
+                </p>
+              </div>
+            )}
 
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-1.5">
@@ -100,9 +159,7 @@ export default function RegisterPage() {
                 defaultValue=""
                 className="w-full px-4 py-3 border border-slate-200 rounded-xl bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition appearance-none cursor-pointer"
               >
-                <option value="" disabled>
-                  Select…
-                </option>
+                <option value="" disabled>Select…</option>
                 <option value="male">Male</option>
                 <option value="female">Female</option>
               </select>
@@ -117,7 +174,7 @@ export default function RegisterPage() {
 
             <button
               type="submit"
-              disabled={pending}
+              disabled={pending || !learnTarget}
               className="w-full py-3 px-4 bg-violet-600 text-white font-semibold rounded-xl hover:bg-violet-700 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
             >
               {pending ? "Creating account…" : "Get started →"}

@@ -37,6 +37,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           gender: user.gender,
           firstName: user.firstName ?? undefined,
           hintEnabled: user.hintEnabled,
+          studyDirection: user.studyDirection,
         }
       },
     }),
@@ -49,6 +50,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         if (session.gender) token.gender = session.gender
         if (session.email) token.email = session.email
         if (session.hintEnabled !== undefined) token.hintEnabled = session.hintEnabled
+        if (session.studyDirection) token.studyDirection = session.studyDirection
       }
       if (user) {
         token.role = (user as { role: string }).role
@@ -56,6 +58,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         token.gender = (user as { gender: string }).gender
         token.firstName = (user as { firstName?: string }).firstName ?? null
         token.hintEnabled = (user as { hintEnabled: boolean }).hintEnabled
+        token.studyDirection = (user as { studyDirection: string }).studyDirection
       }
       return token
     },
@@ -66,6 +69,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       session.user.gender = token.gender as string
       session.user.firstName = (token.firstName as string | null) ?? undefined
       session.user.hintEnabled = (token.hintEnabled as boolean) ?? false
+      session.user.studyDirection = (token.studyDirection as string) ?? "to_slavic"
       return session
     },
   },
