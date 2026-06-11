@@ -21,7 +21,7 @@ const languageInfo = {
 function getLangBadge(language: string, studyDirection: string) {
   const slavic = languageInfo[language as "sr" | "hr"] ?? { label: language, flag: "🌍", native: "" }
   if (studyDirection === "to_english") {
-    return { flag: "🇬🇧", label: "English", subtitle: `${slavic.flag} ${slavic.label} reference` }
+    return { flag: "🇬🇧", label: "English", subtitle: null }
   }
   return { flag: slavic.flag, label: slavic.label, subtitle: slavic.native }
 }
@@ -217,7 +217,7 @@ export default async function DashboardPage() {
             <span>{lang.label}{lang.subtitle ? ` · ${lang.subtitle}` : ""}</span>
           </div>
           <h1 className="text-4xl font-extrabold text-slate-900 leading-tight">
-            <Greeting firstName={firstName} />
+            <Greeting firstName={firstName} studyDirection={studyDirection} />
           </h1>
           <p className="text-slate-500 mt-2 text-lg">What would you like to practice today?</p>
         </div>
@@ -225,7 +225,7 @@ export default async function DashboardPage() {
         {/* Activity graph + daily sentences — side by side */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <ActivityGraph weeks={weeks} streak={streak} totalDaysActive={totalDaysActive} numWeeks={12} />
-          <DailySentences />
+          <DailySentences studyDirection={studyDirection} language={session.user.language as "sr" | "hr"} />
         </div>
 
         {/* Vocabulary Training */}

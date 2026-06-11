@@ -17,7 +17,7 @@ function srNum(n: number): string {
 
 function pad2(n: number) { return n.toString().padStart(2, "0") }
 
-export function CurrentTime() {
+export function CurrentTime({ studyDirection = "to_slavic" }: { studyDirection?: string }) {
   const [now, setNow] = useState<Date | null>(null)
   useEffect(() => { setNow(new Date()) }, [])
 
@@ -43,10 +43,12 @@ export function CurrentTime() {
     ? `It is ${h12}:00 ${ampm} exactly`
     : `It is ${h12}:${pad2(m)} ${ampm}`
 
+  const isEnglishLearner = studyDirection === "to_english"
+
   return (
     <div className="flex flex-col gap-0.5">
-      <p className="font-semibold text-slate-800 leading-snug">{sr}</p>
-      <p className="text-xs text-slate-400">{en}</p>
+      <p className="font-semibold text-slate-800 leading-snug">{isEnglishLearner ? en : sr}</p>
+      <p className="text-xs text-slate-400">{isEnglishLearner ? sr : en}</p>
     </div>
   )
 }

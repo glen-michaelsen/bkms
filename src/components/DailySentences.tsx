@@ -5,6 +5,7 @@ import { Calendar } from "lucide-react"
 import { CurrentTime } from "./CurrentTime"
 
 const DAYS_SR = ["nedelja", "ponedeljak", "utorak", "sreda", "četvrtak", "petak", "subota"]
+const DAYS_HR = ["nedjelja", "ponedjeljak", "utorak", "srijeda", "četvrtak", "petak", "subota"]
 const DAYS_EN = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 
 const ORDINALS_SR = [
@@ -28,16 +29,21 @@ const MONTHS_SR = [
   "jul", "avgust", "septembar", "oktobar", "novembar", "decembar",
 ]
 
+const MONTHS_HR = [
+  "", "siječanj", "veljača", "ožujak", "travanj", "svibanj", "lipanj",
+  "srpanj", "kolovoz", "rujan", "listopad", "studeni", "prosinac",
+]
+
 const MONTHS_EN = [
   "", "January", "February", "March", "April", "May", "June",
   "July", "August", "September", "October", "November", "December",
 ]
 
-function getSeason(month: number): { sr: string; en: string } {
-  if (month >= 3 && month <= 5) return { sr: "proleće", en: "spring" }
-  if (month >= 6 && month <= 8) return { sr: "leto", en: "summer" }
-  if (month >= 9 && month <= 11) return { sr: "jesen", en: "autumn" }
-  return { sr: "zima", en: "winter" }
+function getSeason(month: number): { sr: string; hr: string; en: string } {
+  if (month >= 3 && month <= 5) return { sr: "proleće",  hr: "proljeće", en: "spring" }
+  if (month >= 6 && month <= 8) return { sr: "leto",     hr: "ljeto",    en: "summer" }
+  if (month >= 9 && month <= 11) return { sr: "jesen",   hr: "jesen",    en: "autumn" }
+  return                                { sr: "zima",    hr: "zima",     en: "winter" }
 }
 
 function Skeleton() {
@@ -53,7 +59,13 @@ function Skeleton() {
   )
 }
 
-export function DailySentences() {
+export function DailySentences({
+  studyDirection = "to_slavic",
+  language = "sr",
+}: {
+  studyDirection?: string
+  language?: "sr" | "hr"
+}) {
   const [now, setNow] = useState<Date | null>(null)
   useEffect(() => { setNow(new Date()) }, [])
 
@@ -66,15 +78,21 @@ export function DailySentences() {
     )
   }
 
+  const isEnglishLearner = studyDirection === "to_english"
   const dow    = now.getDay()
   const day    = now.getDate()
   const month  = now.getMonth() + 1
   const season = getSeason(month)
 
-  const sentences = [
-    { sr: `Danas je ${DAYS_SR[dow]}.`,              en: `Today is ${DAYS_EN[dow]}` },
-    { sr: `Datum je ${ORDINALS_SR[day]} ${MONTHS_SR[month]}.`, en: `The date is ${MONTHS_EN[month]} ${ORDINALS_EN[day]}` },
-    { sr: `Godišnje doba je ${season.sr}.`,          en: `The season is ${season.en}` },
+  const slavicDay   = language === "hr" ? DAYS_HR[dow]   : DAYS_SR[dow]
+  const slavicMonth = language === "hr" ? MONTHS_HR[month] : MONTHS_SR[month]
+  const slavicSeason = language === "hr" ? season.hr : season.sr
+  const slavicOrdinal = ORDINALS_SR[day]  // ordinals same structure both languages
+
+  const srSentences = [
+    { slavic: `Danas je ${slavicDay}.`,                         en: `Today is ${DAYS_EN[dow]}` },
+    { slavic: `Datum je ${slavicOrdinal} ${slavicMonth}.`,      en: `The date is ${MONTHS_EN[month]} ${ORDINALS_EN[day]}` },
+    { slavic: `Godišnje doba je ${slavicSeason}.`,              en: `The season is ${season.en}` },
   ]
 
   return (
@@ -84,11 +102,20 @@ export function DailySentences() {
       </div>
 
       <div className="space-y-4 flex-1">
-        <CurrentTime />
-        {sentences.map(({ sr, en }, i) => (
+        <CurrentTime studyDirection={studyDirection} />
+        {srSentences.map(({ slavic, en }, i) => (
           <div key={i} className="flex flex-col gap-0.5">
-            <p className="font-semibold text-slate-800 leading-snug">{sr}</p>
-            <p className="text-xs text-slate-400">{en}</p>
+            {isEnglishLearner ? (
+              <>
+                <p className="font-semibold text-slate-800 leading-snug">{en}</p>
+                <p className="text-xs text-slate-400">{slavic}</p>
+              </>
+            ) : (
+              <>
+                <p className="font-semibold text-slate-800 leading-snug">{slavic}</p>
+                <p className="text-xs text-slate-400">{en}</p>
+              </>
+            )}
           </div>
         ))}
       </div>
