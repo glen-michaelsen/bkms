@@ -396,7 +396,7 @@ export async function adminTriggerVerbOfDayAction(): Promise<VerbMailResult> {
   const userId = parseInt(session.user.id)
   const user = await db.select({
     id: users.id, email: users.email, firstName: users.firstName,
-    language: users.language, timezone: users.timezone,
+    language: users.language, studyDirection: users.studyDirection, timezone: users.timezone,
     verbOfDayEnabled: users.verbOfDayEnabled, verbOfDayEnabledAt: users.verbOfDayEnabledAt,
   }).from(users).where(eq(users.id, userId)).get()
 
@@ -412,7 +412,7 @@ export async function adminTriggerVerbOfDayAction(): Promise<VerbMailResult> {
   const dayIndex = Math.max(0, Math.round((new Date(userLocalDate).getTime() - new Date(startDate).getTime()) / msPerDay))
   const verb = allVerbs[dayIndex % allVerbs.length]
 
-  await sendVerbOfDay({ to: user.email, firstName: user.firstName, verb, verbNumber: (dayIndex % allVerbs.length) + 1, language: user.language })
+  await sendVerbOfDay({ to: user.email, firstName: user.firstName, verb, verbNumber: (dayIndex % allVerbs.length) + 1, language: user.language, studyDirection: user.studyDirection })
   await db.update(users).set({ verbMailLastSentDate: userLocalDate }).where(eq(users.id, userId))
   return { sent: true }
 }
