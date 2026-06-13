@@ -103,7 +103,7 @@ interface CrosswordGameProps {
 export function CrosswordGame({ puzzle, date, initialInput, initialSolvedAt, studyDirection }: CrosswordGameProps) {
   if (!puzzle) return <NoPuzzle />
 
-  return <CrosswordBoard puzzle={puzzle} date={date} initialInput={initialInput} initialSolvedAt={initialSolvedAt} studyDirection={studyDirection} />
+  return <CrosswordBoard puzzle={puzzle} date={date} initialInput={initialInput} initialSolvedAt={initialSolvedAt} studyDirection={studyDirection ?? "to_slavic"} />
 }
 
 function CrosswordBoard({ puzzle, date, initialInput, initialSolvedAt, studyDirection }: Required<CrosswordGameProps> & { puzzle: GeneratedPuzzle }) {
