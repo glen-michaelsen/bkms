@@ -90,22 +90,24 @@ function NoPuzzle() {
 const CELL_MAX = 44  // px — max cell size (desktop)
 const CELL_MIN = 30  // px — minimum usable tap size
 const SAVE_DEBOUNCE_MS = 800
-const SPECIAL_CHARS = ["Č", "Ć", "Š", "Đ", "Ž"]
+const SPECIAL_CHARS_SR = ["Č", "Ć", "Š", "Đ", "Ž"]
 
 interface CrosswordGameProps {
   puzzle: GeneratedPuzzle | null
   date: string
   initialInput: Record<string, string>
   initialSolvedAt: string | null
+  studyDirection?: string
 }
 
-export function CrosswordGame({ puzzle, date, initialInput, initialSolvedAt }: CrosswordGameProps) {
+export function CrosswordGame({ puzzle, date, initialInput, initialSolvedAt, studyDirection }: CrosswordGameProps) {
   if (!puzzle) return <NoPuzzle />
 
-  return <CrosswordBoard puzzle={puzzle} date={date} initialInput={initialInput} initialSolvedAt={initialSolvedAt} />
+  return <CrosswordBoard puzzle={puzzle} date={date} initialInput={initialInput} initialSolvedAt={initialSolvedAt} studyDirection={studyDirection} />
 }
 
-function CrosswordBoard({ puzzle, date, initialInput, initialSolvedAt }: Required<CrosswordGameProps> & { puzzle: GeneratedPuzzle }) {
+function CrosswordBoard({ puzzle, date, initialInput, initialSolvedAt, studyDirection }: Required<CrosswordGameProps> & { puzzle: GeneratedPuzzle }) {
+  const isEnglishLearner = studyDirection === "to_english"
   const { words, gridRows, gridCols } = puzzle
   const grid       = buildGrid(words)
   const wordNumMap = buildWordNumMap(words)
@@ -238,7 +240,8 @@ function CrosswordBoard({ puzzle, date, initialInput, initialSolvedAt }: Require
     if (e.key === "ArrowUp")    { setSelected({ row: Math.max(row - 1, 0), col, dir: "down" }); return }
 
     const letter = e.key.toUpperCase()
-    if (letter.length === 1 && /[A-ZČĆĐŠŽ]/.test(letter)) {
+    const validLetter = isEnglishLearner ? /^[A-Z]$/.test(letter) : /^[A-ZČĆĐŠŽ]$/.test(letter)
+    if (letter.length === 1 && validLetter) {
       e.preventDefault()
       insertLetter(letter)
     }
@@ -349,7 +352,8 @@ function CrosswordBoard({ puzzle, date, initialInput, initialSolvedAt }: Require
                 const raw = e.target.value
                 if (!raw) return
                 const letter = raw.slice(-1).toUpperCase()
-                if (/[A-ZČĆĐŠŽ]/.test(letter)) insertLetter(letter)
+                const validLetter = isEnglishLearner ? /^[A-Z]$/.test(letter) : /^[A-ZČĆĐŠŽ]$/.test(letter)
+                if (validLetter) insertLetter(letter)
                 // Reset so next keypress is always a fresh single character
                 if (inputRef.current) inputRef.current.value = ""
               }}
@@ -420,10 +424,10 @@ function CrosswordBoard({ puzzle, date, initialInput, initialSolvedAt }: Require
 
           {/* Clue lists */}
           <div className="flex-1 space-y-6 min-w-0">
-            {/* Special character buttons */}
-            {!solved && (
+            {/* Special character buttons — Slavic learners only */}
+            {!solved && !isEnglishLearner && (
               <div className="flex flex-wrap gap-2">
-                {SPECIAL_CHARS.map(ch => (
+                {SPECIAL_CHARS_SR.map(ch => (
                   <button
                     key={ch}
                     onMouseDown={e => { e.preventDefault(); insertLetter(ch) }}
@@ -476,7 +480,7 @@ function CrosswordBoard({ puzzle, date, initialInput, initialSolvedAt }: Require
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
           <div className="bg-white rounded-3xl shadow-2xl p-8 text-center max-w-sm w-full">
             <div className="w-16 h-16 bg-violet-100 rounded-3xl flex items-center justify-center text-violet-500 mx-auto mb-4"><Sparkles className="w-8 h-8" /></div>
-            <h2 className="text-2xl font-extrabold text-slate-900 mb-2">Odlično!</h2>
+            <h2 className="text-2xl font-extrabold text-slate-900 mb-2">{isEnglishLearner ? "Excellent!" : "Odlično!"}</h2>
             <p className="text-slate-500 mb-6">You solved today's crossword!</p>
             <div className="flex flex-col gap-3">
               <Link

@@ -15,7 +15,11 @@ export default async function CrosswordPage() {
   const session = await auth()
   if (!session) redirect("/login")
 
+  const studyDirection = (session.user.studyDirection ?? "to_slavic") as string
+  const isEnglishLearner = studyDirection === "to_english"
   const date = todayUtc()
+  // English learners get a separate cached puzzle (English answers, Serbian clues)
+  const puzzleKey = isEnglishLearner ? `${date}-en` : date
 
   // ── Fetch or generate today's puzzle ─────────────────────────────────────────
   let puzzle: GeneratedPuzzle | null = null
@@ -23,20 +27,19 @@ export default async function CrosswordPage() {
   const existing = await db
     .select()
     .from(crosswordPuzzles)
-    .where(eq(crosswordPuzzles.date, date))
+    .where(eq(crosswordPuzzles.date, puzzleKey))
     .get()
 
   if (existing) {
     puzzle = JSON.parse(existing.puzzleJson) as GeneratedPuzzle
   } else {
-    // Generate from the word database
     const dbWords = await db.select({ english: words.english, serbian: words.serbian }).from(words).all()
-    puzzle = generateDailyCrossword(dbWords)
+    puzzle = generateDailyCrossword(dbWords, isEnglishLearner)
 
     if (puzzle) {
       try {
         await db.insert(crosswordPuzzles).values({
-          date,
+          date: puzzleKey,
           puzzleJson: JSON.stringify(puzzle),
         })
       } catch {
@@ -54,7 +57,7 @@ export default async function CrosswordPage() {
     .where(
       and(
         eq(userCrosswordProgress.userId, userId),
-        eq(userCrosswordProgress.date, date),
+        eq(userCrosswordProgress.date, puzzleKey),
       ),
     )
     .get()
@@ -70,9 +73,10 @@ export default async function CrosswordPage() {
   return (
     <CrosswordGame
       puzzle={puzzle}
-      date={date}
+      date={puzzleKey}
       initialInput={initialInput}
       initialSolvedAt={initialSolvedAt}
+      studyDirection={studyDirection}
     />
   )
 }

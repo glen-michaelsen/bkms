@@ -19,12 +19,18 @@ type DbWord = { serbian: string; english: string }
 
 // ── Validation ────────────────────────────────────────────────────────────────
 
-// Only single-token words using the Serbian Latin alphabet
-const VALID_RE = /^[A-ZČĆĐŠŽa-zčćđšž]+$/
+const VALID_SR = /^[A-ZČĆĐŠŽa-zčćđšž]+$/
+const VALID_EN = /^[A-Za-z]+$/
 
-function normalise(w: DbWord): { answer: string; clue: string } | null {
+function normalise(w: DbWord, flip = false): { answer: string; clue: string } | null {
+  if (flip) {
+    const answer = w.english.trim().toUpperCase()
+    if (!VALID_EN.test(answer)) return null
+    if (answer.length < 2 || answer.length > 9) return null
+    return { answer, clue: w.serbian.trim() }
+  }
   const answer = w.serbian.trim().toUpperCase()
-  if (!VALID_RE.test(answer)) return null
+  if (!VALID_SR.test(answer)) return null
   if (answer.length < 2 || answer.length > 9) return null
   return { answer, clue: w.english.trim() }
 }
@@ -41,9 +47,9 @@ function normalise(w: DbWord): { answer: string; clue: string } | null {
 //   row C: . . . E V R O   → right (EVRO[0] = E)
 //   ...
 
-export function generateDailyCrossword(dbWords: DbWord[]): GeneratedPuzzle | null {
+export function generateDailyCrossword(dbWords: DbWord[], flip = false): GeneratedPuzzle | null {
   const pool = dbWords.flatMap(w => {
-    const n = normalise(w)
+    const n = normalise(w, flip)
     return n ? [n] : []
   })
 
