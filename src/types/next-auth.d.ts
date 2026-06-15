@@ -7,6 +7,7 @@ declare module "next-auth" {
     gender: string
     firstName?: string
     hintEnabled: boolean
+    studyDirection: string
   }
   interface Session {
     user: {
@@ -17,6 +18,7 @@ declare module "next-auth" {
       gender: string
       firstName?: string
       hintEnabled: boolean
+      studyDirection: string
     }
   }
 }
@@ -28,5 +30,6 @@ declare module "next-auth/jwt" {
     gender: string
     firstName?: string | null
     hintEnabled: boolean
+    studyDirection: string
   }
 }

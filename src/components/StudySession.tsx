@@ -346,7 +346,7 @@ export function StudySession({ type, hintEnabled: initialHint, categoryId, wordT
         <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-3">
           Translate to {type === "words" ? "the word" : "the sentence"}
         </p>
-        <p className="text-2xl font-bold text-slate-900 leading-snug">{exercise.english}</p>
+        <p className="text-2xl font-bold text-slate-900 leading-snug">{exercise.prompt}</p>
       </div>
 
       {/* Exercise */}

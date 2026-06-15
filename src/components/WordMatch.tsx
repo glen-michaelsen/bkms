@@ -7,7 +7,7 @@ import { Shuffle, Check, Sparkles } from "lucide-react"
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-type Word = { id: number; serbian: string; english: string }
+type Word = { id: number; serbian: string; croatian: string; english: string }
 
 type Connection = {
   leftIdx: number   // index into `words`
@@ -93,12 +93,23 @@ export function WordMatch({
   date,
   initialSolved,
   isAdmin = false,
+  language = "sr",
+  studyDirection = "to_slavic",
 }: {
   initialWords: Word[]
   date: string
   initialSolved: boolean
   isAdmin?: boolean
+  language?: "sr" | "hr"
+  studyDirection?: "to_slavic" | "to_english"
 }) {
+  // Left = the word to drag from; Right = the target to connect to
+  // to_slavic: Left = Slavic, Right = English (current default)
+  // to_english: Left = English, Right = Slavic
+  const slavicText = (w: Word) => language === "sr" ? w.serbian : w.croatian
+  const leftText   = (w: Word) => studyDirection === "to_english" ? w.english : slavicText(w)
+  const rightText  = (w: Word) => studyDirection === "to_english" ? slavicText(w) : w.english
+
   const [words]    = useState(initialWords)
   const [shuffled] = useState(() => seededShuffle(initialWords, dateSeed(date)))
 
@@ -309,13 +320,13 @@ export function WordMatch({
                               : "bg-white border-slate-200 text-slate-800 cursor-grab hover:border-violet-300 hover:shadow-sm"
                         }`}
                     >
-                      {word.serbian}
+                      {leftText(word)}
                     </div>
                   )
                 })}
               </div>
 
-              {/* Right — English */}
+              {/* Right column */}
               <div className="space-y-3">
                 {shuffled.map((word, i) => {
                   const status = connectedRight.get(i)
@@ -336,7 +347,7 @@ export function WordMatch({
                               : "bg-white border-slate-200 text-slate-600"
                         }`}
                     >
-                      {word.english}
+                      {rightText(word)}
                     </div>
                   )
                 })}
@@ -364,7 +375,7 @@ export function WordMatch({
             </p>
             <div className="flex flex-col gap-3">
               <Link
-                href={`/study/sentences?wordTexts=${words.map(w => w.serbian).join(",")}`}
+                href={`/study/sentences?wordTexts=${words.map(w => slavicText(w)).join(",")}`}
                 className="block w-full py-3 rounded-2xl bg-violet-600 text-white font-semibold hover:bg-violet-700 transition"
               >
                 Train sentences with these words

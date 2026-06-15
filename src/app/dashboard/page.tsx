@@ -18,6 +18,14 @@ const languageInfo = {
   hr: { label: "Croatian", flag: "🇭🇷", native: "Hrvatski" },
 }
 
+function getLangBadge(language: string, studyDirection: string) {
+  const slavic = languageInfo[language as "sr" | "hr"] ?? { label: language, flag: "🌍", native: "" }
+  if (studyDirection === "to_english") {
+    return { flag: "🇬🇧", label: "English", subtitle: null }
+  }
+  return { flag: slavic.flag, label: slavic.label, subtitle: slavic.native }
+}
+
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 function prevDay(dateStr: string): string {
@@ -133,9 +141,8 @@ export default async function DashboardPage() {
   const session = await auth()
   if (!session) redirect("/login")
 
-  const lang = languageInfo[session.user.language as "sr" | "hr"] ?? {
-    label: session.user.language, flag: "🌍", native: "",
-  }
+  const studyDirection = session.user.studyDirection ?? "to_slavic"
+  const lang = getLangBadge(session.user.language, studyDirection)
   const firstName = session.user.firstName || session.user.email.split("@")[0]
   const userId = parseInt(session.user.id)
   const today = new Date().toISOString().slice(0, 10)
@@ -207,10 +214,10 @@ export default async function DashboardPage() {
         <div>
           <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-violet-100 text-violet-700 text-xs font-semibold rounded-full mb-4">
             <span>{lang.flag}</span>
-            <span>{lang.label} · {lang.native}</span>
+            <span>{lang.label}{lang.subtitle ? ` · ${lang.subtitle}` : ""}</span>
           </div>
           <h1 className="text-4xl font-extrabold text-slate-900 leading-tight">
-            <Greeting firstName={firstName} />
+            <Greeting firstName={firstName} studyDirection={studyDirection} />
           </h1>
           <p className="text-slate-500 mt-2 text-lg">What would you like to practice today?</p>
         </div>
@@ -218,7 +225,7 @@ export default async function DashboardPage() {
         {/* Activity graph + daily sentences — side by side */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <ActivityGraph weeks={weeks} streak={streak} totalDaysActive={totalDaysActive} numWeeks={12} />
-          <DailySentences />
+          <DailySentences studyDirection={studyDirection} language={session.user.language as "sr" | "hr"} />
         </div>
 
         {/* Vocabulary Training */}
@@ -274,13 +281,15 @@ export default async function DashboardPage() {
               solved={false}
               subtitle={profile ? "Practice your intro" : "Set up your profile"}
             />
-            <GameCard
-              href="/study/cases"
-              icon={List}
-              name="Cases"
-              solved={false}
-              subtitle="All 7 cases"
-            />
+            {studyDirection !== "to_english" && (
+              <GameCard
+                href="/study/cases"
+                icon={List}
+                name="Cases"
+                solved={false}
+                subtitle="All 7 cases"
+              />
+            )}
           </div>
         </div>
 

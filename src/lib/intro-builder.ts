@@ -1,6 +1,6 @@
 import { findCountry } from "./countries"
 import { STUDY_LEVELS } from "./job-titles"
-import { toCardinal, toDayOrdinal } from "./number-words"
+import { toCardinal, toDayOrdinal, toEnCardinal, toEnYear, toEnDayOrdinal } from "./number-words"
 
 export type ProfileData = {
   firstName?: string | null
@@ -55,7 +55,12 @@ export type BilingualIntro = {
   target: string   // Serbian or Croatian
 }
 
-export function buildIntro(profile: ProfileData, language: "sr" | "hr"): BilingualIntro {
+export function buildIntro(
+  profile: ProfileData,
+  language: "sr" | "hr",
+  studyDirection: "to_slavic" | "to_english" = "to_slavic"
+): BilingualIntro {
+  const isEnglishLearner = studyDirection === "to_english"
   const parts = { en: [] as string[], tg: [] as string[] }
 
   // Greeting + name
@@ -76,16 +81,30 @@ export function buildIntro(profile: ProfileData, language: "sr" | "hr"): Bilingu
     const monthIdx = b.getUTCMonth()
     const year = b.getUTCFullYear()
 
-    parts.en.push(`I am ${age} years old and my birthday is the ${ordinal(day)} of ${EN_MONTHS[monthIdx]} ${year}.`)
-
     const ageWords  = toCardinal(age, language)
     const dayWords  = toDayOrdinal(day)
     const yearWords = toCardinal(year, language)
 
-    if (language === "sr") {
-      parts.tg.push(`Imam ${age} (${ageWords}) ${ageSuffix(age)} i moj rođendan je ${day}. (${dayWords}) ${SR_MONTHS_GEN[monthIdx]} ${year}. (${yearWords}) godine.`)
+    if (isEnglishLearner) {
+      // English is the learning language — spell out numbers in parentheses in English
+      const enAge  = toEnCardinal(age)
+      const enDay  = toEnDayOrdinal(day)
+      const enYear = toEnYear(year)
+      parts.en.push(`I am ${age} (${enAge}) years old and my birthday is the ${ordinal(day)} (${enDay}) of ${EN_MONTHS[monthIdx]} ${year} (${enYear}).`)
+      // Slavic is reference — no parenthetical words
+      if (language === "sr") {
+        parts.tg.push(`Imam ${age} ${ageSuffix(age)} i moj rođendan je ${day}. ${SR_MONTHS_GEN[monthIdx]} ${year}. godine.`)
+      } else {
+        parts.tg.push(`Imam ${age} ${ageSuffix(age)} i moj rođendan je ${day}. ${HR_MONTHS_GEN[monthIdx]} ${year}.`)
+      }
     } else {
-      parts.tg.push(`Imam ${age} (${ageWords}) ${ageSuffix(age)} i moj rođendan je ${day}. (${dayWords}) ${HR_MONTHS_GEN[monthIdx]} ${year}. (${yearWords})`)
+      // Slavic is the learning language — spell out numbers in parentheses in Slavic
+      parts.en.push(`I am ${age} years old and my birthday is the ${ordinal(day)} of ${EN_MONTHS[monthIdx]} ${year}.`)
+      if (language === "sr") {
+        parts.tg.push(`Imam ${age} (${ageWords}) ${ageSuffix(age)} i moj rođendan je ${day}. (${dayWords}) ${SR_MONTHS_GEN[monthIdx]} ${year}. (${yearWords}) godine.`)
+      } else {
+        parts.tg.push(`Imam ${age} (${ageWords}) ${ageSuffix(age)} i moj rođendan je ${day}. (${dayWords}) ${HR_MONTHS_GEN[monthIdx]} ${year}. (${yearWords})`)
+      }
     }
   }
 

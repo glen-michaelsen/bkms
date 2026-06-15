@@ -36,6 +36,7 @@ export async function registerAction(
   const password = formData.get("password") as string
   const language = formData.get("language") as "sr" | "hr"
   const gender = formData.get("gender") as "male" | "female"
+  const studyDirection = (formData.get("studyDirection") as string) === "to_english" ? "to_english" : "to_slavic"
 
   if (!email || !password || !language || !gender) {
     return { error: "All fields are required" }
@@ -48,7 +49,7 @@ export async function registerAction(
   if (existing) return { error: "An account with this email already exists" }
 
   const passwordHash = await bcrypt.hash(password, 12)
-  await db.insert(users).values({ email, passwordHash, language, gender })
+  await db.insert(users).values({ email, passwordHash, language, gender, studyDirection: studyDirection as "to_slavic" | "to_english" })
 
   redirect("/login?registered=1")
 }
@@ -60,7 +61,7 @@ export async function logoutAction() {
 type SettingsResult = {
   error?: string
   success?: boolean
-  updated?: { firstName?: string; language?: string; gender?: string; email?: string }
+  updated?: { firstName?: string; language?: string; gender?: string; email?: string; studyDirection?: string }
 }
 
 export async function updateProfileAction(
@@ -73,17 +74,18 @@ export async function updateProfileAction(
   const firstName = (formData.get("firstName") as string).trim() || null
   const language = formData.get("language") as "sr" | "hr"
   const gender = formData.get("gender") as "male" | "female"
+  const studyDirection = (formData.get("studyDirection") as string) === "to_english" ? "to_english" : "to_slavic"
 
   if (!language || !gender) return { error: "Language and gender are required" }
 
   await db
     .update(users)
-    .set({ firstName, language, gender })
+    .set({ firstName, language, gender, studyDirection: studyDirection as "to_slavic" | "to_english" })
     .where(eq(users.id, parseInt(session.user.id)))
 
   return {
     success: true,
-    updated: { firstName: firstName ?? undefined, language, gender },
+    updated: { firstName: firstName ?? undefined, language, gender, studyDirection },
   }
 }
 
@@ -394,7 +396,7 @@ export async function adminTriggerVerbOfDayAction(): Promise<VerbMailResult> {
   const userId = parseInt(session.user.id)
   const user = await db.select({
     id: users.id, email: users.email, firstName: users.firstName,
-    language: users.language, timezone: users.timezone,
+    language: users.language, studyDirection: users.studyDirection, timezone: users.timezone,
     verbOfDayEnabled: users.verbOfDayEnabled, verbOfDayEnabledAt: users.verbOfDayEnabledAt,
   }).from(users).where(eq(users.id, userId)).get()
 
@@ -410,7 +412,7 @@ export async function adminTriggerVerbOfDayAction(): Promise<VerbMailResult> {
   const dayIndex = Math.max(0, Math.round((new Date(userLocalDate).getTime() - new Date(startDate).getTime()) / msPerDay))
   const verb = allVerbs[dayIndex % allVerbs.length]
 
-  await sendVerbOfDay({ to: user.email, firstName: user.firstName, verb, verbNumber: (dayIndex % allVerbs.length) + 1, language: user.language })
+  await sendVerbOfDay({ to: user.email, firstName: user.firstName, verb, verbNumber: (dayIndex % allVerbs.length) + 1, language: user.language, studyDirection: user.studyDirection })
   await db.update(users).set({ verbMailLastSentDate: userLocalDate }).where(eq(users.id, userId))
   return { sent: true }
 }

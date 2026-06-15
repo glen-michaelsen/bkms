@@ -21,6 +21,7 @@ export default async function SettingsPage() {
       streakMailHour: users.streakMailHour,
       verbOfDayEnabled: users.verbOfDayEnabled,
       multipleChoiceRatio: users.multipleChoiceRatio,
+      studyDirection: users.studyDirection,
     }).from(users).where(eq(users.id, userId)).get(),
     db.select().from(userProfile).where(eq(userProfile.userId, userId)).get(),
   ])
@@ -48,6 +49,7 @@ export default async function SettingsPage() {
           initialEmail={session.user.email}
           initialLanguage={session.user.language}
           initialGender={session.user.gender}
+          initialStudyDirection={userRow?.studyDirection ?? "to_slavic"}
           levels={allLevels.map((l) => ({ id: l.id, name: l.name }))}
           levelConfig={levelConfig.map((c) => ({ levelId: c.levelId, percentage: c.percentage }))}
           initialTimezone={userRow?.timezone ?? "Europe/Belgrade"}

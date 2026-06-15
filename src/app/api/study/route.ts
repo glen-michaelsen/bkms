@@ -9,7 +9,8 @@ import { eq, or, sql } from "drizzle-orm"
 export type Exercise = {
   id: number
   exerciseType: "type_in" | "multiple_choice"
-  english: string
+  /** The question prompt shown to the user (English for Slavic learners; Slavic for English learners) */
+  prompt: string
   correctAnswer: string
   alternateAnswer?: string  // opposite-gender form, shown in feedback and accepted as correct on type-in
   options?: string[]
@@ -23,6 +24,7 @@ function shuffle<T>(arr: T[]): T[] {
 type DistractorItem = {
   id: number
   categoryId: number | null
+  english: string
   serbian: string
   croatian: string
   serbianFemale?: string | null
@@ -37,6 +39,8 @@ type DistractorItem = {
  *          text length within ±50 % as a tiebreaker.
  * Sentences — length similarity is the primary filter (a wildly different
  *          length is a dead giveaway), category is preferred within that.
+ *
+ * For English-learning direction, all text resolution uses item.english.
  */
 function pickDistractors(
   correct: DistractorItem,
@@ -44,9 +48,11 @@ function pickDistractors(
   language: "sr" | "hr",
   itemType: "words" | "sentences",
   isFemale: boolean,
+  isEnglishLearner: boolean,
   count = 3,
 ): string[] {
   const resolveText = (i: DistractorItem) => {
+    if (isEnglishLearner) return i.english
     const base = language === "sr" ? i.serbian : i.croatian
     const female = language === "sr" ? i.serbianFemale : i.croatianFemale
     return (isFemale && female) ? female : base
@@ -146,13 +152,15 @@ export async function GET(req: NextRequest) {
 
   const language = session.user.language as "sr" | "hr"
   const isFemale = session.user.gender === "female"
+  const isEnglishLearner = (session.user.studyDirection ?? "to_slavic") === "to_english"
   const userId = parseInt(session.user.id)
 
-  // Fetch all items (always needed for MC distractor generation) + categories map + user prefs
-  const [allItems, allCategories, userRow] = await Promise.all([
+  // Fetch all items (always needed for MC distractor generation) + categories map + user prefs + level config
+  const [allItems, allCategories, userRow, levelConfigs] = await Promise.all([
     db.select().from(type === "words" ? words : sentences),
     db.select({ id: categories.id, name: categories.name }).from(categories),
     db.select({ multipleChoiceRatio: users.multipleChoiceRatio }).from(users).where(eq(users.id, userId)).get(),
+    db.select().from(userLevelConfig).where(eq(userLevelConfig.userId, userId)),
   ])
   const categoryMap = new Map(allCategories.map((c) => [c.id, c.name]))
   const mcRatio = userRow?.multipleChoiceRatio ?? 50  // 0–100, default 50/50
@@ -172,7 +180,28 @@ export async function GET(req: NextRequest) {
       sql`lower(${sentences.serbian}) LIKE ${"%" + text + "%"}`
     )
     const matched = await db.select().from(sentences).where(or(...conditions))
-    sessionPool = matched.length >= 4 ? matched : allItems
+
+    if (matched.length === 0) {
+      sessionPool = allItems
+    } else if (levelConfigs.length > 0) {
+      // Distribute matched sentences by the user's level preferences.
+      // We only pick from matched sentences — no shortfall fill from unrelated content.
+      const distribution = distribute(Math.min(10, matched.length), levelConfigs)
+      const picked: typeof matched = []
+      for (const { levelId, count } of distribution) {
+        if (count === 0) continue
+        const pool = shuffle(
+          (matched as (typeof allItems[number] & { levelId: number | null })[]).filter(
+            (s) => s.levelId === levelId
+          )
+        )
+        picked.push(...pool.slice(0, count))
+      }
+      // If nothing matched any configured level, fall back to all matched sentences
+      sessionPool = picked.length > 0 ? picked : matched
+    } else {
+      sessionPool = matched
+    }
   } else if (categoryId !== null) {
     sessionPool = allItems.filter((i) => i.categoryId === categoryId)
   } else {
@@ -190,12 +219,7 @@ export async function GET(req: NextRequest) {
   let sessionItems = shuffle(sessionPool).slice(0, sessionSize)
 
   if (type === "sentences" && categoryId === null && !wordTextList) {
-    // Level-distribution only applies to the full (non-category) flow
-    const levelConfigs = await db
-      .select()
-      .from(userLevelConfig)
-      .where(eq(userLevelConfig.userId, userId))
-
+    // Level-distribution for the full (non-category, non-word-text) flow
     if (levelConfigs.length > 0) {
       const distribution = distribute(10, levelConfigs)
       const picked: typeof allItems = []
@@ -230,22 +254,36 @@ export async function GET(req: NextRequest) {
 
   const exercises: Exercise[] = sessionItems.map((item, index) => {
     const exerciseType = exerciseTypes[index]
-    const base = language === "sr" ? item.serbian : item.croatian
-    const female = language === "sr" ? item.serbianFemale : item.croatianFemale
-    const correctAnswer = (isFemale && female) ? female : base
-    // alternateAnswer: the other gender's form (only when they actually differ)
-    const alternateAnswer = female && female !== base
-      ? (isFemale ? base : female)
-      : undefined
-
     const categoryName = item.categoryId ? categoryMap.get(item.categoryId) : undefined
 
+    let prompt: string
+    let correctAnswer: string
+    let alternateAnswer: string | undefined
+
+    if (isEnglishLearner) {
+      // Prompt = Slavic (gender-matched for female users), answer = English
+      const slavicBase = language === "sr" ? item.serbian : item.croatian
+      const slavicFemale = language === "sr" ? item.serbianFemale : item.croatianFemale
+      prompt = (isFemale && slavicFemale) ? slavicFemale : slavicBase
+      correctAnswer = item.english
+      // No alternateAnswer — English has no grammatical gender
+    } else {
+      // Prompt = English, answer = Slavic (with optional female form)
+      prompt = item.english
+      const base = language === "sr" ? item.serbian : item.croatian
+      const female = language === "sr" ? item.serbianFemale : item.croatianFemale
+      correctAnswer = (isFemale && female) ? female : base
+      alternateAnswer = female && female !== base
+        ? (isFemale ? base : female)
+        : undefined
+    }
+
     if (exerciseType === "multiple_choice") {
-      const distractors = pickDistractors(item as DistractorItem, allItems as DistractorItem[], language, type, isFemale)
+      const distractors = pickDistractors(item as DistractorItem, allItems as DistractorItem[], language, type, isFemale, isEnglishLearner)
       return {
         id: item.id,
         exerciseType,
-        english: item.english,
+        prompt,
         correctAnswer,
         alternateAnswer,
         options: shuffle([correctAnswer, ...distractors]),
@@ -253,7 +291,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    return { id: item.id, exerciseType, english: item.english, correctAnswer, alternateAnswer, categoryName }
+    return { id: item.id, exerciseType, prompt, correctAnswer, alternateAnswer, categoryName }
   })
 
   return NextResponse.json({ exercises })

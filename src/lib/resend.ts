@@ -107,15 +107,18 @@ export async function sendVerbOfDay({
   verb,
   verbNumber,
   language = "sr",
+  studyDirection = "to_slavic",
 }: {
   to: string
   firstName: string | null
   verb: Verb
   verbNumber: number
   language?: string
+  studyDirection?: string
 }) {
   const name = firstName || "there"
   const isCroatian = language === "hr"
+  const isEnglishLearner = studyDirection === "to_english"
   const examples: VerbExample[] = JSON.parse(verb.examplesJson || "[]")
 
   const infinitive = isCroatian ? hrOr(verb.infinitiveHr, verb.infinitive) : verb.infinitive
@@ -139,26 +142,39 @@ export async function sendVerbOfDay({
   ]
   const verbWordsParam = encodeURIComponent(verbForms.join(","))
 
+  // Header: English learners see "to eat" as the headline, Slavic as reference subtitle
+  // Slavic learners see the Slavic infinitive as headline, English as subtitle
+  const headerTitle    = isEnglishLearner ? verb.translation : infinitive
+  const headerSubtitle = isEnglishLearner ? infinitive       : verb.translation
+
   const conjugationHtml = conjugationRows.map(([pronoun, form]) => `
     <tr>
       <td style="padding:8px 12px;color:#64748b;font-size:14px;width:120px;">${pronoun}</td>
       <td style="padding:8px 12px;color:#1e293b;font-size:14px;font-weight:600;">${form}</td>
     </tr>`).join("")
 
+  const conjugationSection = isEnglishLearner ? "" : `
+    <h3 style="margin:0 0 8px;color:#1e293b;font-size:15px;font-weight:700;">Conjugation</h3>
+    <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;background:#f8fafc;border-radius:12px;overflow:hidden;">
+      ${conjugationHtml}
+    </table>`
+
   const examplesHtml = examples.length ? `
     <h3 style="margin:28px 0 12px;color:#1e293b;font-size:15px;font-weight:700;">Examples</h3>
     ${examples.map(ex => {
-      const sentence = isCroatian ? (ex.croatian || ex.serbian) : ex.serbian
+      const slavicSentence = isCroatian ? (ex.croatian || ex.serbian) : ex.serbian
+      const primarySentence   = isEnglishLearner ? ex.english      : slavicSentence
+      const secondarySentence = isEnglishLearner ? slavicSentence  : ex.english
       return `
     <div style="margin-bottom:12px;padding:12px 16px;background:#f8fafc;border-radius:12px;border-left:3px solid #7c3aed;">
-      <p style="margin:0 0 4px;color:#1e293b;font-size:14px;font-weight:600;">${sentence}</p>
-      <p style="margin:0;color:#64748b;font-size:13px;">${ex.english}</p>
+      <p style="margin:0 0 4px;color:#1e293b;font-size:14px;font-weight:600;">${primarySentence}</p>
+      <p style="margin:0;color:#64748b;font-size:13px;">${secondarySentence}</p>
     </div>`}).join("")}` : ""
 
   await resend.emails.send({
     from: FROM,
     to,
-    subject: `Verb of the day: ${infinitive} (${verb.translation})`,
+    subject: `Verb of the day: ${headerTitle}`,
     html: `
 <!DOCTYPE html>
 <html lang="en">
@@ -171,18 +187,15 @@ export async function sendVerbOfDay({
         <tr>
           <td style="background:linear-gradient(135deg,#7c3aed,#a855f7);padding:32px 40px;">
             <p style="margin:0 0 4px;color:#ddd6fe;font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;">Verb #${verbNumber}</p>
-            <h1 style="margin:0 0 4px;color:#ffffff;font-size:32px;font-weight:800;">${infinitive}</h1>
-            <p style="margin:0;color:#ddd6fe;font-size:16px;">${verb.translation}</p>
+            <h1 style="margin:0 0 4px;color:#ffffff;font-size:32px;font-weight:800;">${headerTitle}</h1>
+            <p style="margin:0;color:#ddd6fe;font-size:16px;">${headerSubtitle}</p>
           </td>
         </tr>
         <!-- Body -->
         <tr>
           <td style="padding:32px 40px 24px;">
             <p style="margin:0 0 20px;color:#334155;font-size:15px;line-height:1.6;">Good morning, ${name}! Here is today's verb.</p>
-            <h3 style="margin:0 0 8px;color:#1e293b;font-size:15px;font-weight:700;">Conjugation</h3>
-            <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;background:#f8fafc;border-radius:12px;overflow:hidden;">
-              ${conjugationHtml}
-            </table>
+            ${conjugationSection}
             ${examplesHtml}
             <table cellpadding="0" cellspacing="0" width="100%" style="margin-top:28px;">
               <tr>

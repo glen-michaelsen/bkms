@@ -5,6 +5,7 @@ import { Calendar } from "lucide-react"
 import { CurrentTime } from "./CurrentTime"
 
 const DAYS_SR = ["nedelja", "ponedeljak", "utorak", "sreda", "četvrtak", "petak", "subota"]
+const DAYS_HR = ["nedjelja", "ponedjeljak", "utorak", "srijeda", "četvrtak", "petak", "subota"]
 const DAYS_EN = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 
 const ORDINALS_SR = [
@@ -16,6 +17,7 @@ const ORDINALS_SR = [
   "dvadeset deveti", "trideseti", "trideset prvi",
 ]
 
+// Simple numeric ordinals — used as reference language
 const ORDINALS_EN = [
   "", "1st", "2nd", "3rd", "4th", "5th", "6th", "7th", "8th", "9th",
   "10th", "11th", "12th", "13th", "14th", "15th", "16th", "17th", "18th", "19th",
@@ -23,9 +25,24 @@ const ORDINALS_EN = [
   "30th", "31st",
 ]
 
+// Spelled-out ordinals — used as learning language
+const ORDINALS_EN_SPELLED = [
+  "", "first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth",
+  "tenth", "eleventh", "twelfth", "thirteenth", "fourteenth", "fifteenth",
+  "sixteenth", "seventeenth", "eighteenth", "nineteenth", "twentieth",
+  "twenty-first", "twenty-second", "twenty-third", "twenty-fourth",
+  "twenty-fifth", "twenty-sixth", "twenty-seventh", "twenty-eighth",
+  "twenty-ninth", "thirtieth", "thirty-first",
+]
+
 const MONTHS_SR = [
   "", "januar", "februar", "mart", "april", "maj", "jun",
   "jul", "avgust", "septembar", "oktobar", "novembar", "decembar",
+]
+
+const MONTHS_HR = [
+  "", "siječanj", "veljača", "ožujak", "travanj", "svibanj", "lipanj",
+  "srpanj", "kolovoz", "rujan", "listopad", "studeni", "prosinac",
 ]
 
 const MONTHS_EN = [
@@ -33,11 +50,11 @@ const MONTHS_EN = [
   "July", "August", "September", "October", "November", "December",
 ]
 
-function getSeason(month: number): { sr: string; en: string } {
-  if (month >= 3 && month <= 5) return { sr: "proleće", en: "spring" }
-  if (month >= 6 && month <= 8) return { sr: "leto", en: "summer" }
-  if (month >= 9 && month <= 11) return { sr: "jesen", en: "autumn" }
-  return { sr: "zima", en: "winter" }
+function getSeason(month: number): { sr: string; hr: string; en: string } {
+  if (month >= 3 && month <= 5) return { sr: "proleće",  hr: "proljeće", en: "spring" }
+  if (month >= 6 && month <= 8) return { sr: "leto",     hr: "ljeto",    en: "summer" }
+  if (month >= 9 && month <= 11) return { sr: "jesen",   hr: "jesen",    en: "autumn" }
+  return                                { sr: "zima",    hr: "zima",     en: "winter" }
 }
 
 function Skeleton() {
@@ -53,7 +70,13 @@ function Skeleton() {
   )
 }
 
-export function DailySentences() {
+export function DailySentences({
+  studyDirection = "to_slavic",
+  language = "sr",
+}: {
+  studyDirection?: string
+  language?: "sr" | "hr"
+}) {
   const [now, setNow] = useState<Date | null>(null)
   useEffect(() => { setNow(new Date()) }, [])
 
@@ -66,15 +89,38 @@ export function DailySentences() {
     )
   }
 
+  const isEnglishLearner = studyDirection === "to_english"
   const dow    = now.getDay()
   const day    = now.getDate()
   const month  = now.getMonth() + 1
   const season = getSeason(month)
 
-  const sentences = [
-    { sr: `Danas je ${DAYS_SR[dow]}.`,              en: `Today is ${DAYS_EN[dow]}` },
-    { sr: `Datum je ${ORDINALS_SR[day]} ${MONTHS_SR[month]}.`, en: `The date is ${MONTHS_EN[month]} ${ORDINALS_EN[day]}` },
-    { sr: `Godišnje doba je ${season.sr}.`,          en: `The season is ${season.en}` },
+  const slavicDay   = language === "hr" ? DAYS_HR[dow]   : DAYS_SR[dow]
+  const slavicMonth = language === "hr" ? MONTHS_HR[month] : MONTHS_SR[month]
+  const slavicSeason = language === "hr" ? season.hr : season.sr
+  const slavicOrdinal = ORDINALS_SR[day]  // ordinals same structure both languages
+
+  // Each sentence has: slavicSpelled (learning for Slavic), slavicSimple (reference for English learners),
+  // enSpelled (learning for English), enSimple (reference for Slavic learners)
+  const sentenceItems = [
+    {
+      slavicSpelled: `Danas je ${slavicDay}.`,
+      slavicSimple:  `Danas je ${slavicDay}.`,
+      enSpelled:     `Today is ${DAYS_EN[dow]}`,
+      enSimple:      `Today is ${DAYS_EN[dow]}`,
+    },
+    {
+      slavicSpelled: `Datum je ${slavicOrdinal} ${slavicMonth}.`,
+      slavicSimple:  `Datum je ${day}. ${slavicMonth}.`,
+      enSpelled:     `The date is ${MONTHS_EN[month]} ${ORDINALS_EN_SPELLED[day]}`,
+      enSimple:      `The date is ${MONTHS_EN[month]} ${ORDINALS_EN[day]}`,
+    },
+    {
+      slavicSpelled: `Godišnje doba je ${slavicSeason}.`,
+      slavicSimple:  `Godišnje doba je ${slavicSeason}.`,
+      enSpelled:     `The season is ${season.en}`,
+      enSimple:      `The season is ${season.en}`,
+    },
   ]
 
   return (
@@ -84,13 +130,17 @@ export function DailySentences() {
       </div>
 
       <div className="space-y-4 flex-1">
-        <CurrentTime />
-        {sentences.map(({ sr, en }, i) => (
-          <div key={i} className="flex flex-col gap-0.5">
-            <p className="font-semibold text-slate-800 leading-snug">{sr}</p>
-            <p className="text-xs text-slate-400">{en}</p>
-          </div>
-        ))}
+        <CurrentTime studyDirection={studyDirection} />
+        {sentenceItems.map(({ slavicSpelled, slavicSimple, enSpelled, enSimple }, i) => {
+          const primary   = isEnglishLearner ? enSpelled   : slavicSpelled
+          const secondary = isEnglishLearner ? slavicSimple : enSimple
+          return (
+            <div key={i} className="flex flex-col gap-0.5">
+              <p className="font-semibold text-slate-800 leading-snug">{primary}</p>
+              <p className="text-xs text-slate-400">{secondary}</p>
+            </div>
+          )
+        })}
       </div>
     </div>
   )

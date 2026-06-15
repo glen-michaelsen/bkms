@@ -75,3 +75,54 @@ export function toDayOrdinal(n: number): string {
   // Compound: cardinal tens + ordinal ones, e.g. "dvadeset deveti"
   return `${TENS[Math.floor(n / 10)]} ${ORD_ONES[o]}`
 }
+
+// ── English number words ──────────────────────────────────────────────────────
+
+const EN_ONES = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
+                 "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen",
+                 "sixteen", "seventeen", "eighteen", "nineteen"]
+const EN_TENS = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"]
+
+function enUnder100(n: number): string {
+  if (n < 20) return EN_ONES[n]
+  const o = n % 10
+  return o === 0 ? EN_TENS[Math.floor(n / 10)] : `${EN_TENS[Math.floor(n / 10)]}-${EN_ONES[o]}`
+}
+
+/** English cardinal for ages (0–99). */
+export function toEnCardinal(n: number): string {
+  if (n === 0) return "zero"
+  if (n < 100) return enUnder100(n)
+  // Fallback for larger numbers (not expected for ages)
+  return String(n)
+}
+
+/** English year as spoken: "nineteen eighty-eight", "two thousand", "twenty twenty-four". */
+export function toEnYear(y: number): string {
+  if (y === 2000) return "two thousand"
+  if (y >= 2001 && y <= 2009) return `two thousand ${EN_ONES[y % 10]}`
+  if (y >= 2010 && y <= 2099) return `twenty ${enUnder100(y % 100)}`
+  if (y >= 1000 && y <= 1999) {
+    const high = Math.floor(y / 100)   // e.g. 19 for 1988
+    const low  = y % 100               // e.g. 88 for 1988
+    if (low === 0) return `${enUnder100(high)} hundred`
+    return `${enUnder100(high)} ${enUnder100(low)}`
+  }
+  return String(y)
+}
+
+const EN_ORD_ONES = ["", "first", "second", "third", "fourth", "fifth", "sixth", "seventh",
+                     "eighth", "ninth", "tenth", "eleventh", "twelfth", "thirteenth",
+                     "fourteenth", "fifteenth", "sixteenth", "seventeenth", "eighteenth", "nineteenth"]
+const EN_ORD_TENS  = ["", "", "twentieth", "thirtieth"]
+const EN_CARD_TENS = ["", "", "twenty", "thirty"]
+
+/** English ordinal for day numbers 1–31: "first", "twenty-ninth", "thirty-first". */
+export function toEnDayOrdinal(n: number): string {
+  if (n < 1 || n > 31) return String(n)
+  if (n < 20) return EN_ORD_ONES[n]
+  const t = Math.floor(n / 10)
+  const o = n % 10
+  if (o === 0) return EN_ORD_TENS[t]
+  return `${EN_CARD_TENS[t]}-${EN_ORD_ONES[o]}`
+}

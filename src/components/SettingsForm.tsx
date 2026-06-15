@@ -71,6 +71,7 @@ export function SettingsForm({
   initialEmail,
   initialLanguage,
   initialGender,
+  initialStudyDirection,
   levels,
   levelConfig,
   initialTimezone,
@@ -84,6 +85,7 @@ export function SettingsForm({
   initialEmail: string
   initialLanguage: string
   initialGender: string
+  initialStudyDirection: string
   levels: { id: number; name: string }[]
   levelConfig: { levelId: number; percentage: number }[]
   initialTimezone: string
@@ -94,6 +96,17 @@ export function SettingsForm({
   initialProfile: InitialProfile
 }) {
   const { update } = useSession()
+
+  // Derived learning-direction state for the two-step picker
+  // learnTarget: "en" | "sr" | "hr"
+  const initLearnTarget = initialStudyDirection === "to_english" ? "en" : initialLanguage
+  const [learnTarget, setLearnTarget] = useState<"en" | "sr" | "hr">(initLearnTarget as "en" | "sr" | "hr")
+  const [refLanguage, setRefLanguage] = useState<"sr" | "hr">(initialLanguage as "sr" | "hr")
+
+  // Derived values to feed into the hidden form inputs
+  const derivedLanguage: "sr" | "hr" = learnTarget === "en" ? refLanguage : learnTarget as "sr" | "hr"
+  const derivedDirection = learnTarget === "en" ? "to_english" : "to_slavic"
+
   const [timezone, setTimezone]           = useState(initialTimezone)
   const [streakEnabled, setStreakEnabled] = useState(initialStreakMailEnabled)
   const [streakHour, setStreakHour]       = useState(initialStreakMailHour)
@@ -141,7 +154,7 @@ export function SettingsForm({
     })
   }
 
-  // Sync profile changes (name, language, gender) into the JWT session
+  // Sync profile changes (name, language, gender, studyDirection) into the JWT session
   useEffect(() => {
     if (profileState?.success && profileState.updated) {
       update(profileState.updated)
@@ -163,6 +176,10 @@ export function SettingsForm({
         description="Your display name, language, and gender"
       >
         <form action={profileAction} className="space-y-4">
+          {/* Hidden derived fields */}
+          <input type="hidden" name="language" value={derivedLanguage} />
+          <input type="hidden" name="studyDirection" value={derivedDirection} />
+
           <div>
             <label className="block text-sm font-semibold text-slate-700 mb-1.5">
               First name
@@ -176,33 +193,68 @@ export function SettingsForm({
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-                Language
-              </label>
-              <select
-                name="language"
-                defaultValue={initialLanguage}
-                className="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition appearance-none cursor-pointer"
-              >
-                <option value="sr">🇷🇸 Serbian (Srpski)</option>
-                <option value="hr">🇭🇷 Croatian (Hrvatski)</option>
-              </select>
+          {/* Two-step language picker */}
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5">I am learning</label>
+            <div className="grid grid-cols-3 gap-2">
+              {([
+                { value: "en", flag: "🇬🇧", label: "English" },
+                { value: "sr", flag: "🇷🇸", label: "Serbian" },
+                { value: "hr", flag: "🇭🇷", label: "Croatian" },
+              ] as const).map(({ value, flag, label }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setLearnTarget(value)}
+                  className={`flex flex-col items-center gap-1 py-3 px-2 rounded-xl border-2 text-sm font-semibold transition-all ${
+                    learnTarget === value
+                      ? "border-violet-500 bg-violet-50 text-violet-700"
+                      : "border-slate-200 text-slate-600 hover:border-violet-300 hover:bg-violet-50"
+                  }`}
+                >
+                  <span className="text-xl">{flag}</span>
+                  <span>{label}</span>
+                </button>
+              ))}
             </div>
+          </div>
+
+          {learnTarget === "en" && (
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-                Gender
-              </label>
-              <select
-                name="gender"
-                defaultValue={initialGender}
-                className="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition appearance-none cursor-pointer"
-              >
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-              </select>
+              <label className="block text-sm font-semibold text-slate-700 mb-1.5">Reference language</label>
+              <div className="grid grid-cols-2 gap-2">
+                {([
+                  { value: "sr", flag: "🇷🇸", label: "Serbian" },
+                  { value: "hr", flag: "🇭🇷", label: "Croatian" },
+                ] as const).map(({ value, flag, label }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setRefLanguage(value)}
+                    className={`flex flex-col items-center gap-1 py-3 px-2 rounded-xl border-2 text-sm font-semibold transition-all ${
+                      refLanguage === value
+                        ? "border-violet-500 bg-violet-50 text-violet-700"
+                        : "border-slate-200 text-slate-600 hover:border-violet-300 hover:bg-violet-50"
+                    }`}
+                  >
+                    <span className="text-xl">{flag}</span>
+                    <span>{label}</span>
+                  </button>
+                ))}
+              </div>
             </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-semibold text-slate-700 mb-1.5">Gender</label>
+            <select
+              name="gender"
+              defaultValue={initialGender}
+              className="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:bg-white text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition appearance-none cursor-pointer"
+            >
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+            </select>
           </div>
 
           <div className="flex items-center justify-between pt-1">
