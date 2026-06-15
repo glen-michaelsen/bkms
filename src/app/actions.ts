@@ -34,6 +34,7 @@ export async function registerAction(
 ): Promise<{ error: string } | undefined> {
   const email = (formData.get("email") as string).trim().toLowerCase()
   const password = formData.get("password") as string
+  const firstName = (formData.get("firstName") as string)?.trim() || null
   const language = formData.get("language") as "sr" | "hr"
   const gender = formData.get("gender") as "male" | "female"
   const studyDirection = (formData.get("studyDirection") as string) === "to_english" ? "to_english" : "to_slavic"
@@ -49,7 +50,7 @@ export async function registerAction(
   if (existing) return { error: "An account with this email already exists" }
 
   const passwordHash = await bcrypt.hash(password, 12)
-  await db.insert(users).values({ email, passwordHash, language, gender, studyDirection: studyDirection as "to_slavic" | "to_english" })
+  await db.insert(users).values({ email, passwordHash, firstName, language, gender, studyDirection: studyDirection as "to_slavic" | "to_english" })
 
   redirect("/login?registered=1")
 }

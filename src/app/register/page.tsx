@@ -65,6 +65,17 @@ export default function RegisterPage() {
             <input type="hidden" name="studyDirection" value={studyDirection} />
 
             <div>
+              <label className="block text-sm font-semibold text-slate-700 mb-1.5">First name</label>
+              <input
+                name="firstName"
+                type="text"
+                autoComplete="given-name"
+                placeholder="Your first name"
+                className="w-full px-4 py-3 border border-slate-200 rounded-xl bg-white text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500 focus:border-transparent transition"
+              />
+            </div>
+
+            <div>
               <label className="block text-sm font-semibold text-slate-700 mb-1.5">Email</label>
               <input
                 name="email"

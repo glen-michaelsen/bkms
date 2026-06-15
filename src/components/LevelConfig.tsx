@@ -22,13 +22,9 @@ export function LevelConfig({
       const map = Object.fromEntries(initialConfig.map((c) => [c.levelId, c.percentage]))
       return Object.fromEntries(levels.map((l) => [l.id, map[l.id] ?? 0]))
     }
-    // Equal distribution
+    // Default: 100% on the first (beginner) level
     if (levels.length === 0) return {}
-    const base = Math.floor(100 / levels.length)
-    const remainder = 100 - base * levels.length
-    return Object.fromEntries(
-      levels.map((l, i) => [l.id, i === levels.length - 1 ? base + remainder : base])
-    )
+    return Object.fromEntries(levels.map((l, i) => [l.id, i === 0 ? 100 : 0]))
   }
 
   const [pcts, setPcts] = useState<Record<number, number>>(makeInitial)
