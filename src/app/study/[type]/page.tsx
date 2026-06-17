@@ -35,7 +35,7 @@ export default async function StudyPage({
       </nav>
 
       <main className="flex-1 max-w-2xl mx-auto w-full px-5 py-10">
-        <StudySession type={type as "words" | "sentences"} hintEnabled={session.user.hintEnabled ?? false} categoryId={categoryId} wordTexts={wordTexts} />
+        <StudySession type={type as "words" | "sentences"} hintEnabled={session.user.hintEnabled ?? false} categoryId={categoryId} wordTexts={wordTexts} studyDirection={session.user.studyDirection ?? "to_slavic"} language={session.user.language ?? "sr"} />
       </main>
     </div>
   )

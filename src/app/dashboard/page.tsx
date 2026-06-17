@@ -228,8 +228,8 @@ export default async function DashboardPage() {
           <DailySentences studyDirection={studyDirection} language={session.user.language as "sr" | "hr"} />
         </div>
 
-        {/* Streak milestone — Instagram follow nudge */}
-        {[7, 30, 100].includes(streak) && (
+        {/* Streak milestone — Instagram follow nudge (Slavic learners only) */}
+        {[7, 30, 100].includes(streak) && studyDirection !== "to_english" && (
           <a
             href="https://www.instagram.com/cujemoseapp"
             target="_blank"
@@ -241,7 +241,7 @@ export default async function DashboardPage() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-slate-800">{streak}-day streak — nice work! 🔥</p>
-              <p className="text-xs text-slate-500 mt-0.5">Follow @cujemoseapp on Instagram for Serbian content a few times a week.</p>
+              <p className="text-xs text-slate-500 mt-0.5">Follow @cujemoseapp on Instagram for {session.user.language === "hr" ? "Croatian" : "Serbian"} content a few times a week.</p>
             </div>
             <span className="text-xs font-semibold text-violet-600 flex-shrink-0">Follow →</span>
           </a>

@@ -77,6 +77,7 @@ export default async function CrosswordPage() {
       initialInput={initialInput}
       initialSolvedAt={initialSolvedAt}
       studyDirection={studyDirection}
+      language={session.user.language ?? "sr"}
     />
   )
 }
