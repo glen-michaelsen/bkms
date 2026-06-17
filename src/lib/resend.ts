@@ -219,10 +219,10 @@ export async function sendVerbOfDay({
               You're receiving this because you enabled Verb of the Day in your settings.<br>
               <a href="https://cujemose.com/settings" style="color:#7c3aed;text-decoration:none;">Manage preferences</a>
             </p>
-            ${!isEnglishLearner ? `<p style="margin:12px 0 0;color:#94a3b8;font-size:13px;line-height:1.5;">
-              Follow us on Instagram for ${isCroatian ? "Croatian" : "Serbian"} content a few times a week →
-              <a href="https://www.instagram.com/cujemoseapp" style="color:#7c3aed;text-decoration:none;"> @cujemoseapp</a>
-            </p>` : ""}
+            ${!isEnglishLearner ? `<div style="margin:20px 0 0;padding:16px 20px;background:#f5f3ff;border-radius:14px;border:1px solid #ede9fe;">
+              <p style="margin:0 0 4px;color:#1e293b;font-size:14px;font-weight:700;">Want to learn even more?</p>
+              <p style="margin:0;color:#475569;font-size:13px;line-height:1.6;">We post useful sentences and a taste of Balkan culture on Instagram a few times a week. Come join us at <a href="https://www.instagram.com/cujemoseapp" style="color:#7c3aed;text-decoration:none;font-weight:600;">@cujemoseapp</a></p>
+            </div>` : ""}
           </td>
         </tr>
         <!-- Footer -->
