@@ -18,9 +18,6 @@ export type AdminUserRow = {
 type SortKey = "firstName" | "email" | "language" | "studyDirection" | "createdAt" | "lastActive" | "streak" | "totalAnswers"
 type SortDir = "asc" | "desc"
 
-function directionLabel(dir: string) {
-  return dir === "to_english" ? "→ EN" : "→ SR/HR"
-}
 
 function SortIcon({ col, sortKey, sortDir }: { col: SortKey; sortKey: SortKey; sortDir: SortDir }) {
   if (col !== sortKey) return <ChevronsUpDown className="w-3.5 h-3.5 text-slate-300 ml-1 inline" />
@@ -113,8 +110,7 @@ export function AdminUserList({ rows }: { rows: AdminUserRow[] }) {
             <thead>
               <tr className="border-b border-slate-100">
                 <Th col="firstName"      label="Name" />
-                <Th col="language"       label="Lang" />
-                <Th col="studyDirection" label="Studies" />
+                <Th col="studyDirection" label="Lang" />
                 <Th col="createdAt"      label="Joined" />
                 <Th col="lastActive"     label="Last active" />
                 <Th col="streak"         label="Streak"  align="right" />
@@ -123,21 +119,22 @@ export function AdminUserList({ rows }: { rows: AdminUserRow[] }) {
             </thead>
             <tbody className="divide-y divide-slate-50">
               {sorted.length === 0 ? (
-                <tr><td colSpan={7} className="px-5 py-10 text-center text-slate-400">No users found</td></tr>
-              ) : sorted.map(u => (
+                <tr><td colSpan={6} className="px-5 py-10 text-center text-slate-400">No users found</td></tr>
+              ) : sorted.map(u => {
+                const isEN = u.studyDirection === "to_english"
+                const langLabel = isEN ? "EN" : u.language.toUpperCase()
+                const langStyle = isEN
+                  ? "bg-amber-50 text-amber-700"
+                  : u.language === "sr" ? "bg-violet-50 text-violet-700" : "bg-sky-50 text-sky-700"
+                return (
                 <tr key={u.id} className="hover:bg-slate-50/50 transition-colors">
                   <td className="px-4 py-3.5">
                     <p className="font-medium text-slate-900">{u.firstName ?? <span className="text-slate-300">—</span>}</p>
                     <p className="text-xs text-slate-400">{u.email}</p>
                   </td>
                   <td className="px-4 py-3.5">
-                    <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${u.language === "sr" ? "bg-violet-50 text-violet-700" : "bg-sky-50 text-sky-700"}`}>
-                      {u.language.toUpperCase()}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3.5">
-                    <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${u.studyDirection === "to_english" ? "bg-amber-50 text-amber-700" : "bg-slate-50 text-slate-600"}`}>
-                      {directionLabel(u.studyDirection)}
+                    <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${langStyle}`}>
+                      {langLabel}
                     </span>
                   </td>
                   <td className="px-4 py-3.5 text-slate-500 tabular-nums text-xs">
@@ -155,7 +152,7 @@ export function AdminUserList({ rows }: { rows: AdminUserRow[] }) {
                     {u.totalAnswers > 0 ? u.totalAnswers.toLocaleString() : <span className="text-slate-300">0</span>}
                   </td>
                 </tr>
-              ))}
+              )})}
             </tbody>
           </table>
         </div>
