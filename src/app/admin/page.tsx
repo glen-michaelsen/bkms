@@ -99,6 +99,32 @@ export default async function AdminPage() {
 
   const weeklyStats = weeks.map((w, i) => ({ week: w, newUsers: weeklyNewUsers[i], answers: weeklyAnswers[i], activeUsers: weeklyActiveUsers[i] }))
 
+  // ── Month comparison ──────────────────────────────────────────────────────
+  const nowUtc          = new Date()
+  const daysElapsed     = nowUtc.getUTCDate()
+  const daysInMonth     = new Date(Date.UTC(nowUtc.getUTCFullYear(), nowUtc.getUTCMonth() + 1, 0)).getUTCDate()
+  const firstThisMonth  = new Date(Date.UTC(nowUtc.getUTCFullYear(), nowUtc.getUTCMonth(), 1)).toISOString().slice(0, 10)
+  const firstLastMonth  = new Date(Date.UTC(nowUtc.getUTCFullYear(), nowUtc.getUTCMonth() - 1, 1)).toISOString().slice(0, 10)
+
+  const lastNewUsers   = allUsers.filter(u => { const d = u.createdAt?.toISOString().slice(0, 10) ?? ""; return d >= firstLastMonth && d < firstThisMonth }).length
+  const lastActiveUsers = new Set(allActivity.filter(a => a.date >= firstLastMonth && a.date < firstThisMonth).map(a => a.userId)).size
+  const lastAnswers    = allActivity.filter(a => a.date >= firstLastMonth && a.date < firstThisMonth).reduce((s, a) => s + a.answersCount, 0)
+
+  const curNewUsers    = allUsers.filter(u => { const d = u.createdAt?.toISOString().slice(0, 10) ?? ""; return d >= firstThisMonth && d <= today }).length
+  const curActiveUsers = new Set(allActivity.filter(a => a.date >= firstThisMonth && a.date <= today).map(a => a.userId)).size
+  const curAnswers     = allActivity.filter(a => a.date >= firstThisMonth && a.date <= today).reduce((s, a) => s + a.answersCount, 0)
+
+  const project = (n: number) => Math.round((n / daysElapsed) * daysInMonth)
+
+  const MONTH_NAMES = ["January","February","March","April","May","June","July","August","September","October","November","December"]
+  const monthComparison = {
+    lastMonthName: MONTH_NAMES[new Date(firstLastMonth + "T00:00:00Z").getUTCMonth()],
+    thisMonthName: MONTH_NAMES[nowUtc.getUTCMonth()],
+    daysElapsed,
+    daysInMonth,
+    last:      { newUsers: lastNewUsers,        activeUsers: lastActiveUsers,        answers: lastAnswers },
+    projected: { newUsers: project(curNewUsers), activeUsers: project(curActiveUsers), answers: project(curAnswers) },
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
@@ -119,8 +145,9 @@ export default async function AdminPage() {
         <AdminTabs
           stats={{
             totalUsers: allUsers.length,
-            srCount: allUsers.filter(u => u.language === "sr").length,
-            hrCount: allUsers.filter(u => u.language === "hr").length,
+            srCount: allUsers.filter(u => u.language === "sr" && u.studyDirection !== "to_english").length,
+            hrCount: allUsers.filter(u => u.language === "hr" && u.studyDirection !== "to_english").length,
+            enCount: allUsers.filter(u => u.studyDirection === "to_english").length,
             activeTodayCount: activeTodayIds.size,
             activeWeekCount:  activeWeekIds.size,
             answersToday, answersWeek, answersTotal, bestStreak,
@@ -131,6 +158,7 @@ export default async function AdminPage() {
           sentences={allSentences}
           verbs={allVerbs}
           weeklyStats={weeklyStats}
+          monthComparison={monthComparison}
           actions={{ addCategoryAction, addLevelAction, deleteCategoryAction }}
         />
       </main>
