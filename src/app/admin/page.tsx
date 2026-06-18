@@ -125,7 +125,6 @@ export default async function AdminPage() {
             activeWeekCount:  activeWeekIds.size,
             answersToday, answersWeek, answersTotal, bestStreak,
           }}
-          userRows={userRows}
           categories={allCategories}
           levels={allLevels}
           words={allWords}
