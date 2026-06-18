@@ -59,6 +59,47 @@ export default async function AdminPage() {
 
   const bestStreak = userRows.reduce((mx, u) => Math.max(mx, u.streak), 0)
 
+  // ── Weekly growth (last 12 weeks) ─────────────────────────────────────────
+  function weekMonday(dateStr: string): string {
+    const d = new Date(dateStr + "T00:00:00Z")
+    const dow = d.getUTCDay()
+    d.setUTCDate(d.getUTCDate() - (dow === 0 ? 6 : dow - 1))
+    return d.toISOString().slice(0, 10)
+  }
+
+  const NUM_WEEKS = 12
+  const weeks: string[] = []
+  const baseMonday = new Date(weekMonday(today) + "T00:00:00Z")
+  for (let i = NUM_WEEKS - 1; i >= 0; i--) {
+    const d = new Date(baseMonday)
+    d.setUTCDate(d.getUTCDate() - i * 7)
+    weeks.push(d.toISOString().slice(0, 10))
+  }
+
+  const weeklyNewUsers   = weeks.map(w => {
+    const next = new Date(w + "T00:00:00Z"); next.setUTCDate(next.getUTCDate() + 7)
+    const nextStr = next.toISOString().slice(0, 10)
+    return allUsers.filter(u => {
+      const d = u.createdAt?.toISOString().slice(0, 10) ?? ""
+      return d >= w && d < nextStr
+    }).length
+  })
+
+  const weeklyAnswers = weeks.map(w => {
+    const next = new Date(w + "T00:00:00Z"); next.setUTCDate(next.getUTCDate() + 7)
+    const nextStr = next.toISOString().slice(0, 10)
+    return allActivity.filter(a => a.date >= w && a.date < nextStr).reduce((s, a) => s + a.answersCount, 0)
+  })
+
+  const weeklyActiveUsers = weeks.map(w => {
+    const next = new Date(w + "T00:00:00Z"); next.setUTCDate(next.getUTCDate() + 7)
+    const nextStr = next.toISOString().slice(0, 10)
+    return new Set(allActivity.filter(a => a.date >= w && a.date < nextStr).map(a => a.userId)).size
+  })
+
+  const weeklyStats = weeks.map((w, i) => ({ week: w, newUsers: weeklyNewUsers[i], answers: weeklyAnswers[i], activeUsers: weeklyActiveUsers[i] }))
+
+
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       <nav className="bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-10">
@@ -90,6 +131,7 @@ export default async function AdminPage() {
           words={allWords}
           sentences={allSentences}
           verbs={allVerbs}
+          weeklyStats={weeklyStats}
           actions={{ addCategoryAction, addLevelAction, deleteCategoryAction }}
         />
       </main>

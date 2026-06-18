@@ -32,6 +32,7 @@ type Stats = {
   answersToday: number; answersWeek: number; answersTotal: number
   bestStreak: number
 }
+type WeekStat = { week: string; newUsers: number; answers: number; activeUsers: number }
 type SimpleResult = { error?: string; success?: boolean }
 type UseActionStateAction = (prev: SimpleResult | undefined, formData: FormData) => Promise<SimpleResult>
 type ServerActions = {
@@ -48,6 +49,7 @@ export type AdminTabsProps = {
   words: Word[]
   sentences: Sentence[]
   verbs: Verb[]
+  weeklyStats: WeekStat[]
   actions: ServerActions
 }
 
@@ -150,7 +152,62 @@ function EmailToolsPanel() {
   )
 }
 
-function StatsPanel({ stats, userRows }: { stats: Stats; userRows: UserRow[] }) {
+function BarChart({ data, color }: { data: { label: string; value: number }[]; color: string }) {
+  const max = Math.max(...data.map(d => d.value), 1)
+  const W = 560, H = 100, BAR_GAP = 4
+  const barW = (W - BAR_GAP * (data.length - 1)) / data.length
+  return (
+    <svg viewBox={`0 0 ${W} ${H + 20}`} className="w-full" style={{ display: "block" }}>
+      {data.map((d, i) => {
+        const barH = Math.max(2, (d.value / max) * H)
+        const x = i * (barW + BAR_GAP)
+        const y = H - barH
+        return (
+          <g key={i}>
+            <rect x={x} y={y} width={barW} height={barH} rx={3} fill={color} opacity={0.85} />
+            {d.value > 0 && (
+              <text x={x + barW / 2} y={y - 3} textAnchor="middle" fontSize={9} fill="#64748b">{d.value}</text>
+            )}
+            <text x={x + barW / 2} y={H + 14} textAnchor="middle" fontSize={8} fill="#94a3b8">
+              {d.label}
+            </text>
+          </g>
+        )
+      })}
+    </svg>
+  )
+}
+
+function GrowthCharts({ weeklyStats }: { weeklyStats: WeekStat[] }) {
+  function shortLabel(week: string) {
+    const d = new Date(week + "T00:00:00Z")
+    return `${d.getUTCMonth() + 1}/${d.getUTCDate()}`
+  }
+
+  const charts = [
+    { title: "New users / week",   key: "newUsers"     as const, color: "#7c3aed" },
+    { title: "Answers / week",     key: "answers"      as const, color: "#0ea5e9" },
+    { title: "Active users / week",key: "activeUsers"  as const, color: "#10b981" },
+  ]
+
+  return (
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      {charts.map(({ title, key, color }) => {
+        const data = weeklyStats.map(w => ({ label: shortLabel(w.week), value: w[key] }))
+        const total = data.reduce((s, d) => s + d.value, 0)
+        return (
+          <div key={key} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-4">
+            <p className="text-xs font-semibold text-slate-500 mb-0.5">{title}</p>
+            <p className="text-lg font-extrabold text-slate-900 mb-3">{total.toLocaleString()}</p>
+            <BarChart data={data} color={color} />
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function StatsPanel({ stats, userRows, weeklyStats }: { stats: Stats; userRows: UserRow[]; weeklyStats: WeekStat[] }) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -168,6 +225,8 @@ function StatsPanel({ stats, userRows }: { stats: Stats; userRows: UserRow[] }) 
           </div>
         ))}
       </div>
+
+      <GrowthCharts weeklyStats={weeklyStats} />
 
       <div className="bg-white rounded-3xl border border-slate-100 overflow-hidden shadow-sm">
         <table className="w-full text-sm">
@@ -995,7 +1054,7 @@ function VerbsPanel({ verbs }: { verbs: Verb[] }) {
 
 // ── Root component ───────────────────────────────────────────────────────────
 
-export function AdminTabs({ stats, userRows, categories, levels, words, sentences, verbs, actions }: AdminTabsProps) {
+export function AdminTabs({ stats, userRows, categories, levels, words, sentences, verbs, weeklyStats, actions }: AdminTabsProps) {
   const [activeTab, setActiveTab] = useState<Tab>("Stats")
 
   return (
@@ -1018,7 +1077,7 @@ export function AdminTabs({ stats, userRows, categories, levels, words, sentence
       </div>
 
       {/* Panel */}
-      {activeTab === "Stats"       && <StatsPanel stats={stats} userRows={userRows} />}
+      {activeTab === "Stats"       && <StatsPanel stats={stats} userRows={userRows} weeklyStats={weeklyStats} />}
       {activeTab === "Taxonomies"  && <TaxonomiesPanel categories={categories} levels={levels} actions={actions} />}
       {activeTab === "Add content" && <AddContentPanel categories={categories} levels={levels} />}
       {activeTab === "Words"       && <WordsPanel words={words} categories={categories} />}
