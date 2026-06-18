@@ -34,6 +34,12 @@ type Stats = {
   bestStreak: number
 }
 type WeekStat = { week: string; newUsers: number; answers: number; activeUsers: number }
+type MonthMetrics = { newUsers: number; activeUsers: number; answers: number }
+type MonthComparison = {
+  lastMonthName: string; thisMonthName: string
+  daysElapsed: number; daysInMonth: number
+  last: MonthMetrics; projected: MonthMetrics
+}
 type SimpleResult = { error?: string; success?: boolean }
 type UseActionStateAction = (prev: SimpleResult | undefined, formData: FormData) => Promise<SimpleResult>
 type ServerActions = {
@@ -50,6 +56,7 @@ export type AdminTabsProps = {
   sentences: Sentence[]
   verbs: Verb[]
   weeklyStats: WeekStat[]
+  monthComparison: MonthComparison
   actions: ServerActions
 }
 
@@ -178,11 +185,48 @@ function BarChart({ data, color }: { data: { label: string; value: number }[]; c
   )
 }
 
+function isoWeek(dateStr: string): number {
+  const d = new Date(dateStr + "T00:00:00Z")
+  const thu = new Date(d); thu.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7))
+  const jan1 = new Date(Date.UTC(thu.getUTCFullYear(), 0, 1))
+  return Math.ceil((((thu.getTime() - jan1.getTime()) / 86400000) + 1) / 7)
+}
+
+function trendColor(projected: number, last: number) {
+  if (last === 0) return { text: "text-emerald-600", bg: "bg-emerald-50", arrow: "↑" }
+  const ratio = projected / last
+  if (ratio >= 1.05) return { text: "text-emerald-600", bg: "bg-emerald-50",  arrow: "↑" }
+  if (ratio >= 0.95) return { text: "text-amber-600",   bg: "bg-amber-50",    arrow: "→" }
+  return                     { text: "text-rose-600",    bg: "bg-rose-50",     arrow: "↓" }
+}
+
+function MonthRecap({ monthComparison: mc }: { monthComparison: MonthComparison }) {
+  const metrics = [
+    { label: "New users",    lastVal: mc.last.newUsers,    projVal: mc.projected.newUsers    },
+    { label: "Active users", lastVal: mc.last.activeUsers, projVal: mc.projected.activeUsers },
+    { label: "Answers",      lastVal: mc.last.answers,     projVal: mc.projected.answers     },
+  ]
+  return (
+    <div className="grid grid-cols-3 gap-4">
+      {metrics.map(({ label, lastVal, projVal }) => {
+        const { text, bg, arrow } = trendColor(projVal, lastVal)
+        return (
+          <div key={label} className="bg-white rounded-2xl border border-slate-100 shadow-sm px-5 py-4">
+            <p className="text-xs font-semibold text-slate-400 mb-1">{label} · {mc.lastMonthName}</p>
+            <p className="text-3xl font-extrabold text-slate-900 leading-none mb-3">{lastVal.toLocaleString()}</p>
+            <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg ${bg}`}>
+              <span className={`text-sm font-bold ${text}`}>{arrow} {projVal.toLocaleString()}</span>
+              <span className={`text-xs font-medium ${text} opacity-80`}>est. {mc.thisMonthName}</span>
+            </div>
+            <p className="text-xs text-slate-400 mt-2">{mc.daysElapsed} of {mc.daysInMonth} days in</p>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 function GrowthCharts({ weeklyStats }: { weeklyStats: WeekStat[] }) {
-  function shortLabel(week: string) {
-    const d = new Date(week + "T00:00:00Z")
-    return `${d.getUTCMonth() + 1}/${d.getUTCDate()}`
-  }
 
   const charts = [
     { title: "New users",    sub: "per week · last 12 weeks", key: "newUsers"    as const, color: "#7c3aed" },
@@ -193,7 +237,7 @@ function GrowthCharts({ weeklyStats }: { weeklyStats: WeekStat[] }) {
   return (
     <div className="space-y-4">
       {charts.map(({ title, sub, key, color }) => {
-        const data = weeklyStats.map(w => ({ label: shortLabel(w.week), value: w[key] }))
+        const data = weeklyStats.map(w => ({ label: `#${isoWeek(w.week)}`, value: w[key] }))
         const total = data.reduce((s, d) => s + d.value, 0)
         return (
           <div key={key} className="bg-white rounded-2xl border border-slate-100 shadow-sm px-6 pt-5 pb-4">
@@ -210,7 +254,7 @@ function GrowthCharts({ weeklyStats }: { weeklyStats: WeekStat[] }) {
   )
 }
 
-function StatsPanel({ stats, weeklyStats }: { stats: Stats; weeklyStats: WeekStat[] }) {
+function StatsPanel({ stats, weeklyStats, monthComparison }: { stats: Stats; weeklyStats: WeekStat[]; monthComparison: MonthComparison }) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -233,6 +277,8 @@ function StatsPanel({ stats, weeklyStats }: { stats: Stats; weeklyStats: WeekSta
           </div>
         ))}
       </div>
+
+      <MonthRecap monthComparison={monthComparison} />
 
       <GrowthCharts weeklyStats={weeklyStats} />
 
@@ -1016,7 +1062,7 @@ function VerbsPanel({ verbs }: { verbs: Verb[] }) {
 
 // ── Root component ───────────────────────────────────────────────────────────
 
-export function AdminTabs({ stats, categories, levels, words, sentences, verbs, weeklyStats, actions }: AdminTabsProps) {
+export function AdminTabs({ stats, categories, levels, words, sentences, verbs, weeklyStats, monthComparison, actions }: AdminTabsProps) {
   const [activeTab, setActiveTab] = useState<Tab>("Stats")
 
   return (
@@ -1039,7 +1085,7 @@ export function AdminTabs({ stats, categories, levels, words, sentences, verbs, 
       </div>
 
       {/* Panel */}
-      {activeTab === "Stats"       && <StatsPanel stats={stats} weeklyStats={weeklyStats} />}
+      {activeTab === "Stats"       && <StatsPanel stats={stats} weeklyStats={weeklyStats} monthComparison={monthComparison} />}
       {activeTab === "Taxonomies"  && <TaxonomiesPanel categories={categories} levels={levels} actions={actions} />}
       {activeTab === "Add content" && <AddContentPanel categories={categories} levels={levels} />}
       {activeTab === "Words"       && <WordsPanel words={words} categories={categories} />}
