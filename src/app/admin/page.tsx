@@ -145,8 +145,9 @@ export default async function AdminPage() {
         <AdminTabs
           stats={{
             totalUsers: allUsers.length,
-            srCount: allUsers.filter(u => u.language === "sr").length,
-            hrCount: allUsers.filter(u => u.language === "hr").length,
+            srCount: allUsers.filter(u => u.language === "sr" && u.studyDirection !== "to_english").length,
+            hrCount: allUsers.filter(u => u.language === "hr" && u.studyDirection !== "to_english").length,
+            enCount: allUsers.filter(u => u.studyDirection === "to_english").length,
             activeTodayCount: activeTodayIds.size,
             activeWeekCount:  activeWeekIds.size,
             answersToday, answersWeek, answersTotal, bestStreak,

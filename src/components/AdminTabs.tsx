@@ -28,7 +28,7 @@ type UserRow   = {
   createdAt: Date | null; lastActive: string | null; streak: number; totalAnswers: number
 }
 type Stats = {
-  totalUsers: number; srCount: number; hrCount: number
+  totalUsers: number; srCount: number; hrCount: number; enCount: number
   activeTodayCount: number; activeWeekCount: number
   answersToday: number; answersWeek: number; answersTotal: number
   bestStreak: number
@@ -262,7 +262,7 @@ function StatsPanel({ stats, weeklyStats, monthComparison }: { stats: Stats; wee
           <div className="w-9 h-9 rounded-xl flex items-center justify-center text-violet-500 bg-violet-50 group-hover:bg-violet-100 transition-colors"><Users className="w-4.5 h-4.5" /></div>
           <p className="text-2xl font-extrabold text-slate-900 leading-none mt-2">{stats.totalUsers}</p>
           <p className="text-xs font-semibold text-slate-500">Total users</p>
-          <p className="text-xs text-slate-400">{stats.srCount} SR · {stats.hrCount} HR</p>
+          <p className="text-xs text-slate-400">{[stats.srCount > 0 && `${stats.srCount} SR`, stats.hrCount > 0 && `${stats.hrCount} HR`, stats.enCount > 0 && `${stats.enCount} EN`].filter(Boolean).join(" · ")}</p>
         </Link>
         {[
           { icon: Activity,     color: "text-emerald-500 bg-emerald-50", label: "Active today",  value: stats.activeTodayCount,           sub: `${stats.activeWeekCount} this week` },
