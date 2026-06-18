@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useActionState } from "react"
+import Link from "next/link"
 import { Users, Activity, CheckCircle2, Flame, Tag, BarChart2, Search, Mail, BookOpen as BookOpenIcon, SendHorizonal } from "lucide-react"
 import { AddItemForm } from "./AddItemForm"
 import { AddNamedItem } from "./AddNamedItem"
@@ -23,7 +24,7 @@ type Sentence  = { id: number; english: string; serbian: string; croatian: strin
 type VerbExample = { serbian: string; croatian?: string; english: string }
 type Verb      = { id: number; infinitive: string; translation: string; ja: string; ti: string; onOna: string; mi: string; vi: string; oni: string; infinitiveHr: string | null; jaHr: string | null; tiHr: string | null; onOnaHr: string | null; miHr: string | null; viHr: string | null; oniHr: string | null; examplesJson: string; sortOrder: number }
 type UserRow   = {
-  id: number; email: string; firstName: string | null; language: string
+  id: number; email: string; firstName: string | null; language: string; studyDirection: string
   createdAt: Date | null; lastActive: string | null; streak: number; totalAnswers: number
 }
 type Stats = {
@@ -32,6 +33,7 @@ type Stats = {
   answersToday: number; answersWeek: number; answersTotal: number
   bestStreak: number
 }
+type WeekStat = { week: string; newUsers: number; answers: number; activeUsers: number }
 type SimpleResult = { error?: string; success?: boolean }
 type UseActionStateAction = (prev: SimpleResult | undefined, formData: FormData) => Promise<SimpleResult>
 type ServerActions = {
@@ -42,12 +44,12 @@ type ServerActions = {
 
 export type AdminTabsProps = {
   stats: Stats
-  userRows: UserRow[]
   categories: Category[]
   levels: Level[]
   words: Word[]
   sentences: Sentence[]
   verbs: Verb[]
+  weeklyStats: WeekStat[]
   actions: ServerActions
 }
 
@@ -150,15 +152,78 @@ function EmailToolsPanel() {
   )
 }
 
-function StatsPanel({ stats, userRows }: { stats: Stats; userRows: UserRow[] }) {
+function BarChart({ data, color }: { data: { label: string; value: number }[]; color: string }) {
+  const max = Math.max(...data.map(d => d.value), 1)
+  const W = 800, H = 140, BAR_GAP = 6
+  const barW = (W - BAR_GAP * (data.length - 1)) / data.length
+  return (
+    <svg viewBox={`0 0 ${W} ${H + 28}`} className="w-full" style={{ display: "block" }}>
+      {data.map((d, i) => {
+        const barH = Math.max(3, (d.value / max) * H)
+        const x = i * (barW + BAR_GAP)
+        const y = H - barH
+        return (
+          <g key={i}>
+            <rect x={x} y={y} width={barW} height={barH} rx={4} fill={color} opacity={0.85} />
+            {d.value > 0 && (
+              <text x={x + barW / 2} y={y - 5} textAnchor="middle" fontSize={13} fontWeight="600" fill="#475569">{d.value}</text>
+            )}
+            <text x={x + barW / 2} y={H + 20} textAnchor="middle" fontSize={12} fill="#94a3b8">
+              {d.label}
+            </text>
+          </g>
+        )
+      })}
+    </svg>
+  )
+}
+
+function GrowthCharts({ weeklyStats }: { weeklyStats: WeekStat[] }) {
+  function shortLabel(week: string) {
+    const d = new Date(week + "T00:00:00Z")
+    return `${d.getUTCMonth() + 1}/${d.getUTCDate()}`
+  }
+
+  const charts = [
+    { title: "New users",    sub: "per week · last 12 weeks", key: "newUsers"    as const, color: "#7c3aed" },
+    { title: "Answers",      sub: "per week · last 12 weeks", key: "answers"     as const, color: "#0ea5e9" },
+    { title: "Active users", sub: "per week · last 12 weeks", key: "activeUsers" as const, color: "#10b981" },
+  ]
+
+  return (
+    <div className="space-y-4">
+      {charts.map(({ title, sub, key, color }) => {
+        const data = weeklyStats.map(w => ({ label: shortLabel(w.week), value: w[key] }))
+        const total = data.reduce((s, d) => s + d.value, 0)
+        return (
+          <div key={key} className="bg-white rounded-2xl border border-slate-100 shadow-sm px-6 pt-5 pb-4">
+            <div className="flex items-baseline gap-3 mb-4">
+              <p className="text-base font-bold text-slate-800">{title}</p>
+              <p className="text-xs text-slate-400">{sub}</p>
+              <p className="ml-auto text-2xl font-extrabold text-slate-900">{total.toLocaleString()}</p>
+            </div>
+            <BarChart data={data} color={color} />
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
+function StatsPanel({ stats, weeklyStats }: { stats: Stats; weeklyStats: WeekStat[] }) {
   return (
     <div className="space-y-6">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        <Link href="/admin/users" className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex flex-col gap-1 hover:shadow-md hover:border-violet-100 transition-all group">
+          <div className="w-9 h-9 rounded-xl flex items-center justify-center text-violet-500 bg-violet-50 group-hover:bg-violet-100 transition-colors"><Users className="w-4.5 h-4.5" /></div>
+          <p className="text-2xl font-extrabold text-slate-900 leading-none mt-2">{stats.totalUsers}</p>
+          <p className="text-xs font-semibold text-slate-500">Total users</p>
+          <p className="text-xs text-slate-400">{stats.srCount} SR · {stats.hrCount} HR</p>
+        </Link>
         {[
-          { icon: Users,        color: "text-violet-500 bg-violet-50", label: "Total users",   value: stats.totalUsers,                sub: `${stats.srCount} SR · ${stats.hrCount} HR` },
-          { icon: Activity,     color: "text-emerald-500 bg-emerald-50", label: "Active today",  value: stats.activeTodayCount,          sub: `${stats.activeWeekCount} this week` },
-          { icon: CheckCircle2, color: "text-sky-500 bg-sky-50",    label: "Answers today", value: stats.answersToday.toLocaleString(), sub: `${stats.answersWeek.toLocaleString()} this week` },
-          { icon: Flame,        color: "text-amber-500 bg-amber-50", label: "Best streak",   value: `${stats.bestStreak}d`,          sub: `${stats.answersTotal.toLocaleString()} answers total` },
+          { icon: Activity,     color: "text-emerald-500 bg-emerald-50", label: "Active today",  value: stats.activeTodayCount,           sub: `${stats.activeWeekCount} this week` },
+          { icon: CheckCircle2, color: "text-sky-500 bg-sky-50",         label: "Answers today", value: stats.answersToday.toLocaleString(), sub: `${stats.answersWeek.toLocaleString()} this week` },
+          { icon: Flame,        color: "text-amber-500 bg-amber-50",     label: "Best streak",   value: `${stats.bestStreak}d`,           sub: `${stats.answersTotal.toLocaleString()} answers total` },
         ].map(({ icon: Icon, color, label, value, sub }) => (
           <div key={label} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex flex-col gap-1">
             <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${color}`}><Icon className="w-4.5 h-4.5" /></div>
@@ -169,51 +234,7 @@ function StatsPanel({ stats, userRows }: { stats: Stats; userRows: UserRow[] }) 
         ))}
       </div>
 
-      <div className="bg-white rounded-3xl border border-slate-100 overflow-hidden shadow-sm">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-slate-100">
-              <th className="px-5 py-3.5 text-left font-semibold text-slate-500">User</th>
-              <th className="px-5 py-3.5 text-left font-semibold text-slate-500">Lang</th>
-              <th className="px-5 py-3.5 text-left font-semibold text-slate-500">Joined</th>
-              <th className="px-5 py-3.5 text-left font-semibold text-slate-500">Last active</th>
-              <th className="px-5 py-3.5 text-right font-semibold text-slate-500">Streak</th>
-              <th className="px-5 py-3.5 text-right font-semibold text-slate-500">Answers</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-50">
-            {userRows.length === 0 ? (
-              <tr><td colSpan={6} className="px-5 py-10 text-center text-slate-400">No users yet</td></tr>
-            ) : userRows.map(u => (
-              <tr key={u.id} className="hover:bg-slate-50/50 transition-colors">
-                <td className="px-5 py-3.5">
-                  <p className="font-medium text-slate-900">{u.firstName ?? "—"}</p>
-                  <p className="text-xs text-slate-400">{u.email}</p>
-                </td>
-                <td className="px-5 py-3.5">
-                  <span className={`px-2 py-0.5 text-xs font-semibold rounded-full ${u.language === "sr" ? "bg-violet-50 text-violet-700" : "bg-sky-50 text-sky-700"}`}>
-                    {u.language.toUpperCase()}
-                  </span>
-                </td>
-                <td className="px-5 py-3.5 text-slate-500 tabular-nums">
-                  {u.createdAt ? u.createdAt.toISOString().slice(0, 10) : "—"}
-                </td>
-                <td className="px-5 py-3.5 text-slate-500 tabular-nums">
-                  {u.lastActive ?? <span className="text-slate-300">never</span>}
-                </td>
-                <td className="px-5 py-3.5 text-right">
-                  {u.streak > 0
-                    ? <span className="font-semibold text-amber-600 inline-flex items-center gap-0.5">{u.streak}d<Flame className="w-3.5 h-3.5" /></span>
-                    : <span className="text-slate-300">—</span>}
-                </td>
-                <td className="px-5 py-3.5 text-right font-medium text-slate-700 tabular-nums">
-                  {u.totalAnswers > 0 ? u.totalAnswers.toLocaleString() : <span className="text-slate-300">0</span>}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <GrowthCharts weeklyStats={weeklyStats} />
 
       <EmailToolsPanel />
     </div>
@@ -995,7 +1016,7 @@ function VerbsPanel({ verbs }: { verbs: Verb[] }) {
 
 // ── Root component ───────────────────────────────────────────────────────────
 
-export function AdminTabs({ stats, userRows, categories, levels, words, sentences, verbs, actions }: AdminTabsProps) {
+export function AdminTabs({ stats, categories, levels, words, sentences, verbs, weeklyStats, actions }: AdminTabsProps) {
   const [activeTab, setActiveTab] = useState<Tab>("Stats")
 
   return (
@@ -1018,7 +1039,7 @@ export function AdminTabs({ stats, userRows, categories, levels, words, sentence
       </div>
 
       {/* Panel */}
-      {activeTab === "Stats"       && <StatsPanel stats={stats} userRows={userRows} />}
+      {activeTab === "Stats"       && <StatsPanel stats={stats} weeklyStats={weeklyStats} />}
       {activeTab === "Taxonomies"  && <TaxonomiesPanel categories={categories} levels={levels} actions={actions} />}
       {activeTab === "Add content" && <AddContentPanel categories={categories} levels={levels} />}
       {activeTab === "Words"       && <WordsPanel words={words} categories={categories} />}
