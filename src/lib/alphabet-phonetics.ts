@@ -26,7 +26,7 @@ export const SR_PHONETICS: Record<string, LetterPhonetic> = {
   "NJ": { sounds: '"ny" blended into one sound',             think: 'The "ny" in "ca**ny**on" or "o**ni**on"' },
   "O":  { sounds: '"oh" — round and pure, no glide',         think: '"m**o**re", "st**o**re" (without the trailing "w" sound)' },
   "P":  { sounds: 'Like "p" in English',                     think: '"**p**en", "**p**ark"' },
-  "R":  { sounds: 'Rolled — the tip of the tongue vibrates', think: 'Like "r" in Italian "Ro**m**a" or Spanish "pe**r**o"' },
+  "R":  { sounds: 'Rolled — the tip of the tongue vibrates', think: '"**R**oma" (Italian) or "pe**r**o" (Spanish)' },
   "S":  { sounds: 'Always a sharp "s" — never buzzy',        think: '"**s**un", "**s**even"' },
   "Š":  { sounds: '"sh"',                                    think: '"**sh**oe", "wi**sh**"' },
   "T":  { sounds: 'Like "t" in English',                     think: '"**t**op", "**t**ime"' },
