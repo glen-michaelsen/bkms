@@ -13,6 +13,20 @@ type Props = {
   isEnglishLearner: boolean
 }
 
+/** Render a string with **bold** markers as highlighted spans */
+function BoldText({ text }: { text: string }) {
+  const parts = text.split(/(\*\*[^*]+\*\*)/)
+  return (
+    <>
+      {parts.map((part, i) =>
+        part.startsWith("**") && part.endsWith("**")
+          ? <strong key={i} className="text-slate-900 font-bold">{part.slice(2, -2)}</strong>
+          : <span key={i}>{part}</span>
+      )}
+    </>
+  )
+}
+
 /** Highlight the starting letter(s) within a word */
 function HighlightedWord({ word, letter }: { word: string; letter: string }) {
   const len = letter.length
@@ -112,7 +126,7 @@ export function AlphabetExercise({ alphabet, letterMap, langName, isEnglishLearn
                 </div>
                 <div>
                   <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-0.5">Pronunciation</p>
-                  <p className="text-sm text-slate-700">{p.sounds}</p>
+                  <p className="text-sm text-slate-700"><BoldText text={p.sounds} /></p>
                 </div>
               </div>
               <div className="flex items-start gap-3 px-6 py-4">
@@ -121,7 +135,7 @@ export function AlphabetExercise({ alphabet, letterMap, langName, isEnglishLearn
                 </div>
                 <div>
                   <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-0.5">Think of</p>
-                  <p className="text-sm text-slate-700">{p.think}</p>
+                  <p className="text-sm text-slate-700"><BoldText text={p.think} /></p>
                 </div>
               </div>
             </div>
