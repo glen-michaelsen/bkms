@@ -9,20 +9,17 @@ type Props = {
   langName: string
 }
 
-function SegmentDisplay({ segments, written }: { segments: string[]; written: string }) {
+function SegmentDisplay({ segments }: { segments: string[] }) {
   return (
-    <div className="text-center">
-      <div className="flex flex-wrap justify-center gap-3 mb-4">
-        {segments.map((seg, i) => (
-          <span
-            key={i}
-            className="bg-white/20 rounded-2xl px-5 py-2.5 text-white font-bold text-xl leading-tight"
-          >
-            {seg}
-          </span>
-        ))}
-      </div>
-      <p className="text-white/40 text-sm italic">{written}</p>
+    <div className="flex flex-wrap justify-center gap-3">
+      {segments.map((seg, i) => (
+        <span
+          key={i}
+          className="bg-white/20 rounded-2xl px-5 py-2.5 text-white font-bold text-xl leading-tight"
+        >
+          {seg}
+        </span>
+      ))}
     </div>
   )
 }
@@ -126,7 +123,7 @@ export function NumbersExercise({ lang, langName }: Props) {
               </div>
 
               {/* Segments + written */}
-              <SegmentDisplay segments={browseBD.segments} written={browseBD.written} />
+              <SegmentDisplay segments={browseBD.segments} />
             </div>
           </div>
 
@@ -171,7 +168,7 @@ export function NumbersExercise({ lang, langName }: Props) {
 
           {typeBD && typeBD.segments.length > 0 && (
             <div className="bg-gradient-to-br from-violet-600 to-violet-700 px-8 py-8">
-              <SegmentDisplay segments={typeBD.segments} written={typeBD.written} />
+              <SegmentDisplay segments={typeBD.segments} />
             </div>
           )}
 
