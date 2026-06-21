@@ -86,7 +86,7 @@ export default async function AlphabetPage() {
           <h1 className="text-2xl font-extrabold text-slate-900">The {langName} Alphabet</h1>
           <p className="text-sm text-slate-500 mt-1">{alphabet.length} letters · tap a letter to explore</p>
         </div>
-        <AlphabetExercise letterMap={letterMap} alphabet={alphabet} langName={langName} />
+        <AlphabetExercise letterMap={letterMap} alphabet={alphabet} langName={langName} isEnglishLearner={isEnglishLearner} />
       </main>
     </div>
   )

@@ -1,7 +1,8 @@
 "use client"
 
 import { useState, useRef, useEffect } from "react"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronLeft, ChevronRight, Volume2, Lightbulb } from "lucide-react"
+import { SR_PHONETICS } from "@/lib/alphabet-phonetics"
 
 type Word = { id: number; display: string; translation: string }
 
@@ -9,6 +10,7 @@ type Props = {
   alphabet: string[]
   letterMap: Record<string, Word[]>
   langName: string
+  isEnglishLearner: boolean
 }
 
 /** Highlight the starting letter(s) within a word */
@@ -24,7 +26,7 @@ function HighlightedWord({ word, letter }: { word: string; letter: string }) {
   return <span className="font-bold text-slate-900 text-lg">{word}</span>
 }
 
-export function AlphabetExercise({ alphabet, letterMap, langName }: Props) {
+export function AlphabetExercise({ alphabet, letterMap, langName, isEnglishLearner }: Props) {
   const [idx, setIdx] = useState(0)
   const chipRef       = useRef<HTMLButtonElement | null>(null)
   const scrollRef     = useRef<HTMLDivElement>(null)
@@ -98,6 +100,33 @@ export function AlphabetExercise({ alphabet, letterMap, langName }: Props) {
             <ChevronRight className="w-5 h-5" />
           </button>
         </div>
+
+        {/* Pronunciation guide — Slavic learners only */}
+        {!isEnglishLearner && SR_PHONETICS[letter] && (() => {
+          const p = SR_PHONETICS[letter]
+          return (
+            <div className="border-t border-slate-100 divide-y divide-slate-50">
+              <div className="flex items-start gap-3 px-6 py-4">
+                <div className="w-7 h-7 rounded-lg bg-violet-50 flex items-center justify-center shrink-0 mt-0.5">
+                  <Volume2 className="w-3.5 h-3.5 text-violet-500" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-0.5">Pronunciation</p>
+                  <p className="text-sm text-slate-700">{p.sounds}</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 px-6 py-4">
+                <div className="w-7 h-7 rounded-lg bg-amber-50 flex items-center justify-center shrink-0 mt-0.5">
+                  <Lightbulb className="w-3.5 h-3.5 text-amber-500" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-0.5">Think of</p>
+                  <p className="text-sm text-slate-700">{p.think}</p>
+                </div>
+              </div>
+            </div>
+          )
+        })()}
 
         {/* Words list */}
         <div className="divide-y divide-slate-50">
