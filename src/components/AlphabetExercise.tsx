@@ -83,7 +83,7 @@ export function AlphabetExercise({ alphabet, letterMap, langName, isEnglishLearn
       {/* Main letter card */}
       <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden">
         {/* Letter hero */}
-        <div className="bg-gradient-to-br from-violet-600 to-violet-700 px-8 py-10 flex items-center justify-between">
+        <div className="bg-gradient-to-br from-violet-600 to-violet-700 px-8 pt-14 pb-10 flex items-center justify-between">
           <button
             onClick={prev}
             disabled={idx === 0}
