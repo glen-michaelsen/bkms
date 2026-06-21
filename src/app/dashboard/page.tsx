@@ -11,7 +11,7 @@ import { ActivityGraph } from "@/components/ActivityGraph"
 import { CategoryTags } from "@/components/CategoryTags"
 import { DailySentences } from "@/components/DailySentences"
 import { Greeting } from "@/components/Greeting"
-import { BookOpen, MessageSquare, Grid3x3, Shuffle, ArrowRight, Check, User, List } from "lucide-react"
+import { BookOpen, MessageSquare, Grid3x3, Shuffle, ArrowRight, Check, User, List, Sparkles } from "lucide-react"
 
 const languageInfo = {
   sr: { label: "Serbian", flag: "🇷🇸", native: "Srpski" },
@@ -250,6 +250,24 @@ export default async function DashboardPage() {
         <div>
           <h2 className="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-3">Vocabulary Training</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            {wordStats.unseen > 0 && (
+              <Link
+                href="/learn/words"
+                className="group relative overflow-hidden bg-gradient-to-br from-violet-600 to-violet-700 rounded-3xl border border-violet-500 p-7 hover:shadow-xl hover:-translate-y-1 transition-all duration-200 sm:col-span-2"
+              >
+                <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
+                <div className="relative z-10 flex items-center gap-5">
+                  <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center shrink-0 group-hover:bg-white/30 transition-colors text-white">
+                    <Sparkles className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-white mb-1">Learn New Words</h3>
+                    <p className="text-violet-200 text-sm">{wordStats.unseen} unseen word{wordStats.unseen !== 1 ? "s" : ""} · Read, choose, then type each one</p>
+                  </div>
+                  <ArrowRight className="ml-auto w-5 h-5 text-violet-200 group-hover:translate-x-1 transition-transform shrink-0" />
+                </div>
+              </Link>
+            )}
             <Link
               href="/study/words"
               className="group relative overflow-hidden bg-white rounded-3xl border border-slate-100 p-7 hover:shadow-xl hover:-translate-y-1 transition-all duration-200"
