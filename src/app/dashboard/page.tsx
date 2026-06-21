@@ -11,7 +11,7 @@ import { ActivityGraph } from "@/components/ActivityGraph"
 import { CategoryTags } from "@/components/CategoryTags"
 import { DailySentences } from "@/components/DailySentences"
 import { Greeting } from "@/components/Greeting"
-import { BookOpen, MessageSquare, Grid3x3, Shuffle, ArrowRight, Check, User, List, Sparkles } from "lucide-react"
+import { BookOpen, MessageSquare, Grid3x3, Shuffle, ArrowRight, Check, User, List, Sparkles, ALargeSmall } from "lucide-react"
 
 const languageInfo = {
   sr: { label: "Serbian", flag: "🇷🇸", native: "Srpski" },
@@ -326,6 +326,13 @@ export default async function DashboardPage() {
                 subtitle="All 7 cases"
               />
             )}
+            <GameCard
+              href="/alphabet"
+              icon={ALargeSmall}
+              name="Alphabet"
+              solved={false}
+              subtitle="Letters & example words"
+            />
           </div>
         </div>
 
