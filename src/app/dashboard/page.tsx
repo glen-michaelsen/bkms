@@ -326,13 +326,15 @@ export default async function DashboardPage() {
                 subtitle="All 7 cases"
               />
             )}
-            <GameCard
-              href="/alphabet"
-              icon={ALargeSmall}
-              name="Alphabet"
-              solved={false}
-              subtitle="Letters & example words"
-            />
+            {studyDirection !== "to_english" && (
+              <GameCard
+                href="/alphabet"
+                icon={ALargeSmall}
+                name="Learn Letters"
+                solved={false}
+                subtitle="Letters & pronunciation"
+              />
+            )}
           </div>
         </div>
 
