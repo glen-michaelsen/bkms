@@ -46,7 +46,7 @@ export function AlphabetExercise({ alphabet, letterMap, langName, isEnglishLearn
   const scrollRef     = useRef<HTMLDivElement>(null)
 
   const letter = alphabet[idx]
-  const words  = letterMap[letter] ?? []
+  const words  = (letterMap[letter] ?? []).slice(0, 5)
 
   // Scroll the active chip into view when the letter changes
   useEffect(() => {
@@ -98,11 +98,6 @@ export function AlphabetExercise({ alphabet, letterMap, langName, isEnglishLearn
             </p>
             <p className="text-white font-extrabold leading-none" style={{ fontSize: "6rem" }}>
               {letter}
-            </p>
-            <p className="text-white/60 text-sm mt-2 font-medium">
-              {words.length === 0
-                ? "No words yet"
-                : `${words.length} word${words.length !== 1 ? "s" : ""} in library`}
             </p>
           </div>
 
