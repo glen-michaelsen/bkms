@@ -330,9 +330,9 @@ export default async function DashboardPage() {
               <GameCard
                 href="/alphabet"
                 icon={ALargeSmall}
-                name="Learn Letters"
+                name="Alphabet"
                 solved={false}
-                subtitle="Letters & pronunciation"
+                subtitle="Learn letters"
               />
             )}
           </div>
