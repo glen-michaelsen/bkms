@@ -93,7 +93,7 @@ export function AlphabetExercise({ alphabet, letterMap, langName, isEnglishLearn
           </button>
 
           <div className="text-center">
-            <p className="text-white/60 text-xs font-semibold uppercase tracking-widest mb-2">
+            <p className="text-white/60 text-xs font-semibold uppercase tracking-widest mb-8">
               {langName} alphabet · {idx + 1} of {alphabet.length}
             </p>
             <p className="text-white font-extrabold leading-none" style={{ fontSize: "6rem" }}>
