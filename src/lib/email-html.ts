@@ -97,8 +97,29 @@ export function wrapEmailHtml({
         </tr>
         <!-- Footer -->
         <tr>
-          <td style="background:#f8fafc;padding:20px 40px;border-top:1px solid #e2e8f0;">
-            <p style="margin:0;text-align:center;color:#94a3b8;font-size:12px;">Čujemo se · <a href="https://cujemose.com" style="color:#7c3aed;text-decoration:none;">cujemose.com</a></p>
+          <td style="background:#f8fafc;padding:24px 40px;border-top:1px solid #e2e8f0;">
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <!-- Photo -->
+                <td width="33%" valign="middle" style="padding-right:16px;">
+                  <img src="https://cujemose.com/glen-randelovic-michaelsen.jpg"
+                       alt="Glen Ranđelović Michaelsen"
+                       width="80" height="80"
+                       style="display:block;width:80px;height:80px;border-radius:50%;object-fit:cover;" />
+                </td>
+                <!-- Signature -->
+                <td width="67%" valign="middle">
+                  <p style="margin:0 0 2px;color:#94a3b8;font-size:12px;">S poštovanjem,</p>
+                  <p style="margin:0 0 1px;color:#1e293b;font-size:13px;font-weight:700;">Glen Ranđelović Michaelsen</p>
+                  <p style="margin:0 0 8px;color:#64748b;font-size:12px;">Founder of Čujemo se</p>
+                  <p style="margin:0;font-size:12px;line-height:1.8;">
+                    <a href="https://cujemose.com" style="color:#7c3aed;text-decoration:none;">Website</a>
+                    &nbsp;·&nbsp;
+                    <a href="https://www.instagram.com/cujemose" style="color:#7c3aed;text-decoration:none;">Instagram</a>
+                  </p>
+                </td>
+              </tr>
+            </table>
           </td>
         </tr>
       </table>
