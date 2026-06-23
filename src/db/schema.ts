@@ -169,6 +169,38 @@ export const userProfile = sqliteTable("user_profile", {
   countryOfOrigin: text("country_of_origin"),
 })
 
+// ── Email feature ─────────────────────────────────────────────────────────────
+
+export const emailWelcomeSteps = sqliteTable("email_welcome_steps", {
+  id:          integer("id").primaryKey({ autoIncrement: true }),
+  stepNumber:  integer("step_number").notNull(),
+  delayDays:   integer("delay_days").notNull(),
+  subject:     text("subject").notNull(),
+  body:        text("body").notNull(),   // JSON: Block[]
+  active:      integer("active", { mode: "boolean" }).notNull().default(true),
+  createdAt:   text("created_at").notNull().default("now"),
+})
+
+export const emailCampaigns = sqliteTable("email_campaigns", {
+  id:          integer("id").primaryKey({ autoIncrement: true }),
+  name:        text("name").notNull(),
+  subject:     text("subject").notNull(),
+  body:        text("body").notNull(),   // JSON: Block[]
+  status:      text("status").notNull().default("draft"), // draft|scheduled|sending|sent
+  scheduledAt: text("scheduled_at"),    // ISO datetime or null
+  sentAt:      text("sent_at"),
+  filters:     text("filters").notNull().default("{}"),   // JSON: CampaignFilters
+  createdAt:   text("created_at").notNull().default("now"),
+})
+
+export const emailSendLog = sqliteTable("email_send_log", {
+  id:          integer("id").primaryKey({ autoIncrement: true }),
+  userId:      integer("user_id").notNull(),
+  type:        text("type").notNull(),  // "welcome" | "campaign"
+  referenceId: integer("reference_id").notNull(),
+  sentAt:      text("sent_at").notNull(),
+})
+
 export type User = typeof users.$inferSelect
 export type Verb = typeof verbs.$inferSelect
 export type Category = typeof categories.$inferSelect

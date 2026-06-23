@@ -1,0 +1,16 @@
+import { NextResponse } from "next/server"
+import { auth } from "@/auth"
+import { dispatchCampaign } from "@/lib/email-dispatch"
+
+export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
+
+export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const session = await auth()
+  if (!session || session.user.role !== "admin")
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+
+  const { id } = await params
+  const result = await dispatchCampaign(parseInt(id))
+  return NextResponse.json(result)
+}

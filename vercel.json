@@ -1,1 +1,6 @@
-{}
+{
+  "crons": [
+    { "path": "/api/cron/email-welcome",   "schedule": "0 8 * * *"  },
+    { "path": "/api/cron/email-campaigns", "schedule": "0 * * * *"  }
+  ]
+}

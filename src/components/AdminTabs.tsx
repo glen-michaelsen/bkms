@@ -105,6 +105,16 @@ function EmailToolsPanel() {
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
 
+        {/* Campaigns & welcome flow link */}
+        <Link href="/admin/emails" className="border-2 border-dashed border-violet-200 rounded-2xl p-4 space-y-2 hover:border-violet-400 hover:bg-violet-50 transition group col-span-full sm:col-span-1">
+          <div className="flex items-center gap-2">
+            <SendHorizonal className="w-4 h-4 text-violet-500" />
+            <p className="text-sm font-semibold text-slate-800">Campaigns &amp; welcome flow</p>
+          </div>
+          <p className="text-xs text-slate-400 leading-relaxed">Create and schedule campaigns, manage the welcome email sequence.</p>
+          <p className="text-xs font-semibold text-violet-600 group-hover:underline">Open email manager →</p>
+        </Link>
+
         {/* Streak mail */}
         <div className="border border-slate-100 rounded-2xl p-4 space-y-3">
           <div className="flex items-center gap-2">

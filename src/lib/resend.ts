@@ -2,7 +2,11 @@ import { Resend } from "resend"
 import type { Verb } from "@/db/schema"
 
 const resend = new Resend(process.env.RESEND_API_KEY)
-const FROM = "Čujemo se <zdravo@cujemose.com>"
+export const FROM = "Čujemo se <zdravo@cujemose.com>"
+
+export async function sendEmail({ to, subject, html }: { to: string; subject: string; html: string }) {
+  await resend.emails.send({ from: FROM, to, subject, html })
+}
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
