@@ -263,9 +263,10 @@ function CampaignForm({
 // ── Welcome step form ─────────────────────────────────────────────────────────
 
 function WelcomeStepForm({
-  initial, onSave, onCancel,
+  initial, adminEmail, onSave, onCancel,
 }: {
   initial?: WelcomeStep
+  adminEmail: string
   onSave: () => void
   onCancel: () => void
 }) {
@@ -275,7 +276,9 @@ function WelcomeStepForm({
   const [blocks,     setBlocks]     = useState<Block[]>(() => {
     try { return JSON.parse(initial?.body ?? "[]") } catch { return [] }
   })
-  const [saving, setSaving] = useState(false)
+  const [saving,     setSaving]     = useState(false)
+  const [testEmail,  setTestEmail]  = useState(adminEmail)
+  const [testStatus, setTestStatus] = useState<"idle"|"sending"|"sent"|"error">("idle")
 
   async function save() {
     setSaving(true)
@@ -287,6 +290,17 @@ function WelcomeStepForm({
     })
     setSaving(false)
     onSave()
+  }
+
+  async function sendTest() {
+    if (!initial) return
+    setTestStatus("sending")
+    const res = await fetch(`/api/admin/welcome-steps/${initial.id}/test`, {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ testEmail }),
+    })
+    setTestStatus(res.ok ? "sent" : "error")
+    setTimeout(() => setTestStatus("idle"), 3000)
   }
 
   return (
@@ -318,6 +332,26 @@ function WelcomeStepForm({
       />
 
       <EmailBlockEditor blocks={blocks} onChange={setBlocks} />
+
+      {/* Test email — only available when editing an existing step */}
+      {initial && (
+        <div className="p-4 bg-violet-50 rounded-2xl border border-violet-100 space-y-2">
+          <p className="text-xs font-bold text-violet-500 uppercase tracking-widest">Send test email</p>
+          <div className="flex gap-2">
+            <input value={testEmail} onChange={e => setTestEmail(e.target.value)}
+              placeholder="test@example.com"
+              className="flex-1 text-sm border border-violet-200 bg-white rounded-xl px-3 py-2 outline-none focus:border-violet-500"
+            />
+            <button onClick={sendTest} disabled={testStatus === "sending"}
+              className="flex items-center gap-1.5 px-4 py-2 bg-violet-600 text-white text-sm font-bold rounded-xl hover:bg-violet-700 disabled:opacity-60 transition">
+              {testStatus === "sending" ? <Loader2 className="w-4 h-4 animate-spin" /> :
+               testStatus === "sent"    ? <CheckCircle2 className="w-4 h-4" /> :
+                                          <FlaskConical className="w-4 h-4" />}
+              {testStatus === "sent" ? "Sent!" : testStatus === "error" ? "Failed" : "Send test"}
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="flex gap-3 pt-1">
         <button onClick={onCancel}
@@ -486,6 +520,7 @@ export function EmailAdmin({ adminEmail }: { adminEmail: string }) {
           {editingStep ? (
             <WelcomeStepForm
               initial={editingStep === "new" ? undefined : editingStep}
+              adminEmail={adminEmail}
               onSave={() => { setEditingStep(null); loadAll() }}
               onCancel={() => setEditingStep(null)}
             />
