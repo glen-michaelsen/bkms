@@ -149,31 +149,36 @@ function CampaignForm({
   })
   const [scheduledAt, setScheduledAt] = useState(initial?.scheduledAt?.slice(0, 16) ?? "")
   const [saving,      setSaving]      = useState(false)
+  const [saveError,   setSaveError]   = useState<string | null>(null)
   const [testEmail,   setTestEmail]   = useState(adminEmail)
   const [testStatus,  setTestStatus]  = useState<"idle"|"sending"|"sent"|"error">("idle")
   const [showFilters, setShowFilters] = useState(false)
 
   async function save() {
     setSaving(true)
-    const body = {
-      name, subject,
-      body: JSON.stringify(blocks),
-      filters,
-      scheduledAt: scheduledAt || null,
+    setSaveError(null)
+    try {
+      const payload = {
+        name, subject,
+        body: JSON.stringify(blocks),
+        filters,
+        scheduledAt: scheduledAt || null,
+      }
+      const res = await (initial
+        ? fetch(`/api/admin/campaigns/${initial.id}`, { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
+        : fetch("/api/admin/campaigns",               { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) })
+      )
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        setSaveError(err.error ?? `Error ${res.status}`)
+        setSaving(false)
+        return
+      }
+      onSave()
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : "Network error")
+      setSaving(false)
     }
-    if (initial) {
-      await fetch(`/api/admin/campaigns/${initial.id}`, {
-        method: "PUT", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      })
-    } else {
-      await fetch("/api/admin/campaigns", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      })
-    }
-    setSaving(false)
-    onSave()
   }
 
   async function sendTest() {
@@ -256,6 +261,7 @@ function CampaignForm({
           Save
         </button>
       </div>
+      {saveError && <p className="text-xs text-red-500 font-semibold">{saveError}</p>}
     </div>
   )
 }
@@ -277,19 +283,31 @@ function WelcomeStepForm({
     try { return JSON.parse(initial?.body ?? "[]") } catch { return [] }
   })
   const [saving,     setSaving]     = useState(false)
+  const [saveError,  setSaveError]  = useState<string | null>(null)
   const [testEmail,  setTestEmail]  = useState(adminEmail)
   const [testStatus, setTestStatus] = useState<"idle"|"sending"|"sent"|"error">("idle")
 
   async function save() {
     setSaving(true)
-    const payload = { id: initial?.id, stepNumber, delayDays, subject, body: JSON.stringify(blocks), active: initial?.active ?? true }
-    await fetch("/api/admin/welcome-steps", {
-      method: initial ? "PUT" : "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    })
-    setSaving(false)
-    onSave()
+    setSaveError(null)
+    try {
+      const payload = { id: initial?.id, stepNumber, delayDays, subject, body: JSON.stringify(blocks), active: initial?.active ?? true }
+      const res = await fetch("/api/admin/welcome-steps", {
+        method: initial ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        setSaveError(err.error ?? `Error ${res.status}`)
+        setSaving(false)
+        return
+      }
+      onSave()
+    } catch (e) {
+      setSaveError(e instanceof Error ? e.message : "Network error")
+      setSaving(false)
+    }
   }
 
   async function sendTest() {
@@ -364,6 +382,7 @@ function WelcomeStepForm({
           Save
         </button>
       </div>
+      {saveError && <p className="text-xs text-red-500 font-semibold">{saveError}</p>}
     </div>
   )
 }
@@ -388,13 +407,13 @@ export function EmailAdmin({ adminEmail }: { adminEmail: string }) {
 
   async function loadAll() {
     const [s, c, e] = await Promise.all([
-      fetch("/api/admin/welcome-steps").then(r => r.json()),
-      fetch("/api/admin/campaigns").then(r => r.json()),
-      fetch("/api/admin/welcome-flow/enroll").then(r => r.json()),
+      fetch("/api/admin/welcome-steps").then(r => r.json()).catch(() => null),
+      fetch("/api/admin/campaigns").then(r => r.json()).catch(() => null),
+      fetch("/api/admin/welcome-flow/enroll").then(r => r.json()).catch(() => null),
     ])
-    setSteps(s)
-    setEnrollStats(e)
-    setCampaigns(c)
+    if (s) setSteps(s)
+    if (c) setCampaigns(c)
+    if (e) setEnrollStats(e)
   }
 
   async function toggleStepActive(step: WelcomeStep) {
