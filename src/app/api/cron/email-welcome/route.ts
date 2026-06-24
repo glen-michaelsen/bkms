@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { db } from "@/db"
-import { users, emailWelcomeSteps, emailSendLog } from "@/db/schema"
-import { eq, and } from "drizzle-orm"
+import { users, emailWelcomeSteps, emailSendLog, emailWelcomeEnrollments } from "@/db/schema"
+import { eq } from "drizzle-orm"
 import { sendEmail } from "@/lib/resend"
 import { parseBlocks, renderEmail } from "@/lib/email-html"
 
@@ -26,6 +26,13 @@ export async function GET(req: Request) {
     id: users.id, email: users.email, firstName: users.firstName, createdAt: users.createdAt,
   }).from(users).all()
 
+  // Build a map of userId → flow start date from manual enrollments
+  const enrollments = await db.select({
+    userId: emailWelcomeEnrollments.userId,
+    startedAt: emailWelcomeEnrollments.startedAt,
+  }).from(emailWelcomeEnrollments).all()
+  const enrollmentMap = new Map(enrollments.map(e => [e.userId, e.startedAt]))
+
   const sentPairs = new Set(
     (await db.select({ userId: emailSendLog.userId, referenceId: emailSendLog.referenceId })
       .from(emailSendLog).where(eq(emailSendLog.type, "welcome")).all())
@@ -39,9 +46,14 @@ export async function GET(req: Request) {
     for (const user of allUsers) {
       if (sentPairs.has(`${user.id}:${step.id}`)) { skipped++; continue }
 
-      const signupDate = user.createdAt instanceof Date ? user.createdAt : new Date(user.createdAt ?? 0)
-      const daysSinceSignup = (now.getTime() - signupDate.getTime()) / 86_400_000
-      if (daysSinceSignup < step.delayDays) { skipped++; continue }
+      // Use manual enrollment date if present, otherwise fall back to signup date
+      const baselineStr = enrollmentMap.get(user.id)
+      const baseline = baselineStr
+        ? new Date(baselineStr)
+        : user.createdAt instanceof Date ? user.createdAt : new Date(user.createdAt ?? 0)
+
+      const daysSinceBaseline = (now.getTime() - baseline.getTime()) / 86_400_000
+      if (daysSinceBaseline < step.delayDays) { skipped++; continue }
 
       try {
         const blocks = parseBlocks(step.body)

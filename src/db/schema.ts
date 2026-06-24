@@ -201,6 +201,15 @@ export const emailSendLog = sqliteTable("email_send_log", {
   sentAt:      text("sent_at").notNull(),
 })
 
+// Tracks manual enrollment of existing users into the welcome flow.
+// UNIQUE on userId ensures a user can never be enrolled twice.
+export const emailWelcomeEnrollments = sqliteTable("email_welcome_enrollments", {
+  id:         integer("id").primaryKey({ autoIncrement: true }),
+  userId:     integer("user_id").notNull().unique(),
+  startedAt:  text("started_at").notNull(),  // ISO date — used as timing baseline by the cron
+  enrolledBy: text("enrolled_by"),           // admin email who triggered it
+})
+
 export type User = typeof users.$inferSelect
 export type Verb = typeof verbs.$inferSelect
 export type Category = typeof categories.$inferSelect

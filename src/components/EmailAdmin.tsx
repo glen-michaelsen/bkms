@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, Send, Clock, Trash2, Edit2, CheckCircle2, Loader2, FlaskConical, ChevronDown, ChevronUp } from "lucide-react"
+import { Plus, Send, Clock, Trash2, Edit2, CheckCircle2, Loader2, FlaskConical, ChevronDown, ChevronUp, UserPlus } from "lucide-react"
 import { EmailBlockEditor } from "@/components/EmailBlockEditor"
 import type { Block, CampaignFilters } from "@/lib/email-html"
 
@@ -370,6 +370,8 @@ function WelcomeStepForm({
 
 // ── Main component ────────────────────────────────────────────────────────────
 
+type EnrollStats = { total: number; enrolled: number; unenrolled: { id: number; email: string; firstName: string | null }[] }
+
 export function EmailAdmin({ adminEmail }: { adminEmail: string }) {
   const [tab,           setTab]           = useState<"welcome"|"campaigns">("campaigns")
   const [steps,         setSteps]         = useState<WelcomeStep[]>([])
@@ -378,15 +380,20 @@ export function EmailAdmin({ adminEmail }: { adminEmail: string }) {
   const [editingCamp,   setEditingCamp]   = useState<Campaign | null | "new">(null)
   const [sendingId,     setSendingId]     = useState<number | null>(null)
   const [sendResult,    setSendResult]    = useState<{ id: number; sent: number } | null>(null)
+  const [enrollStats,   setEnrollStats]   = useState<EnrollStats | null>(null)
+  const [enrollBusy,    setEnrollBusy]    = useState(false)
+  const [enrollResult,  setEnrollResult]  = useState<string | null>(null)
 
   useEffect(() => { loadAll() }, [])
 
   async function loadAll() {
-    const [s, c] = await Promise.all([
+    const [s, c, e] = await Promise.all([
       fetch("/api/admin/welcome-steps").then(r => r.json()),
       fetch("/api/admin/campaigns").then(r => r.json()),
+      fetch("/api/admin/welcome-flow/enroll").then(r => r.json()),
     ])
     setSteps(s)
+    setEnrollStats(e)
     setCampaigns(c)
   }
 
@@ -396,6 +403,21 @@ export function EmailAdmin({ adminEmail }: { adminEmail: string }) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ...step, body: step.body, active: !step.active }),
     })
+    loadAll()
+  }
+
+  async function enrollAll() {
+    if (!enrollStats || enrollStats.unenrolled.length === 0) return
+    if (!confirm(`Enroll ${enrollStats.unenrolled.length} user${enrollStats.unenrolled.length !== 1 ? "s" : ""} into the welcome flow? They will start receiving steps from today.`)) return
+    setEnrollBusy(true)
+    setEnrollResult(null)
+    const res = await fetch("/api/admin/welcome-flow/enroll", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ all: true }),
+    })
+    const data = await res.json()
+    setEnrollResult(`Enrolled ${data.enrolled} user${data.enrolled !== 1 ? "s" : ""}`)
+    setEnrollBusy(false)
     loadAll()
   }
 
@@ -517,6 +539,33 @@ export function EmailAdmin({ adminEmail }: { adminEmail: string }) {
       {/* ── Welcome flow tab ── */}
       {tab === "welcome" && (
         <div className="space-y-4">
+
+          {/* Enrollment panel */}
+          {!editingStep && enrollStats && (
+            <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-5">
+              <div className="flex items-center justify-between gap-4">
+                <div>
+                  <p className="font-bold text-slate-900 text-sm">Enroll existing users</p>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    {enrollStats.enrolled} of {enrollStats.total} user{enrollStats.total !== 1 ? "s" : ""} enrolled
+                    {enrollStats.unenrolled.length > 0 && ` · ${enrollStats.unenrolled.length} not yet enrolled`}
+                  </p>
+                  {enrollResult && (
+                    <p className="text-xs text-green-600 font-semibold mt-1">✓ {enrollResult}</p>
+                  )}
+                </div>
+                <button
+                  onClick={enrollAll}
+                  disabled={enrollBusy || enrollStats.unenrolled.length === 0}
+                  className="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white text-sm font-bold rounded-xl hover:bg-violet-700 disabled:opacity-50 transition shrink-0"
+                >
+                  {enrollBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
+                  {enrollStats.unenrolled.length === 0 ? "All enrolled" : `Enroll ${enrollStats.unenrolled.length} user${enrollStats.unenrolled.length !== 1 ? "s" : ""}`}
+                </button>
+              </div>
+            </div>
+          )}
+
           {editingStep ? (
             <WelcomeStepForm
               initial={editingStep === "new" ? undefined : editingStep}

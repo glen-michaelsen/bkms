@@ -115,7 +115,7 @@ export function wrapEmailHtml({
                   <p style="margin:0;font-size:12px;line-height:1.8;">
                     <a href="https://cujemose.com" style="color:#7c3aed;text-decoration:none;">Website</a>
                     &nbsp;·&nbsp;
-                    <a href="https://www.instagram.com/cujemose" style="color:#7c3aed;text-decoration:none;">Instagram</a>
+                    <a href="https://www.instagram.com/cujemoseapp" style="color:#7c3aed;text-decoration:none;">Instagram</a>
                   </p>
                 </td>
               </tr>
