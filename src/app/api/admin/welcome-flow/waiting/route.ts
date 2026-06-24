@@ -35,6 +35,8 @@ export async function GET() {
     const waiting: { id: number; email: string; firstName: string | null; daysUntil: number }[] = []
 
     for (const user of allUsers) {
+      if (!enrollmentMap.has(user.id)) continue  // only count explicitly enrolled users
+
       if (sentPairs.has(`${user.id}:${step.id}`)) continue  // already received this step
 
       // Must have received the previous step before being "in queue" for this one
