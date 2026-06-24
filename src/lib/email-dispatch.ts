@@ -16,7 +16,7 @@ export async function resolveRecipients(filters: CampaignFilters, campaignId: nu
       .all()).map(r => r.userId)
   )
 
-  let targets = allUsers.filter(u => !alreadySent.has(u.id))
+  let targets = allUsers.filter(u => !alreadySent.has(u.id) && u.newsletterEnabled !== false)
 
   if (filters.languages?.length) {
     targets = targets.filter(u => {

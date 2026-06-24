@@ -22,9 +22,10 @@ export async function GET(req: Request) {
 
   if (!steps.length) return NextResponse.json({ sent: 0, skipped: 0 })
 
-  const allUsers = await db.select({
+  const allUsers = (await db.select({
     id: users.id, email: users.email, firstName: users.firstName, createdAt: users.createdAt,
-  }).from(users).all()
+    newsletterEnabled: users.newsletterEnabled,
+  }).from(users).all()).filter(u => u.newsletterEnabled !== false)
 
   // Build a map of userId → flow start date from manual enrollments
   const enrollments = await db.select({

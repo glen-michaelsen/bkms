@@ -15,6 +15,7 @@ export const users = sqliteTable("users", {
   streakMailHour: integer("streak_mail_hour").notNull().default(20),
   verbOfDayEnabled: integer("verb_of_day_enabled", { mode: "boolean" }).notNull().default(false),
   verbOfDayEnabledAt: text("verb_of_day_enabled_at"), // YYYY-MM-DD, set when first enabled
+  newsletterEnabled: integer("newsletter_enabled", { mode: "boolean" }).notNull().default(true),
   // Study preferences
   multipleChoiceRatio: integer("multiple_choice_ratio").notNull().default(50),
   studyDirection: text("study_direction", { enum: ["to_slavic", "to_english"] }).notNull().default("to_slavic"),

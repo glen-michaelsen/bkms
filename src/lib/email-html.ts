@@ -33,7 +33,7 @@ function escape(s: string): string {
 function blockToHtml(block: Block): string {
   switch (block.type) {
     case "heading":
-      return `<h2 style="margin:0 0 16px;color:#1e293b;font-size:22px;font-weight:800;line-height:1.3;">${escape(block.text)}</h2>`
+      return `<h2 style="margin:28px 0 8px;color:#1e293b;font-size:19px;font-weight:800;line-height:1.3;">${escape(block.text)}</h2>`
 
     case "paragraph":
       // Support simple **bold** inline markers
@@ -90,9 +90,6 @@ export function wrapEmailHtml({
         <tr>
           <td style="padding:32px 40px 24px;">
             ${bodyHtml}
-            <p style="margin:24px 0 0;color:#94a3b8;font-size:13px;line-height:1.5;">
-              <a href="https://cujemose.com/settings" style="color:#7c3aed;text-decoration:none;">Unsubscribe or manage preferences</a>
-            </p>
           </td>
         </tr>
         <!-- Footer -->
@@ -123,6 +120,9 @@ export function wrapEmailHtml({
           </td>
         </tr>
       </table>
+      <p style="margin:16px 0 0;text-align:center;font-size:12px;line-height:1.5;">
+        <a href="https://cujemose.com/settings" style="color:#94a3b8;text-decoration:none;">Manage preferences</a>
+      </p>
     </td></tr>
   </table>
 </body>

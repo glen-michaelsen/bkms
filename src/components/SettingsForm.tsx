@@ -78,6 +78,7 @@ export function SettingsForm({
   initialStreakMailEnabled,
   initialStreakMailHour,
   initialVerbOfDayEnabled,
+  initialNewsletterEnabled,
   initialMultipleChoiceRatio,
   initialProfile,
 }: {
@@ -92,6 +93,7 @@ export function SettingsForm({
   initialStreakMailEnabled: boolean
   initialStreakMailHour: number
   initialVerbOfDayEnabled: boolean
+  initialNewsletterEnabled: boolean
   initialMultipleChoiceRatio: number
   initialProfile: InitialProfile
 }) {
@@ -107,11 +109,12 @@ export function SettingsForm({
   const derivedLanguage: "sr" | "hr" = learnTarget === "en" ? refLanguage : learnTarget as "sr" | "hr"
   const derivedDirection = learnTarget === "en" ? "to_english" : "to_slavic"
 
-  const [timezone, setTimezone]           = useState(initialTimezone)
-  const [streakEnabled, setStreakEnabled] = useState(initialStreakMailEnabled)
-  const [streakHour, setStreakHour]       = useState(initialStreakMailHour)
-  const [verbEnabled, setVerbEnabled]     = useState(initialVerbOfDayEnabled)
-  const [mcRatio, setMcRatio]             = useState(initialMultipleChoiceRatio)
+  const [timezone, setTimezone]               = useState(initialTimezone)
+  const [streakEnabled, setStreakEnabled]     = useState(initialStreakMailEnabled)
+  const [streakHour, setStreakHour]           = useState(initialStreakMailHour)
+  const [verbEnabled, setVerbEnabled]         = useState(initialVerbOfDayEnabled)
+  const [newsletterEnabled, setNewsletter]    = useState(initialNewsletterEnabled)
+  const [mcRatio, setMcRatio]                 = useState(initialMultipleChoiceRatio)
 
   const [profileState, profileAction, profilePending]           = useActionState(updateProfileAction, undefined)
   const [emailState, emailAction, emailPending]                 = useActionState(updateEmailAction, undefined)
@@ -149,6 +152,7 @@ export function SettingsForm({
       fd.set("streakMailEnabled", streakEnabled ? "1" : "0")
       fd.set("streakMailHour", streakHour.toString())
       fd.set("verbOfDayEnabled", verbEnabled ? "1" : "0")
+      fd.set("newsletterEnabled", newsletterEnabled ? "1" : "0")
       const res = await updateEmailPrefsAction(undefined, fd)
       setEmailPrefsState(res)
     })
@@ -409,6 +413,23 @@ export function SettingsForm({
                 className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${verbEnabled ? "bg-violet-600" : "bg-slate-200"}`}
               >
                 <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${verbEnabled ? "translate-x-6" : "translate-x-1"}`} />
+              </button>
+            </div>
+          </div>
+
+          {/* Newsletter */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-semibold text-slate-700">Newsletter</p>
+                <p className="text-xs text-slate-500 mt-0.5">Occasional emails with tips, updates and new features</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setNewsletter(v => !v)}
+                className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${newsletterEnabled ? "bg-violet-600" : "bg-slate-200"}`}
+              >
+                <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${newsletterEnabled ? "translate-x-6" : "translate-x-1"}`} />
               </button>
             </div>
           </div>
