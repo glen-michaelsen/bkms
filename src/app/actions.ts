@@ -464,9 +464,10 @@ export async function updateEmailPrefsAction(
 
   const userId = parseInt(session.user.id)
   const timezone        = (formData.get("timezone") as string) || "Europe/Belgrade"
-  const streakEnabled   = formData.get("streakMailEnabled") === "1"
-  const streakHour      = Math.min(23, Math.max(0, parseInt(formData.get("streakMailHour") as string) || 20))
-  const verbEnabled     = formData.get("verbOfDayEnabled") === "1"
+  const streakEnabled      = formData.get("streakMailEnabled") === "1"
+  const streakHour         = Math.min(23, Math.max(0, parseInt(formData.get("streakMailHour") as string) || 20))
+  const verbEnabled        = formData.get("verbOfDayEnabled") === "1"
+  const newsletterEnabled  = formData.get("newsletterEnabled") === "1"
 
   // If verb of day is being switched on for the first time, record today as start date
   let verbEnabledAt: string | undefined
@@ -483,6 +484,7 @@ export async function updateEmailPrefsAction(
     streakMailEnabled: streakEnabled,
     streakMailHour: streakHour,
     verbOfDayEnabled: verbEnabled,
+    newsletterEnabled,
     ...(verbEnabledAt ? { verbOfDayEnabledAt: verbEnabledAt } : {}),
     // Clear start date if disabling so re-enabling restarts from verb #1
     ...((!verbEnabled) ? { verbOfDayEnabledAt: null } : {}),

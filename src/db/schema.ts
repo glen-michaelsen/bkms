@@ -15,6 +15,7 @@ export const users = sqliteTable("users", {
   streakMailHour: integer("streak_mail_hour").notNull().default(20),
   verbOfDayEnabled: integer("verb_of_day_enabled", { mode: "boolean" }).notNull().default(false),
   verbOfDayEnabledAt: text("verb_of_day_enabled_at"), // YYYY-MM-DD, set when first enabled
+  newsletterEnabled: integer("newsletter_enabled", { mode: "boolean" }).notNull().default(true),
   // Study preferences
   multipleChoiceRatio: integer("multiple_choice_ratio").notNull().default(50),
   studyDirection: text("study_direction", { enum: ["to_slavic", "to_english"] }).notNull().default("to_slavic"),
@@ -167,6 +168,47 @@ export const userProfile = sqliteTable("user_profile", {
   city: text("city"),
   country: text("country"),          // English name
   countryOfOrigin: text("country_of_origin"),
+})
+
+// ── Email feature ─────────────────────────────────────────────────────────────
+
+export const emailWelcomeSteps = sqliteTable("email_welcome_steps", {
+  id:          integer("id").primaryKey({ autoIncrement: true }),
+  stepNumber:  integer("step_number").notNull(),
+  delayDays:   integer("delay_days").notNull(),
+  subject:     text("subject").notNull(),
+  body:        text("body").notNull(),   // JSON: Block[]
+  active:      integer("active", { mode: "boolean" }).notNull().default(true),
+  createdAt:   text("created_at").notNull().default("now"),
+})
+
+export const emailCampaigns = sqliteTable("email_campaigns", {
+  id:          integer("id").primaryKey({ autoIncrement: true }),
+  name:        text("name").notNull(),
+  subject:     text("subject").notNull(),
+  body:        text("body").notNull(),   // JSON: Block[]
+  status:      text("status").notNull().default("draft"), // draft|scheduled|sending|sent
+  scheduledAt: text("scheduled_at"),    // ISO datetime or null
+  sentAt:      text("sent_at"),
+  filters:     text("filters").notNull().default("{}"),   // JSON: CampaignFilters
+  createdAt:   text("created_at").notNull().default("now"),
+})
+
+export const emailSendLog = sqliteTable("email_send_log", {
+  id:          integer("id").primaryKey({ autoIncrement: true }),
+  userId:      integer("user_id").notNull(),
+  type:        text("type").notNull(),  // "welcome" | "campaign"
+  referenceId: integer("reference_id").notNull(),
+  sentAt:      text("sent_at").notNull(),
+})
+
+// Tracks manual enrollment of existing users into the welcome flow.
+// UNIQUE on userId ensures a user can never be enrolled twice.
+export const emailWelcomeEnrollments = sqliteTable("email_welcome_enrollments", {
+  id:         integer("id").primaryKey({ autoIncrement: true }),
+  userId:     integer("user_id").notNull().unique(),
+  startedAt:  text("started_at").notNull(),  // ISO date — used as timing baseline by the cron
+  enrolledBy: text("enrolled_by"),           // admin email who triggered it
 })
 
 export type User = typeof users.$inferSelect
