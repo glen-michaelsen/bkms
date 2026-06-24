@@ -2,7 +2,7 @@
 
 import { signIn, signOut, auth } from "@/auth"
 import { db } from "@/db"
-import { users, categories, levels, userLevelConfig, words, sentences, userCrosswordProgress, userWordMatchProgress, verbs, userDailyActivity, userProfile } from "@/db/schema"
+import { users, categories, levels, userLevelConfig, words, sentences, userCrosswordProgress, userWordMatchProgress, verbs, userDailyActivity, userProfile, emailWelcomeEnrollments } from "@/db/schema"
 import { eq, and, max, asc } from "drizzle-orm"
 import { sendStreakReminder, sendVerbOfDay, localDateString } from "@/lib/resend"
 import bcrypt from "bcryptjs"
@@ -50,7 +50,16 @@ export async function registerAction(
   if (existing) return { error: "An account with this email already exists" }
 
   const passwordHash = await bcrypt.hash(password, 12)
-  await db.insert(users).values({ email, passwordHash, firstName, language, gender, studyDirection: studyDirection as "to_slavic" | "to_english" })
+  const [newUser] = await db.insert(users).values({ email, passwordHash, firstName, language, gender, studyDirection: studyDirection as "to_slavic" | "to_english" }).returning({ id: users.id })
+
+  // Auto-enroll in welcome flow
+  if (newUser) {
+    await db.insert(emailWelcomeEnrollments).values({
+      userId: newUser.id,
+      startedAt: new Date().toISOString(),
+      enrolledBy: "registration",
+    }).onConflictDoNothing()
+  }
 
   redirect("/login?registered=1")
 }
