@@ -27,12 +27,18 @@ export async function GET() {
   const sentPairs = new Set(sentLog.map(r => `${r.userId}:${r.referenceId}`))
   const now = new Date()
 
-  // For each step: users who haven't received it yet AND haven't reached the delay threshold
-  const result = steps.map(step => {
+  // Sort steps by delay so we can find "previous step" for each
+  const sorted = [...steps].sort((a, b) => a.delayDays - b.delayDays)
+
+  const result = sorted.map((step, idx) => {
+    const prevStep = idx > 0 ? sorted[idx - 1] : null
     const waiting: { id: number; email: string; firstName: string | null; daysUntil: number }[] = []
 
     for (const user of allUsers) {
-      if (sentPairs.has(`${user.id}:${step.id}`)) continue  // already sent
+      if (sentPairs.has(`${user.id}:${step.id}`)) continue  // already received this step
+
+      // Must have received the previous step before being "in queue" for this one
+      if (prevStep && !sentPairs.has(`${user.id}:${prevStep.id}`)) continue
 
       const baselineStr = enrollmentMap.get(user.id)
       const baseline = baselineStr
@@ -40,7 +46,7 @@ export async function GET() {
         : user.createdAt instanceof Date ? user.createdAt : new Date(user.createdAt ?? 0)
 
       const daysSince = (now.getTime() - baseline.getTime()) / 86_400_000
-      if (daysSince >= step.delayDays) continue  // already eligible (cron will send it) — not "waiting"
+      if (daysSince >= step.delayDays) continue  // already eligible — cron will send it shortly
 
       waiting.push({
         id: user.id,

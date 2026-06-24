@@ -256,7 +256,7 @@ function CampaignForm({
         <label className="text-xs font-bold text-slate-400 uppercase tracking-widest block mb-2">
           Schedule (optional — leave blank for draft)
         </label>
-        <input type="datetime-local" value={scheduledAt}
+        <input type="datetime-local" value={scheduledAt} step="1800"
           onChange={e => setScheduledAt(e.target.value)}
           className="text-sm border border-slate-200 rounded-xl px-3 py-2.5 outline-none focus:border-violet-400"
         />
