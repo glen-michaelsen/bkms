@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { auth } from "@/auth"
 import { db } from "@/db"
 import { users, emailWelcomeEnrollments } from "@/db/schema"
+import { eq } from "drizzle-orm"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -30,7 +31,7 @@ export async function GET() {
 }
 
 // POST — enroll users (idempotent — UNIQUE on userId, duplicate inserts silently ignored)
-// Body: { userIds: number[] } | { all: true }
+// Body: { userIds: number[] } | { all: true } | { email: string }
 export async function POST(req: Request) {
   const session = await auth()
   if (!session || session.user.role !== "admin") {
@@ -40,6 +41,20 @@ export async function POST(req: Request) {
   const body = await req.json()
   const startedAt = new Date().toISOString()
   const enrolledBy = session.user.email ?? "admin"
+
+  // Single-email enroll
+  if (body.email) {
+    const [user] = await db.select({ id: users.id })
+      .from(users).where(eq(users.email, body.email.trim().toLowerCase())).all()
+    if (!user) return NextResponse.json({ error: "not_found" }, { status: 404 })
+
+    const result = await db.insert(emailWelcomeEnrollments)
+      .values({ userId: user.id, startedAt, enrolledBy })
+      .onConflictDoNothing()
+
+    const wasAlreadyEnrolled = (result as { rowsAffected?: number }).rowsAffected === 0
+    return NextResponse.json({ enrolled: wasAlreadyEnrolled ? 0 : 1, alreadyEnrolled: wasAlreadyEnrolled })
+  }
 
   let targetIds: number[]
 
@@ -54,14 +69,10 @@ export async function POST(req: Request) {
 
   let enrolled = 0
   for (const userId of targetIds) {
-    try {
-      await db.insert(emailWelcomeEnrollments)
-        .values({ userId, startedAt, enrolledBy })
-        .onConflictDoNothing()   // UNIQUE on userId — silently skips already-enrolled users
-      enrolled++
-    } catch {
-      // already enrolled — ignore
-    }
+    await db.insert(emailWelcomeEnrollments)
+      .values({ userId, startedAt, enrolledBy })
+      .onConflictDoNothing()
+    enrolled++
   }
 
   return NextResponse.json({ enrolled })

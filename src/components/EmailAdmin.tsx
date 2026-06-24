@@ -431,11 +431,14 @@ export function EmailAdmin({ adminEmail }: { adminEmail: string }) {
   const [editingCamp,   setEditingCamp]   = useState<Campaign | null | "new">(null)
   const [sendingId,     setSendingId]     = useState<number | null>(null)
   const [sendResult,    setSendResult]    = useState<{ id: number; sent: number } | null>(null)
-  const [enrollStats,   setEnrollStats]   = useState<EnrollStats | null>(null)
-  const [enrollBusy,    setEnrollBusy]    = useState(false)
-  const [enrollResult,  setEnrollResult]  = useState<string | null>(null)
-  const [waitingData,   setWaitingData]   = useState<WaitingEntry[]>([])
-  const [waitingModal,  setWaitingModal]  = useState<WaitingUser[] | null>(null)
+  const [enrollStats,       setEnrollStats]       = useState<EnrollStats | null>(null)
+  const [enrollBusy,        setEnrollBusy]        = useState(false)
+  const [enrollResult,      setEnrollResult]      = useState<string | null>(null)
+  const [singleEmail,       setSingleEmail]       = useState("")
+  const [singleEnrollBusy,  setSingleEnrollBusy]  = useState(false)
+  const [singleEnrollMsg,   setSingleEnrollMsg]   = useState<{ text: string; ok: boolean } | null>(null)
+  const [waitingData,       setWaitingData]       = useState<WaitingEntry[]>([])
+  const [waitingModal,      setWaitingModal]      = useState<WaitingUser[] | null>(null)
 
   useEffect(() => { loadAll() }, [])
 
@@ -474,6 +477,27 @@ export function EmailAdmin({ adminEmail }: { adminEmail: string }) {
     setEnrollResult(`Enrolled ${data.enrolled} user${data.enrolled !== 1 ? "s" : ""}`)
     setEnrollBusy(false)
     loadAll()
+  }
+
+  async function enrollSingle() {
+    if (!singleEmail.trim()) return
+    setSingleEnrollBusy(true)
+    setSingleEnrollMsg(null)
+    const res = await fetch("/api/admin/welcome-flow/enroll", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email: singleEmail.trim() }),
+    })
+    const data = await res.json()
+    if (res.status === 404) {
+      setSingleEnrollMsg({ text: "No user found with that email", ok: false })
+    } else if (data.alreadyEnrolled) {
+      setSingleEnrollMsg({ text: "Already enrolled", ok: false })
+    } else {
+      setSingleEnrollMsg({ text: "Enrolled!", ok: true })
+      setSingleEmail("")
+      loadAll()
+    }
+    setSingleEnrollBusy(false)
   }
 
   async function deleteStep(id: number) {
@@ -618,6 +642,29 @@ export function EmailAdmin({ adminEmail }: { adminEmail: string }) {
                   {enrollBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
                   {enrollStats.unenrolled.length === 0 ? "All enrolled" : `Enroll ${enrollStats.unenrolled.length} user${enrollStats.unenrolled.length !== 1 ? "s" : ""}`}
                 </button>
+              </div>
+
+              {/* Single email enroll */}
+              <div className="mt-3 pt-3 border-t border-slate-100">
+                <div className="flex gap-2">
+                  <input
+                    value={singleEmail}
+                    onChange={e => { setSingleEmail(e.target.value); setSingleEnrollMsg(null) }}
+                    onKeyDown={e => e.key === "Enter" && enrollSingle()}
+                    placeholder="Enroll by email…"
+                    className="flex-1 text-sm border border-slate-200 rounded-xl px-3 py-2 outline-none focus:border-violet-400"
+                  />
+                  <button onClick={enrollSingle} disabled={singleEnrollBusy || !singleEmail.trim()}
+                    className="flex items-center gap-1.5 px-3 py-2 bg-violet-600 text-white text-sm font-bold rounded-xl hover:bg-violet-700 disabled:opacity-50 transition shrink-0">
+                    {singleEnrollBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
+                    Enroll
+                  </button>
+                </div>
+                {singleEnrollMsg && (
+                  <p className={`text-xs font-semibold mt-1.5 ${singleEnrollMsg.ok ? "text-green-600" : "text-red-500"}`}>
+                    {singleEnrollMsg.text}
+                  </p>
+                )}
               </div>
             </div>
           )}
