@@ -12,6 +12,9 @@ type WelcomeStep = {
   subject: string; body: string; active: boolean; createdAt: string
 }
 
+type WaitingUser = { id: number; email: string; firstName: string | null; daysUntil: number }
+type WaitingEntry = { stepId: number; waiting: WaitingUser[] }
+
 type Campaign = {
   id: number; name: string; subject: string; body: string
   status: string; scheduledAt: string | null; sentAt: string | null
@@ -32,6 +35,35 @@ function StatusBadge({ status }: { status: string }) {
     <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full capitalize ${STATUS_BADGE[status] ?? STATUS_BADGE.draft}`}>
       {status}
     </span>
+  )
+}
+
+function WaitingModal({ users, onClose }: { users: WaitingUser[]; onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
+         onClick={onClose}>
+      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
+      <div className="relative bg-white rounded-3xl shadow-xl w-full max-w-sm p-6 space-y-4"
+           onClick={e => e.stopPropagation()}>
+        <div className="flex items-center justify-between">
+          <h3 className="font-extrabold text-slate-900">Waiting users</h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-700 text-xl leading-none">×</button>
+        </div>
+        <div className="space-y-2 max-h-80 overflow-y-auto">
+          {users.map(u => (
+            <div key={u.id} className="flex items-center justify-between gap-3 py-2 border-b border-slate-100 last:border-0">
+              <div className="min-w-0">
+                {u.firstName && <p className="text-sm font-semibold text-slate-800 truncate">{u.firstName}</p>}
+                <p className="text-xs text-slate-500 truncate">{u.email}</p>
+              </div>
+              <span className="text-xs font-bold text-violet-500 bg-violet-50 px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap">
+                {u.daysUntil}d left
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
   )
 }
 
@@ -402,18 +434,22 @@ export function EmailAdmin({ adminEmail }: { adminEmail: string }) {
   const [enrollStats,   setEnrollStats]   = useState<EnrollStats | null>(null)
   const [enrollBusy,    setEnrollBusy]    = useState(false)
   const [enrollResult,  setEnrollResult]  = useState<string | null>(null)
+  const [waitingData,   setWaitingData]   = useState<WaitingEntry[]>([])
+  const [waitingModal,  setWaitingModal]  = useState<WaitingUser[] | null>(null)
 
   useEffect(() => { loadAll() }, [])
 
   async function loadAll() {
-    const [s, c, e] = await Promise.all([
+    const [s, c, e, w] = await Promise.all([
       fetch("/api/admin/welcome-steps").then(r => r.json()).catch(() => null),
       fetch("/api/admin/campaigns").then(r => r.json()).catch(() => null),
       fetch("/api/admin/welcome-flow/enroll").then(r => r.json()).catch(() => null),
+      fetch("/api/admin/welcome-flow/waiting").then(r => r.json()).catch(() => null),
     ])
     if (s) setSteps(s)
     if (c) setCampaigns(c)
     if (e) setEnrollStats(e)
+    if (w) setWaitingData(w)
   }
 
   async function toggleStepActive(step: WelcomeStep) {
@@ -466,6 +502,7 @@ export function EmailAdmin({ adminEmail }: { adminEmail: string }) {
   }
 
   return (
+    <>
     <div className="space-y-6">
       {/* Tabs */}
       <div className="flex gap-1 bg-white rounded-2xl p-1 border border-slate-100 shadow-sm w-fit">
@@ -603,42 +640,66 @@ export function EmailAdmin({ adminEmail }: { adminEmail: string }) {
                 <p className="text-sm text-slate-400 text-center py-10">No welcome steps yet</p>
               )}
 
-              {[...steps].sort((a, b) => a.delayDays - b.delayDays).map(step => (
-                <div key={step.id} className="bg-white rounded-3xl border border-slate-100 shadow-sm p-5">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <span className="text-xs font-bold text-violet-500 bg-violet-50 px-2 py-0.5 rounded-full">
-                          Step {step.stepNumber}
-                        </span>
-                        <span className="text-xs text-slate-400">Day {step.delayDays}</span>
-                        <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${step.active ? "bg-green-50 text-green-600" : "bg-slate-100 text-slate-400"}`}>
-                          {step.active ? "Active" : "Paused"}
-                        </span>
+              {[...steps].sort((a, b) => a.delayDays - b.delayDays).map(step => {
+                const entry = waitingData.find(w => w.stepId === step.id)
+                const count = entry?.waiting.length ?? 0
+                return (
+                  <div key={step.id} className="space-y-2">
+                    {/* Waiting count before this step */}
+                    <button
+                      onClick={() => entry && count > 0 && setWaitingModal(entry.waiting)}
+                      className={`w-full text-center text-xs font-semibold py-1.5 rounded-xl transition ${
+                        count > 0
+                          ? "text-violet-600 bg-violet-50 hover:bg-violet-100 cursor-pointer"
+                          : "text-slate-400 bg-slate-50 cursor-default"
+                      }`}
+                    >
+                      {count} user{count !== 1 ? "s" : ""} waiting
+                    </button>
+
+                    {/* Step card */}
+                    <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-5">
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 mb-0.5">
+                            <span className="text-xs font-bold text-violet-500 bg-violet-50 px-2 py-0.5 rounded-full">
+                              Step {step.stepNumber}
+                            </span>
+                            <span className="text-xs text-slate-400">Day {step.delayDays}</span>
+                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${step.active ? "bg-green-50 text-green-600" : "bg-slate-100 text-slate-400"}`}>
+                              {step.active ? "Active" : "Paused"}
+                            </span>
+                          </div>
+                          <p className="font-semibold text-slate-900 truncate mt-0.5">{step.subject}</p>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <button onClick={() => toggleStepActive(step)}
+                            className="text-xs font-semibold px-3 py-1.5 rounded-xl border-2 border-slate-200 text-slate-500 hover:border-violet-300 hover:text-violet-600 transition">
+                            {step.active ? "Pause" : "Activate"}
+                          </button>
+                          <button onClick={() => setEditingStep(step)}
+                            className="p-2 text-slate-400 hover:text-violet-600 transition">
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => deleteStep(step.id)}
+                            className="p-2 text-slate-400 hover:text-red-500 transition">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </div>
-                      <p className="font-semibold text-slate-900 truncate mt-0.5">{step.subject}</p>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <button onClick={() => toggleStepActive(step)}
-                        className="text-xs font-semibold px-3 py-1.5 rounded-xl border-2 border-slate-200 text-slate-500 hover:border-violet-300 hover:text-violet-600 transition">
-                        {step.active ? "Pause" : "Activate"}
-                      </button>
-                      <button onClick={() => setEditingStep(step)}
-                        className="p-2 text-slate-400 hover:text-violet-600 transition">
-                        <Edit2 className="w-4 h-4" />
-                      </button>
-                      <button onClick={() => deleteStep(step.id)}
-                        className="p-2 text-slate-400 hover:text-red-500 transition">
-                        <Trash2 className="w-4 h-4" />
-                      </button>
                     </div>
                   </div>
-                </div>
-              ))}
+                )
+              })}
             </>
           )}
         </div>
       )}
     </div>
+
+    {waitingModal && (
+      <WaitingModal users={waitingModal} onClose={() => setWaitingModal(null)} />
+    )}
+    </>
   )
 }

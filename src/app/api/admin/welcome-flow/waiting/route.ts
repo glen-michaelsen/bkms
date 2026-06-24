@@ -1,0 +1,57 @@
+import { NextResponse } from "next/server"
+import { auth } from "@/auth"
+import { db } from "@/db"
+import { users, emailWelcomeSteps, emailSendLog, emailWelcomeEnrollments } from "@/db/schema"
+import { eq } from "drizzle-orm"
+
+export const runtime = "nodejs"
+export const dynamic = "force-dynamic"
+
+export async function GET() {
+  const session = await auth()
+  if (!session || session.user.role !== "admin") {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
+  const [steps, allUsers, enrollments, sentLog] = await Promise.all([
+    db.select().from(emailWelcomeSteps).all(),
+    db.select({ id: users.id, email: users.email, firstName: users.firstName, createdAt: users.createdAt })
+      .from(users).all(),
+    db.select({ userId: emailWelcomeEnrollments.userId, startedAt: emailWelcomeEnrollments.startedAt })
+      .from(emailWelcomeEnrollments).all(),
+    db.select({ userId: emailSendLog.userId, referenceId: emailSendLog.referenceId })
+      .from(emailSendLog).where(eq(emailSendLog.type, "welcome")).all(),
+  ])
+
+  const enrollmentMap = new Map(enrollments.map(e => [e.userId, e.startedAt]))
+  const sentPairs = new Set(sentLog.map(r => `${r.userId}:${r.referenceId}`))
+  const now = new Date()
+
+  // For each step: users who haven't received it yet AND haven't reached the delay threshold
+  const result = steps.map(step => {
+    const waiting: { id: number; email: string; firstName: string | null; daysUntil: number }[] = []
+
+    for (const user of allUsers) {
+      if (sentPairs.has(`${user.id}:${step.id}`)) continue  // already sent
+
+      const baselineStr = enrollmentMap.get(user.id)
+      const baseline = baselineStr
+        ? new Date(baselineStr)
+        : user.createdAt instanceof Date ? user.createdAt : new Date(user.createdAt ?? 0)
+
+      const daysSince = (now.getTime() - baseline.getTime()) / 86_400_000
+      if (daysSince >= step.delayDays) continue  // already eligible (cron will send it) — not "waiting"
+
+      waiting.push({
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        daysUntil: Math.ceil(step.delayDays - daysSince),
+      })
+    }
+
+    return { stepId: step.id, waiting }
+  })
+
+  return NextResponse.json(result)
+}
