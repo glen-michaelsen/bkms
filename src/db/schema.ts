@@ -224,7 +224,7 @@ export const blogPosts = sqliteTable("blog_posts", {
   body:           text("body").notNull(),          // markdown source
   bodyHtml:       text("body_html").notNull(),      // pre-rendered HTML
   category:       text("category").notNull(),
-  author:         text("author").notNull().default("Claude"),
+  author:         text("author").notNull().default("Glen Ranđelović Michaelsen"),
   readingMinutes: integer("reading_minutes").notNull().default(1),
   published:      integer("published", { mode: "boolean" }).notNull().default(false),
   publishedAt:    text("published_at"),             // ISO date, set when published

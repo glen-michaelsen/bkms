@@ -54,7 +54,7 @@ async function main() {
       body            text NOT NULL,
       body_html       text NOT NULL,
       category        text NOT NULL,
-      author          text NOT NULL DEFAULT 'Claude',
+      author          text NOT NULL DEFAULT 'Glen Ranđelović Michaelsen',
       reading_minutes integer NOT NULL DEFAULT 1,
       published       integer NOT NULL DEFAULT 0,
       published_at    text,
@@ -83,7 +83,7 @@ async function main() {
     }
 
     const html = await marked.parse(content, { gfm: true, breaks: false })
-    const author = fm.author ?? "Claude"
+    const author = fm.author ?? "Glen Ranđelović Michaelsen"
     const published = fm.published ? 1 : 0
     const publishedAt = fm.publishedAt ?? null
     const minutes = readingMinutes(content)
