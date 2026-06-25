@@ -12,7 +12,7 @@ export default async function CasesPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
-      <nav className="bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-10">
+      <nav className="bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-40">
         <div className="max-w-2xl mx-auto px-5 h-16 flex items-center justify-between">
           <Link
             href="/dashboard"
