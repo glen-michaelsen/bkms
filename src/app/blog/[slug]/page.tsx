@@ -118,7 +118,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           </a>
 
           {/* Sign up */}
-          <div className="relative overflow-hidden flex flex-col justify-between p-7 bg-violet-600 text-white min-h-[250px]">
+          <Link
+            href="/register"
+            className="group relative overflow-hidden flex flex-col justify-between p-7 bg-violet-600 text-white min-h-[250px]"
+          >
             {/* purple fade — same as the homepage hero */}
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_#a78bfa_0%,_transparent_60%)] opacity-60" />
             <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_#ec4899_0%,_transparent_60%)] opacity-30" />
@@ -141,13 +144,10 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                 ))}
               </ul>
             </div>
-            <Link
-              href="/register"
-              className="relative mt-5 inline-flex items-center justify-center self-start px-5 py-2 bg-white text-violet-700 text-sm font-bold rounded-full hover:bg-violet-50 transition-colors"
-            >
+            <span className="relative mt-5 inline-flex items-center justify-center self-start px-5 py-2 bg-white text-violet-700 text-sm font-bold rounded-full group-hover:scale-[1.03] transition-transform">
               Create account
-            </Link>
-          </div>
+            </span>
+          </Link>
         </div>
       </main>
     </div>
