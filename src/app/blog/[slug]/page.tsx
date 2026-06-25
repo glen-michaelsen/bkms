@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
-import { Check } from "lucide-react"
+import { Check, Languages } from "lucide-react"
 import MarketingNav from "@/components/MarketingNav"
 import { db } from "@/db"
 import { blogPosts } from "@/db/schema"
@@ -88,7 +88,7 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             href="https://instagram.com/cujemoseapp"
             target="_blank"
             rel="noopener noreferrer"
-            className="group flex flex-col justify-between p-7 bg-gradient-to-br from-amber-400 via-pink-500 to-purple-600 text-white min-h-[230px]"
+            className="group flex flex-col justify-between p-7 bg-gradient-to-br from-amber-400 via-pink-500 to-purple-600 text-white min-h-[250px]"
           >
             <div>
               <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-4">
@@ -98,10 +98,19 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
                   <circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none" />
                 </svg>
               </div>
-              <h3 className="text-xl font-extrabold leading-snug">Follow along on Instagram</h3>
-              <p className="text-white/90 text-sm mt-2 leading-relaxed">
-                Daily words, quick tips and a little Balkan culture in your feed.
-              </p>
+              <h3 className="text-xl font-extrabold leading-snug">Follow on Instagram</h3>
+              <ul className="mt-4 space-y-2">
+                {[
+                  "Learn useful sentences",
+                  "Get quick tips",
+                  "Explore Balkan culture",
+                ].map(point => (
+                  <li key={point} className="flex items-start gap-2.5 text-sm text-white/95">
+                    <Check className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                    <span>{point}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
             <span className="mt-5 inline-flex items-center gap-1.5 self-start px-4 py-2 bg-white text-slate-900 text-sm font-bold rounded-full group-hover:scale-[1.03] transition-transform">
               @cujemoseapp →
@@ -109,17 +118,24 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           </a>
 
           {/* Sign up */}
-          <div className="flex flex-col justify-between p-7 bg-slate-900 text-white min-h-[230px]">
-            <div>
+          <div className="relative overflow-hidden flex flex-col justify-between p-7 bg-violet-600 text-white min-h-[250px]">
+            {/* purple fade — same as the homepage hero */}
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_#a78bfa_0%,_transparent_60%)] opacity-60" />
+            <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_#ec4899_0%,_transparent_60%)] opacity-30" />
+
+            <div className="relative">
+              <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-4">
+                <Languages className="w-6 h-6" />
+              </div>
               <h3 className="text-xl font-extrabold leading-snug">Start learning free</h3>
               <ul className="mt-4 space-y-2">
                 {[
-                  "Serbian & Croatian, side by side",
-                  "Smart review that adapts to you",
-                  "Daily games to keep your streak",
+                  "100% free to use",
+                  "Learn Serbian or Croatian",
+                  "Daily games to help you learn",
                 ].map(point => (
-                  <li key={point} className="flex items-start gap-2.5 text-sm text-slate-200">
-                    <Check className="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" />
+                  <li key={point} className="flex items-start gap-2.5 text-sm text-white/95">
+                    <Check className="w-4 h-4 mt-0.5 flex-shrink-0" />
                     <span>{point}</span>
                   </li>
                 ))}
@@ -127,9 +143,9 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
             </div>
             <Link
               href="/register"
-              className="mt-5 inline-flex items-center justify-center px-5 py-2.5 bg-violet-600 text-white text-sm font-bold rounded-full hover:bg-violet-500 transition-colors"
+              className="relative mt-5 inline-flex items-center justify-center self-start px-5 py-2 bg-white text-violet-700 text-sm font-bold rounded-full hover:bg-violet-50 transition-colors"
             >
-              Create your free account →
+              Create account
             </Link>
           </div>
         </div>
