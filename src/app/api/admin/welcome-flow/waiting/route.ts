@@ -43,10 +43,10 @@ export async function GET() {
       const baseline = new Date(enrolledAt)
       const daysSince = (now.getTime() - baseline.getTime()) / 86_400_000
 
-      if (daysSince < step.delayDays) continue  // not yet eligible
+      // Sequential: must have been enrolled long enough to have received the previous step
+      if (prevStep && daysSince < prevStep.delayDays) continue
 
-      // Sequential: must have actually received the previous step
-      if (prevStep && !sentPairs.has(`${user.id}:${prevStep.id}`)) continue
+      if (daysSince >= step.delayDays) continue  // already eligible — cron will send it shortly
 
       waiting.push({ id: user.id, email: user.email, firstName: user.firstName, enrolledAt })
     }
