@@ -151,7 +151,11 @@ export default async function AdminPage() {
             activeTodayCount: activeTodayIds.size,
             activeWeekCount:  activeWeekIds.size,
             answersToday, answersWeek, answersTotal, bestStreak,
+            newsletterCount: allUsers.filter(u => u.newsletterEnabled).length,
+            streakMailCount: allUsers.filter(u => u.streakMailEnabled).length,
+            verbOfDayCount:  allUsers.filter(u => u.verbOfDayEnabled).length,
           }}
+          adminEmail={session.user.email!}
           categories={allCategories}
           levels={allLevels}
           words={allWords}
