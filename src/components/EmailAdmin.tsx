@@ -479,6 +479,21 @@ export function EmailAdmin({ adminEmail }: { adminEmail: string }) {
     loadAll()
   }
 
+  async function enrollNext(n: number) {
+    if (!enrollStats || enrollStats.unenrolled.length === 0) return
+    const batch = enrollStats.unenrolled.slice(0, n).map(u => u.id)
+    setEnrollBusy(true)
+    setEnrollResult(null)
+    const res = await fetch("/api/admin/welcome-flow/enroll", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userIds: batch }),
+    })
+    const data = await res.json()
+    setEnrollResult(`Enrolled ${data.enrolled} user${data.enrolled !== 1 ? "s" : ""}`)
+    setEnrollBusy(false)
+    loadAll()
+  }
+
   async function enrollSingle() {
     if (!singleEmail.trim()) return
     setSingleEnrollBusy(true)
@@ -634,14 +649,26 @@ export function EmailAdmin({ adminEmail }: { adminEmail: string }) {
                     <p className="text-xs text-green-600 font-semibold mt-1">✓ {enrollResult}</p>
                   )}
                 </div>
-                <button
-                  onClick={enrollAll}
-                  disabled={enrollBusy || enrollStats.unenrolled.length === 0}
-                  className="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white text-sm font-bold rounded-xl hover:bg-violet-700 disabled:opacity-50 transition shrink-0"
-                >
-                  {enrollBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
-                  {enrollStats.unenrolled.length === 0 ? "All enrolled" : `Enroll ${enrollStats.unenrolled.length} user${enrollStats.unenrolled.length !== 1 ? "s" : ""}`}
-                </button>
+                <div className="flex items-center gap-2 shrink-0">
+                  {enrollStats.unenrolled.length > 50 && (
+                    <button
+                      onClick={() => enrollNext(50)}
+                      disabled={enrollBusy}
+                      className="flex items-center gap-2 px-4 py-2 bg-white border border-violet-300 text-violet-700 text-sm font-bold rounded-xl hover:bg-violet-50 disabled:opacity-50 transition"
+                    >
+                      {enrollBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
+                      Enroll 50
+                    </button>
+                  )}
+                  <button
+                    onClick={enrollAll}
+                    disabled={enrollBusy || enrollStats.unenrolled.length === 0}
+                    className="flex items-center gap-2 px-4 py-2 bg-violet-600 text-white text-sm font-bold rounded-xl hover:bg-violet-700 disabled:opacity-50 transition"
+                  >
+                    {enrollBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
+                    {enrollStats.unenrolled.length === 0 ? "All enrolled" : `Enroll ${enrollStats.unenrolled.length} user${enrollStats.unenrolled.length !== 1 ? "s" : ""}`}
+                  </button>
+                </div>
               </div>
 
               {/* Single email enroll */}
