@@ -32,27 +32,23 @@ export async function GET() {
 
   const result = sorted.map((step, idx) => {
     const prevStep = idx > 0 ? sorted[idx - 1] : null
-    const waiting: { id: number; email: string; firstName: string | null; daysUntil: number }[] = []
+    const waiting: { id: number; email: string; firstName: string | null; enrolledAt: string }[] = []
 
     for (const user of allUsers) {
       if (!enrollmentMap.has(user.id)) continue  // only count explicitly enrolled users
 
       if (sentPairs.has(`${user.id}:${step.id}`)) continue  // already received this step
 
-      const baseline = new Date(enrollmentMap.get(user.id)!)
+      const enrolledAt = enrollmentMap.get(user.id)!
+      const baseline = new Date(enrolledAt)
       const daysSince = (now.getTime() - baseline.getTime()) / 86_400_000
 
-      // Sequential check: user must have been enrolled long enough to have received the previous step
-      if (prevStep && daysSince < prevStep.delayDays) continue
+      if (daysSince < step.delayDays) continue  // not yet eligible
 
-      if (daysSince >= step.delayDays) continue  // already eligible — cron will send it shortly
+      // Sequential: must have actually received the previous step
+      if (prevStep && !sentPairs.has(`${user.id}:${prevStep.id}`)) continue
 
-      waiting.push({
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        daysUntil: Math.ceil(step.delayDays - daysSince),
-      })
+      waiting.push({ id: user.id, email: user.email, firstName: user.firstName, enrolledAt })
     }
 
     return { stepId: step.id, waiting }
