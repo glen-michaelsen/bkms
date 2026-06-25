@@ -211,10 +211,36 @@ export const emailWelcomeEnrollments = sqliteTable("email_welcome_enrollments", 
   enrolledBy: text("enrolled_by"),           // admin email who triggered it
 })
 
+// ── Blog ────────────────────────────────────────────────────────────────────
+// Articles are authored as markdown files in content/blog/, rendered to HTML
+// once by scripts/blog-sync.ts, and upserted here by slug. The front-end reads
+// only this table. No content is generated at runtime — zero API cost.
+
+export const blogPosts = sqliteTable("blog_posts", {
+  id:             integer("id").primaryKey({ autoIncrement: true }),
+  slug:           text("slug").notNull().unique(),
+  title:          text("title").notNull(),
+  excerpt:        text("excerpt").notNull(),
+  body:           text("body").notNull(),          // markdown source
+  bodyHtml:       text("body_html").notNull(),      // pre-rendered HTML
+  category:       text("category").notNull(),
+  author:         text("author").notNull().default("Claude"),
+  readingMinutes: integer("reading_minutes").notNull().default(1),
+  published:      integer("published", { mode: "boolean" }).notNull().default(false),
+  publishedAt:    text("published_at"),             // ISO date, set when published
+  createdAt:      integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+  updatedAt:      integer("updated_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+})
+
 export type User = typeof users.$inferSelect
 export type Verb = typeof verbs.$inferSelect
 export type Category = typeof categories.$inferSelect
 export type Level = typeof levels.$inferSelect
 export type Word = typeof words.$inferSelect
 export type Sentence = typeof sentences.$inferSelect
+export type BlogPost = typeof blogPosts.$inferSelect
 export type UserLevelConfig = typeof userLevelConfig.$inferSelect
