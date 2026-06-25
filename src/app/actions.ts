@@ -85,17 +85,24 @@ export async function updateProfileAction(
   const language = formData.get("language") as "sr" | "hr"
   const gender = formData.get("gender") as "male" | "female"
   const studyDirection = (formData.get("studyDirection") as string) === "to_english" ? "to_english" : "to_slavic"
+  const email = (formData.get("email") as string | null)?.trim().toLowerCase()
 
   if (!language || !gender) return { error: "Language and gender are required" }
+  if (!email) return { error: "Email is required" }
+
+  const existing = await db.select().from(users).where(eq(users.email, email)).get()
+  if (existing && existing.id !== parseInt(session.user.id)) {
+    return { error: "That email is already in use" }
+  }
 
   await db
     .update(users)
-    .set({ firstName, language, gender, studyDirection: studyDirection as "to_slavic" | "to_english" })
+    .set({ firstName, language, gender, studyDirection: studyDirection as "to_slavic" | "to_english", email })
     .where(eq(users.id, parseInt(session.user.id)))
 
   return {
     success: true,
-    updated: { firstName: firstName ?? undefined, language, gender, studyDirection },
+    updated: { firstName: firstName ?? undefined, language, gender, studyDirection, email },
   }
 }
 
