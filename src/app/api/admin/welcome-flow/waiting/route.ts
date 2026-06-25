@@ -39,12 +39,15 @@ export async function GET() {
 
       if (sentPairs.has(`${user.id}:${step.id}`)) continue  // already received this step
 
-      // Sequential: must have actually received the previous step
-      if (prevStep && !sentPairs.has(`${user.id}:${prevStep.id}`)) continue
-
       const enrolledAt = enrollmentMap.get(user.id)!
-      const baseline = new Date(enrolledAt)
-      const daysSince = (now.getTime() - baseline.getTime()) / 86_400_000
+
+      // Compare calendar days (UTC) so timing of enrollment within a day doesn't matter
+      const enrolledDay = new Date(enrolledAt); enrolledDay.setUTCHours(0, 0, 0, 0)
+      const todayStart = new Date(now); todayStart.setUTCHours(0, 0, 0, 0)
+      const daysSince = (todayStart.getTime() - enrolledDay.getTime()) / 86_400_000
+
+      // Sequential: must have been enrolled long enough for the previous step to have been due
+      if (prevStep && daysSince < prevStep.delayDays) continue
 
       if (daysSince >= step.delayDays) continue  // already eligible — cron will send it shortly
 
