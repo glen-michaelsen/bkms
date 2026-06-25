@@ -1,6 +1,7 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { notFound } from "next/navigation"
+import { Check } from "lucide-react"
 import MarketingNav from "@/components/MarketingNav"
 import { db } from "@/db"
 import { blogPosts } from "@/db/schema"
@@ -81,13 +82,56 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
           />
         </article>
 
-        <div className="mt-12 pt-8 border-t border-slate-100">
-          <Link
-            href="/register"
-            className="inline-flex items-center px-5 py-2.5 bg-violet-600 text-white text-sm font-semibold rounded-full hover:bg-violet-700 transition-colors"
+        <div className="mt-14 grid grid-cols-1 sm:grid-cols-2 gap-4 rounded-3xl overflow-hidden">
+          {/* Instagram */}
+          <a
+            href="https://instagram.com/cujemoseapp"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group flex flex-col justify-between p-7 bg-gradient-to-br from-amber-400 via-pink-500 to-purple-600 text-white min-h-[230px]"
           >
-            Start learning for free →
-          </Link>
+            <div>
+              <div className="w-12 h-12 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center mb-4">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+                  <rect x="2" y="2" width="20" height="20" rx="5" />
+                  <circle cx="12" cy="12" r="4" />
+                  <circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" stroke="none" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-extrabold leading-snug">Follow along on Instagram</h3>
+              <p className="text-white/90 text-sm mt-2 leading-relaxed">
+                Daily words, quick tips and a little Balkan culture in your feed.
+              </p>
+            </div>
+            <span className="mt-5 inline-flex items-center gap-1.5 self-start px-4 py-2 bg-white text-slate-900 text-sm font-bold rounded-full group-hover:scale-[1.03] transition-transform">
+              @cujemoseapp →
+            </span>
+          </a>
+
+          {/* Sign up */}
+          <div className="flex flex-col justify-between p-7 bg-slate-900 text-white min-h-[230px]">
+            <div>
+              <h3 className="text-xl font-extrabold leading-snug">Start learning free</h3>
+              <ul className="mt-4 space-y-2">
+                {[
+                  "Serbian & Croatian, side by side",
+                  "Smart review that adapts to you",
+                  "Daily games to keep your streak",
+                ].map(point => (
+                  <li key={point} className="flex items-start gap-2.5 text-sm text-slate-200">
+                    <Check className="w-4 h-4 text-emerald-400 mt-0.5 flex-shrink-0" />
+                    <span>{point}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <Link
+              href="/register"
+              className="mt-5 inline-flex items-center justify-center px-5 py-2.5 bg-violet-600 text-white text-sm font-bold rounded-full hover:bg-violet-500 transition-colors"
+            >
+              Create your free account →
+            </Link>
+          </div>
         </div>
       </main>
     </div>
