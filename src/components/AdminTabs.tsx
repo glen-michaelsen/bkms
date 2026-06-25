@@ -2,7 +2,7 @@
 
 import { useState, useActionState } from "react"
 import Link from "next/link"
-import { Users, Activity, CheckCircle2, Flame, Tag, BarChart2, Search, Mail, BookOpen as BookOpenIcon, SendHorizonal } from "lucide-react"
+import { Users, Activity, CheckCircle2, Flame, Tag, BarChart2, Search, Mail, BookOpen as BookOpenIcon, SendHorizonal, Plus } from "lucide-react"
 import { AddItemForm } from "./AddItemForm"
 import { AddNamedItem } from "./AddNamedItem"
 import { CsvUpload } from "./CsvUpload"
@@ -65,7 +65,7 @@ export type AdminTabsProps = {
 
 // ── Tab definitions ──────────────────────────────────────────────────────────
 
-const TABS = ["Stats", "Email", "Taxonomies", "Add content", "Words", "Sentences", "Verbs"] as const
+const TABS = ["Stats", "Email", "Taxonomies", "Words", "Sentences", "Verbs"] as const
 type Tab = (typeof TABS)[number]
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -381,23 +381,27 @@ function TaxonomiesPanel({ categories, levels, actions }: { categories: Category
   )
 }
 
-function AddContentPanel({ categories, levels }: { categories: Category[]; levels: Level[] }) {
+// Collapsible "add single item + bulk import" section, shown at the top of the
+// Words / Sentences panels. Kept closed by default so the data table stays the
+// focus of the page.
+function AddImportSection({ type, categories, levels }: { type: "words" | "sentences"; categories: Category[]; levels: Level[] }) {
+  const [open, setOpen] = useState(false)
+  const noun = type === "words" ? "words" : "sentences"
   return (
-    <div className="space-y-10">
-      <div>
-        <h3 className="text-lg font-bold text-slate-700 mb-4">Add single item</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          <AddItemForm type="words" categories={categories} levels={levels} />
-          <AddItemForm type="sentences" categories={categories} levels={levels} />
+    <div className="mb-5">
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="flex items-center gap-2 px-4 py-2.5 rounded-2xl border border-slate-200 bg-white text-sm font-semibold text-slate-700 hover:border-violet-300 hover:text-violet-700 transition shadow-sm"
+      >
+        <Plus className={`w-4 h-4 transition-transform ${open ? "rotate-45" : ""}`} />
+        {open ? `Hide add & import` : `Add or import ${noun}`}
+      </button>
+      {open && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 mt-4">
+          <AddItemForm type={type} categories={categories} levels={levels} />
+          <CsvUpload type={type} />
         </div>
-      </div>
-      <div>
-        <h3 className="text-lg font-bold text-slate-700 mb-4">Bulk import</h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-          <CsvUpload type="words" />
-          <CsvUpload type="sentences" />
-        </div>
-      </div>
+      )}
     </div>
   )
 }
@@ -745,7 +749,7 @@ function EditSentenceModal({
 
 // ── Words panel ───────────────────────────────────────────────────────────────
 
-function WordsPanel({ words: initialWords, categories }: { words: Word[]; categories: Category[] }) {
+function WordsPanel({ words: initialWords, categories, levels }: { words: Word[]; categories: Category[]; levels: Level[] }) {
   const [items, setItems] = useState(initialWords)
   const [q, setQ]         = useState("")
   const [cat, setCat]     = useState("")
@@ -770,6 +774,7 @@ function WordsPanel({ words: initialWords, categories }: { words: Word[]; catego
 
   return (
     <div>
+      <AddImportSection type="words" categories={categories} levels={levels} />
       <div className="flex gap-3 mb-5">
         <div className="flex-1"><SearchInput value={q} onChange={setQ} placeholder="Search English, Serbian or Croatian…" /></div>
         <FilterSelect value={cat} onChange={setCat} options={categories.map(c => ({ value: String(c.id), label: c.name }))} placeholder="All categories" accent="violet" />
@@ -861,6 +866,7 @@ function SentencesPanel({ sentences: initialSentences, categories, levels }: { s
 
   return (
     <div>
+      <AddImportSection type="sentences" categories={categories} levels={levels} />
       <div className="flex gap-3 mb-5">
         <div className="flex-1"><SearchInput value={q} onChange={setQ} placeholder="Search English, Serbian or Croatian…" /></div>
         <FilterSelect value={cat} onChange={setCat} options={categories.map(c => ({ value: String(c.id), label: c.name }))} placeholder="All categories" accent="violet" />
@@ -1132,8 +1138,7 @@ export function AdminTabs({ stats, adminEmail, categories, levels, words, senten
       {activeTab === "Stats"       && <StatsPanel stats={stats} weeklyStats={weeklyStats} monthComparison={monthComparison} />}
       {activeTab === "Email"       && <EmailPanel adminEmail={adminEmail} />}
       {activeTab === "Taxonomies"  && <TaxonomiesPanel categories={categories} levels={levels} actions={actions} />}
-      {activeTab === "Add content" && <AddContentPanel categories={categories} levels={levels} />}
-      {activeTab === "Words"       && <WordsPanel words={words} categories={categories} />}
+      {activeTab === "Words"       && <WordsPanel words={words} categories={categories} levels={levels} />}
       {activeTab === "Sentences"   && <SentencesPanel sentences={sentences} categories={categories} levels={levels} />}
       {activeTab === "Verbs"       && <VerbsPanel verbs={verbs} />}
     </>
