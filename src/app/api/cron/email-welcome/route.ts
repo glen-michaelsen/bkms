@@ -17,8 +17,9 @@ function authorized(req: Request): boolean {
 export async function GET(req: Request) {
   if (!authorized(req)) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  const steps = await db.select().from(emailWelcomeSteps)
-    .where(eq(emailWelcomeSteps.active, true)).all()
+  const steps = (await db.select().from(emailWelcomeSteps)
+    .where(eq(emailWelcomeSteps.active, true)).all())
+    .sort((a, b) => a.delayDays - b.delayDays)  // process in flow order so "previous step" is well-defined
 
   if (!steps.length) return NextResponse.json({ sent: 0, skipped: 0 })
 
@@ -43,11 +44,18 @@ export async function GET(req: Request) {
   const now = new Date()
   let sent = 0, skipped = 0
 
-  for (const step of steps) {
+  for (let i = 0; i < steps.length; i++) {
+    const step = steps[i]
+    const prevStep = i > 0 ? steps[i - 1] : null
+
     for (const user of allUsers) {
       if (!enrollmentMap.has(user.id)) { skipped++; continue }  // only send to enrolled users
 
       if (sentPairs.has(`${user.id}:${step.id}`)) { skipped++; continue }
+
+      // Sequential: never send step N before step N-1 has actually gone out.
+      // Uses this run's initial snapshot, so a user advances at most one step per run.
+      if (prevStep && !sentPairs.has(`${user.id}:${prevStep.id}`)) { skipped++; continue }
 
       const baselineStr = enrollmentMap.get(user.id)!
       const baseline = new Date(baselineStr)

@@ -15,7 +15,7 @@ export async function GET() {
 
   const [steps, allUsers, enrollments, sentLog] = await Promise.all([
     db.select().from(emailWelcomeSteps).all(),
-    db.select({ id: users.id, email: users.email, firstName: users.firstName, createdAt: users.createdAt })
+    db.select({ id: users.id, email: users.email, firstName: users.firstName, newsletterEnabled: users.newsletterEnabled })
       .from(users).all(),
     db.select({ userId: emailWelcomeEnrollments.userId, startedAt: emailWelcomeEnrollments.startedAt })
       .from(emailWelcomeEnrollments).all(),
@@ -41,6 +41,8 @@ export async function GET() {
 
     for (const user of allUsers) {
       if (!enrollmentMap.has(user.id)) continue  // only count explicitly enrolled users
+
+      if (user.newsletterEnabled === false) continue  // opted out — cron skips these, so don't count them
 
       if (sentPairs.has(`${user.id}:${step.id}`)) continue  // already received this step
 
