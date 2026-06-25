@@ -12,7 +12,7 @@ type WelcomeStep = {
   subject: string; body: string; active: boolean; createdAt: string
 }
 
-type WaitingUser = { id: number; email: string; firstName: string | null; daysUntil: number }
+type WaitingUser = { id: number; email: string; firstName: string | null; enrolledAt: string }
 type WaitingEntry = { stepId: number; waiting: WaitingUser[] }
 
 type Campaign = {
@@ -57,7 +57,7 @@ function WaitingModal({ users, onClose }: { users: WaitingUser[]; onClose: () =>
                 <p className="text-xs text-slate-500 truncate">{u.email}</p>
               </div>
               <span className="text-xs font-bold text-violet-500 bg-violet-50 px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap">
-                {u.daysUntil}d left
+                {new Date(u.enrolledAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
               </span>
             </div>
           ))}
