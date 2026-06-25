@@ -56,9 +56,14 @@ function WaitingModal({ users, onClose }: { users: WaitingUser[]; onClose: () =>
                 {u.firstName && <p className="text-sm font-semibold text-slate-800 truncate">{u.firstName}</p>}
                 <p className="text-xs text-slate-500 truncate">{u.email}</p>
               </div>
-              <span className="text-xs font-bold text-violet-500 bg-violet-50 px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap">
-                {new Date(u.enrolledAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
-              </span>
+              <div className="flex flex-col items-end gap-0.5 shrink-0">
+                <span className="text-xs font-bold text-violet-500 bg-violet-50 px-2 py-0.5 rounded-full whitespace-nowrap">
+                  {new Date(u.enrolledAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                </span>
+                <span className="text-xs text-slate-400 whitespace-nowrap">
+                  {Math.floor((Date.now() - new Date(u.enrolledAt).getTime()) / 86_400_000)}d ago
+                </span>
+              </div>
             </div>
           ))}
         </div>
