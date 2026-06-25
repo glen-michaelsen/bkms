@@ -45,13 +45,12 @@ export async function GET(req: Request) {
 
   for (const step of steps) {
     for (const user of allUsers) {
+      if (!enrollmentMap.has(user.id)) { skipped++; continue }  // only send to enrolled users
+
       if (sentPairs.has(`${user.id}:${step.id}`)) { skipped++; continue }
 
-      // Use manual enrollment date if present, otherwise fall back to signup date
-      const baselineStr = enrollmentMap.get(user.id)
-      const baseline = baselineStr
-        ? new Date(baselineStr)
-        : user.createdAt instanceof Date ? user.createdAt : new Date(user.createdAt ?? 0)
+      const baselineStr = enrollmentMap.get(user.id)!
+      const baseline = new Date(baselineStr)
 
       const daysSinceBaseline = (now.getTime() - baseline.getTime()) / 86_400_000
       if (daysSinceBaseline < step.delayDays) { skipped++; continue }
