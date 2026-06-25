@@ -7,6 +7,7 @@ import { AddItemForm } from "./AddItemForm"
 import { AddNamedItem } from "./AddNamedItem"
 import { CsvUpload } from "./CsvUpload"
 import { VerbCsvUpload } from "./VerbCsvUpload"
+import { EmailAdmin } from "./EmailAdmin"
 import {
   updateWordAction, deleteWordAction,
   updateSentenceAction, deleteSentenceAction,
@@ -32,6 +33,7 @@ type Stats = {
   activeTodayCount: number; activeWeekCount: number
   answersToday: number; answersWeek: number; answersTotal: number
   bestStreak: number
+  newsletterCount: number; streakMailCount: number; verbOfDayCount: number
 }
 type WeekStat = { week: string; newUsers: number; answers: number; activeUsers: number }
 type MonthMetrics = { newUsers: number; activeUsers: number; answers: number }
@@ -50,6 +52,7 @@ type ServerActions = {
 
 export type AdminTabsProps = {
   stats: Stats
+  adminEmail: string
   categories: Category[]
   levels: Level[]
   words: Word[]
@@ -62,7 +65,7 @@ export type AdminTabsProps = {
 
 // ── Tab definitions ──────────────────────────────────────────────────────────
 
-const TABS = ["Stats", "Taxonomies", "Add content", "Words", "Sentences", "Verbs"] as const
+const TABS = ["Stats", "Email", "Taxonomies", "Add content", "Words", "Sentences", "Verbs"] as const
 type Tab = (typeof TABS)[number]
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -74,7 +77,7 @@ function matches(q: string, ...fields: (string | null | undefined)[]): boolean {
 
 // ── Sub-panels ───────────────────────────────────────────────────────────────
 
-function EmailToolsPanel() {
+function TestMailsPanel() {
   const [streakState, setStreakState] = useState<StreakMailResult | null>(null)
   const [verbState, setVerbState]     = useState<boolean | null>(null)
   const [streakBusy, setStreakBusy]   = useState(false)
@@ -100,20 +103,10 @@ function EmailToolsPanel() {
     <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6">
       <div className="flex items-center gap-2 mb-5">
         <Mail className="w-4.5 h-4.5 text-slate-500" />
-        <h2 className="font-bold text-slate-900">Email tools</h2>
+        <h2 className="font-bold text-slate-900">Test mails</h2>
         <span className="text-xs text-slate-400 ml-1">— sends to your account only</span>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-        {/* Campaigns & welcome flow link */}
-        <Link href="/admin/emails" className="border-2 border-dashed border-violet-200 rounded-2xl p-4 space-y-2 hover:border-violet-400 hover:bg-violet-50 transition group col-span-full sm:col-span-1">
-          <div className="flex items-center gap-2">
-            <SendHorizonal className="w-4 h-4 text-violet-500" />
-            <p className="text-sm font-semibold text-slate-800">Campaigns &amp; welcome flow</p>
-          </div>
-          <p className="text-xs text-slate-400 leading-relaxed">Create and schedule campaigns, manage the welcome email sequence.</p>
-          <p className="text-xs font-semibold text-violet-600 group-hover:underline">Open email manager →</p>
-        </Link>
 
         {/* Streak mail */}
         <div className="border border-slate-100 rounded-2xl p-4 space-y-3">
@@ -290,9 +283,50 @@ function StatsPanel({ stats, weeklyStats, monthComparison }: { stats: Stats; wee
 
       <MonthRecap monthComparison={monthComparison} />
 
-      <GrowthCharts weeklyStats={weeklyStats} />
+      {/* Email preference counts */}
+      <div className="grid grid-cols-3 gap-4">
+        {[
+          { icon: Mail,         color: "text-violet-500 bg-violet-50", label: "Newsletter",     value: stats.newsletterCount },
+          { icon: Flame,        color: "text-amber-500 bg-amber-50",   label: "Streak mail",    value: stats.streakMailCount },
+          { icon: BookOpenIcon, color: "text-sky-500 bg-sky-50",       label: "Verb of the day", value: stats.verbOfDayCount },
+        ].map(({ icon: Icon, color, label, value }) => (
+          <div key={label} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex flex-col gap-1">
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${color}`}><Icon className="w-4.5 h-4.5" /></div>
+            <p className="text-2xl font-extrabold text-slate-900 leading-none mt-2">{value}</p>
+            <p className="text-xs font-semibold text-slate-500">{label}</p>
+            <p className="text-xs text-slate-400">of {stats.totalUsers} users</p>
+          </div>
+        ))}
+      </div>
 
-      <EmailToolsPanel />
+      <GrowthCharts weeklyStats={weeklyStats} />
+    </div>
+  )
+}
+
+function EmailPanel({ adminEmail }: { adminEmail: string }) {
+  const [sub, setSub] = useState<"campaigns" | "welcome" | "test">("campaigns")
+  const subtabs: { key: typeof sub; label: string }[] = [
+    { key: "campaigns", label: "Campaigns" },
+    { key: "welcome",   label: "Welcome Flow" },
+    { key: "test",      label: "Test Mails" },
+  ]
+  return (
+    <div className="space-y-6">
+      <div className="flex gap-1 bg-white rounded-2xl p-1 border border-slate-100 shadow-sm w-fit">
+        {subtabs.map(t => (
+          <button key={t.key} onClick={() => setSub(t.key)}
+            className={`px-5 py-2 rounded-xl text-sm font-semibold transition-all ${
+              sub === t.key ? "bg-violet-600 text-white shadow-sm" : "text-slate-500 hover:text-slate-800"
+            }`}>
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {sub === "test"
+        ? <TestMailsPanel />
+        : <EmailAdmin adminEmail={adminEmail} view={sub} showTabBar={false} />}
     </div>
   )
 }
@@ -1072,7 +1106,7 @@ function VerbsPanel({ verbs }: { verbs: Verb[] }) {
 
 // ── Root component ───────────────────────────────────────────────────────────
 
-export function AdminTabs({ stats, categories, levels, words, sentences, verbs, weeklyStats, monthComparison, actions }: AdminTabsProps) {
+export function AdminTabs({ stats, adminEmail, categories, levels, words, sentences, verbs, weeklyStats, monthComparison, actions }: AdminTabsProps) {
   const [activeTab, setActiveTab] = useState<Tab>("Stats")
 
   return (
@@ -1096,6 +1130,7 @@ export function AdminTabs({ stats, categories, levels, words, sentences, verbs, 
 
       {/* Panel */}
       {activeTab === "Stats"       && <StatsPanel stats={stats} weeklyStats={weeklyStats} monthComparison={monthComparison} />}
+      {activeTab === "Email"       && <EmailPanel adminEmail={adminEmail} />}
       {activeTab === "Taxonomies"  && <TaxonomiesPanel categories={categories} levels={levels} actions={actions} />}
       {activeTab === "Add content" && <AddContentPanel categories={categories} levels={levels} />}
       {activeTab === "Words"       && <WordsPanel words={words} categories={categories} />}

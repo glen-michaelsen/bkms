@@ -491,8 +491,11 @@ function WelcomeStepForm({
 
 type EnrollStats = { total: number; enrolled: number; unenrolled: { id: number; email: string; firstName: string | null }[] }
 
-export function EmailAdmin({ adminEmail }: { adminEmail: string }) {
-  const [tab,           setTab]           = useState<"welcome"|"campaigns">("campaigns")
+export function EmailAdmin({ adminEmail, view, showTabBar = true }: {
+  adminEmail: string; view?: "welcome"|"campaigns"; showTabBar?: boolean
+}) {
+  const [tabState,      setTab]           = useState<"welcome"|"campaigns">("campaigns")
+  const tab = view ?? tabState
   const [steps,         setSteps]         = useState<WelcomeStep[]>([])
   const [campaigns,     setCampaigns]     = useState<Campaign[]>([])
   const [editingStep,   setEditingStep]   = useState<WelcomeStep | null | "new">(null)
@@ -612,16 +615,18 @@ export function EmailAdmin({ adminEmail }: { adminEmail: string }) {
     <>
     <div className="space-y-6">
       {/* Tabs */}
-      <div className="flex gap-1 bg-white rounded-2xl p-1 border border-slate-100 shadow-sm w-fit">
-        {(["campaigns", "welcome"] as const).map(t => (
-          <button key={t} onClick={() => setTab(t)}
-            className={`px-5 py-2 rounded-xl text-sm font-semibold capitalize transition-all ${
-              tab === t ? "bg-violet-600 text-white shadow-sm" : "text-slate-500 hover:text-slate-800"
-            }`}>
-            {t === "campaigns" ? "Campaigns" : "Welcome flow"}
-          </button>
-        ))}
-      </div>
+      {showTabBar && (
+        <div className="flex gap-1 bg-white rounded-2xl p-1 border border-slate-100 shadow-sm w-fit">
+          {(["campaigns", "welcome"] as const).map(t => (
+            <button key={t} onClick={() => setTab(t)}
+              className={`px-5 py-2 rounded-xl text-sm font-semibold capitalize transition-all ${
+                tab === t ? "bg-violet-600 text-white shadow-sm" : "text-slate-500 hover:text-slate-800"
+              }`}>
+              {t === "campaigns" ? "Campaigns" : "Welcome flow"}
+            </button>
+          ))}
+        </div>
+      )}
 
       {/* ── Campaigns tab ── */}
       {tab === "campaigns" && (
