@@ -25,11 +25,16 @@ export async function GET() {
 
   const enrollmentMap = new Map(enrollments.map(e => [e.userId, e.startedAt]))
   const sentPairs = new Set(sentLog.map(r => `${r.userId}:${r.referenceId}`))
-  const now = new Date()
 
   // Sort steps by delay so we can find "previous step" for each
   const sorted = [...steps].sort((a, b) => a.delayDays - b.delayDays)
 
+  // Each enrolled user belongs in exactly one bucket: the first step they
+  // haven't received yet. A user lands in step N's bucket iff they have
+  // received every earlier step but not step N. No date filter — this shows
+  // everyone still in the flow, regardless of whether their next send is due
+  // yet. "Received" is read straight from the send log (the source of truth
+  // for what Resend actually sent).
   const result = sorted.map((step, idx) => {
     const prevStep = idx > 0 ? sorted[idx - 1] : null
     const waiting: { id: number; email: string; firstName: string | null; enrolledAt: string }[] = []
@@ -39,19 +44,10 @@ export async function GET() {
 
       if (sentPairs.has(`${user.id}:${step.id}`)) continue  // already received this step
 
-      const enrolledAt = enrollmentMap.get(user.id)!
+      // Sequential: must have received the previous step (else they belong in an earlier bucket)
+      if (prevStep && !sentPairs.has(`${user.id}:${prevStep.id}`)) continue
 
-      // Compare calendar days (UTC) so timing of enrollment within a day doesn't matter
-      const enrolledDay = new Date(enrolledAt); enrolledDay.setUTCHours(0, 0, 0, 0)
-      const todayStart = new Date(now); todayStart.setUTCHours(0, 0, 0, 0)
-      const daysSince = (todayStart.getTime() - enrolledDay.getTime()) / 86_400_000
-
-      // Sequential: must have been enrolled long enough for the previous step to have been due
-      if (prevStep && daysSince < prevStep.delayDays) continue
-
-      if (daysSince >= step.delayDays) continue  // already eligible — cron will send it shortly
-
-      waiting.push({ id: user.id, email: user.email, firstName: user.firstName, enrolledAt })
+      waiting.push({ id: user.id, email: user.email, firstName: user.firstName, enrolledAt: enrollmentMap.get(user.id)! })
     }
 
     return { stepId: step.id, waiting }
