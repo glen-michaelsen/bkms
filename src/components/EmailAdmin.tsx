@@ -38,32 +38,95 @@ function StatusBadge({ status }: { status: string }) {
   )
 }
 
-function WaitingModal({ users, onClose }: { users: WaitingUser[]; onClose: () => void }) {
+// Wall-clock offset (ms) of a timezone at a given instant.
+function tzOffsetMs(utcMs: number, tz: string): number {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: tz, hour12: false,
+    year: "numeric", month: "2-digit", day: "2-digit",
+    hour: "2-digit", minute: "2-digit", second: "2-digit",
+  }).formatToParts(new Date(utcMs))
+  const m: Record<string, string> = {}
+  for (const p of parts) m[p.type] = p.value
+  const asUTC = Date.UTC(+m.year, +m.month - 1, +m.day, +m.hour === 24 ? 0 : +m.hour, +m.minute, +m.second)
+  return asUTC - utcMs
+}
+
+// UTC instant of 08:00 Europe/Copenhagen on the calendar day of `utcMs`.
+function cph0800OnDayOf(utcMs: number): number {
+  const [y, mo, d] = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Europe/Copenhagen", year: "numeric", month: "2-digit", day: "2-digit",
+  }).format(new Date(utcMs)).split("-").map(Number)
+  const guess = Date.UTC(y, mo - 1, d, 8, 0, 0)
+  return guess - tzOffsetMs(guess, "Europe/Copenhagen")
+}
+
+// When the daily 08:00 CPH cron will actually send this user's next step:
+// the first 08:00 run at or after they become eligible (enrolled + delayDays·24h).
+function predictedSend(enrolledAt: string, delayDays: number): Date {
+  const eligible = new Date(enrolledAt).getTime() + delayDays * 86_400_000
+  for (let i = 0; i < 60; i++) {
+    const run = cph0800OnDayOf(eligible + i * 86_400_000)
+    if (run >= eligible) return new Date(run)
+  }
+  return new Date(eligible)
+}
+
+const cphDayKey = (ms: number) =>
+  new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Copenhagen", year: "numeric", month: "2-digit", day: "2-digit" })
+    .format(new Date(ms))
+
+// "Today" / "Tomorrow" / "Friday, 27 June" for a send instant, relative to now (CPH).
+function sendDayLabel(send: Date): string {
+  const key = cphDayKey(send.getTime())
+  if (key === cphDayKey(Date.now())) return "Today"
+  if (key === cphDayKey(Date.now() + 86_400_000)) return "Tomorrow"
+  return new Intl.DateTimeFormat("en-GB", { timeZone: "Europe/Copenhagen", weekday: "long", day: "numeric", month: "long" })
+    .format(send)
+}
+
+function WaitingModal({ users, delayDays, stepNumber, onClose }: {
+  users: WaitingUser[]; delayDays: number; stepNumber: number; onClose: () => void
+}) {
+  // Group by predicted send day, ordered soonest first.
+  const groups = new Map<string, { label: string; sortKey: number; users: WaitingUser[] }>()
+  for (const u of users) {
+    const send = predictedSend(u.enrolledAt, delayDays)
+    const key = cphDayKey(send.getTime())
+    if (!groups.has(key)) groups.set(key, { label: sendDayLabel(send), sortKey: send.getTime(), users: [] })
+    groups.get(key)!.users.push(u)
+  }
+  const ordered = [...groups.values()].sort((a, b) => a.sortKey - b.sortKey)
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
-         onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" onClick={onClose}>
       <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" />
-      <div className="relative bg-white rounded-3xl shadow-xl w-full max-w-sm p-6 space-y-4"
+      <div className="relative bg-white rounded-3xl shadow-xl w-full max-w-2xl p-6 space-y-5"
            onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between">
-          <h3 className="font-extrabold text-slate-900">Waiting users</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-700 text-xl leading-none">×</button>
+          <div>
+            <h3 className="font-extrabold text-slate-900 text-lg">Waiting for Step {stepNumber}</h3>
+            <p className="text-xs text-slate-500 mt-0.5">{users.length} user{users.length !== 1 ? "s" : ""} · grouped by next send (08:00)</p>
+          </div>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-700 text-2xl leading-none">×</button>
         </div>
-        <div className="space-y-2 max-h-80 overflow-y-auto">
-          {users.map(u => (
-            <div key={u.id} className="flex items-center justify-between gap-3 py-2 border-b border-slate-100 last:border-0">
-              <div className="min-w-0">
-                {u.firstName && <p className="text-sm font-semibold text-slate-800 truncate">{u.firstName}</p>}
-                <p className="text-xs text-slate-500 truncate">{u.email}</p>
+        <div className="space-y-6 max-h-[70vh] overflow-y-auto pr-1">
+          {ordered.map(g => (
+            <div key={g.label} className="space-y-2">
+              <div className="flex items-baseline justify-between sticky top-0 bg-white py-1">
+                <h4 className="text-sm font-bold text-violet-600">Planned for {g.label}</h4>
+                <span className="text-xs text-slate-400">{g.users.length}</span>
               </div>
-              <div className="flex flex-col items-end gap-0.5 shrink-0">
-                <span className="text-xs font-bold text-violet-500 bg-violet-50 px-2 py-0.5 rounded-full whitespace-nowrap">
-                  {new Date(u.enrolledAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
-                </span>
-                <span className="text-xs text-slate-400 whitespace-nowrap">
-                  {Math.floor((Date.now() - new Date(u.enrolledAt).getTime()) / 86_400_000)}d ago
-                </span>
-              </div>
+              {g.users.map(u => (
+                <div key={u.id} className="flex items-center justify-between gap-3 py-2 border-b border-slate-100 last:border-0">
+                  <div className="min-w-0">
+                    {u.firstName && <p className="text-sm font-semibold text-slate-800 truncate">{u.firstName}</p>}
+                    <p className="text-xs text-slate-500 truncate">{u.email}</p>
+                  </div>
+                  <span className="text-xs text-slate-400 shrink-0 whitespace-nowrap">
+                    enrolled {new Date(u.enrolledAt).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                  </span>
+                </div>
+              ))}
             </div>
           ))}
         </div>
@@ -443,7 +506,7 @@ export function EmailAdmin({ adminEmail }: { adminEmail: string }) {
   const [singleEnrollBusy,  setSingleEnrollBusy]  = useState(false)
   const [singleEnrollMsg,   setSingleEnrollMsg]   = useState<{ text: string; ok: boolean } | null>(null)
   const [waitingData,       setWaitingData]       = useState<WaitingEntry[]>([])
-  const [waitingModal,      setWaitingModal]      = useState<WaitingUser[] | null>(null)
+  const [waitingModal,      setWaitingModal]      = useState<{ users: WaitingUser[]; delayDays: number; stepNumber: number } | null>(null)
 
   useEffect(() => { loadAll() }, [])
 
@@ -726,7 +789,7 @@ export function EmailAdmin({ adminEmail }: { adminEmail: string }) {
                   <div key={step.id} className="space-y-2">
                     {/* Waiting count before this step */}
                     <button
-                      onClick={() => entry && count > 0 && setWaitingModal(entry.waiting)}
+                      onClick={() => entry && count > 0 && setWaitingModal({ users: entry.waiting, delayDays: step.delayDays, stepNumber: step.stepNumber })}
                       className={`w-full text-center text-xs font-semibold py-1.5 rounded-xl transition ${
                         count > 0
                           ? "text-violet-600 bg-violet-50 hover:bg-violet-100 cursor-pointer"
@@ -777,7 +840,8 @@ export function EmailAdmin({ adminEmail }: { adminEmail: string }) {
     </div>
 
     {waitingModal && (
-      <WaitingModal users={waitingModal} onClose={() => setWaitingModal(null)} />
+      <WaitingModal users={waitingModal.users} delayDays={waitingModal.delayDays}
+        stepNumber={waitingModal.stepNumber} onClose={() => setWaitingModal(null)} />
     )}
     </>
   )
