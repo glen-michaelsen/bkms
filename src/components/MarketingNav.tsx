@@ -25,6 +25,7 @@ export default async function MarketingNav({ variant = "light" }: { variant?: "l
             { href: "/words", label: "Words" },
             { href: "/sentences", label: "Sentences" },
             { href: "/cases", label: "Cases" },
+            { href: "/blog", label: "Blog" },
           ].map(({ href, label }) => (
             <Link
               key={href}
