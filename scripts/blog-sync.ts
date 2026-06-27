@@ -25,6 +25,7 @@ type Frontmatter = {
   slug: string
   category: string
   excerpt: string
+  cover?: string
   author?: string
   published?: boolean
   publishedAt?: string
@@ -53,6 +54,7 @@ async function main() {
       excerpt         text NOT NULL,
       body            text NOT NULL,
       body_html       text NOT NULL,
+      cover_image     text,
       category        text NOT NULL,
       author          text NOT NULL DEFAULT 'Glen Ranđelović Michaelsen',
       reading_minutes integer NOT NULL DEFAULT 1,
@@ -62,6 +64,14 @@ async function main() {
       updated_at      integer NOT NULL
     )
   `)
+
+  // Idempotent column guard — the table may already exist (dev/prod) from before
+  // cover images were added. Adding an existing column is a harmless no-op here.
+  try {
+    await client.execute("ALTER TABLE blog_posts ADD COLUMN cover_image text")
+  } catch (e) {
+    if (!/duplicate column/i.test(String(e))) throw e
+  }
 
   const files = readdirSync(BLOG_DIR).filter(f => f.endsWith(".md"))
   if (files.length === 0) {
@@ -86,6 +96,7 @@ async function main() {
     const author = fm.author ?? "Glen Ranđelović Michaelsen"
     const published = fm.published ? 1 : 0
     const publishedAt = fm.publishedAt ?? null
+    const coverImage = fm.cover ?? null
     const minutes = readingMinutes(content)
 
     const existing = await client.execute({
@@ -96,19 +107,19 @@ async function main() {
     if (existing.rows.length > 0) {
       await client.execute({
         sql: `UPDATE blog_posts SET
-                title = ?, excerpt = ?, body = ?, body_html = ?, category = ?,
+                title = ?, excerpt = ?, body = ?, body_html = ?, cover_image = ?, category = ?,
                 author = ?, reading_minutes = ?, published = ?, published_at = ?, updated_at = ?
               WHERE slug = ?`,
-        args: [fm.title, fm.excerpt, content, html, fm.category, author, minutes, published, publishedAt, now, fm.slug],
+        args: [fm.title, fm.excerpt, content, html, coverImage, fm.category, author, minutes, published, publishedAt, now, fm.slug],
       })
       updated++
       console.log(`  ✓ updated  ${fm.slug}`)
     } else {
       await client.execute({
         sql: `INSERT INTO blog_posts
-                (slug, title, excerpt, body, body_html, category, author, reading_minutes, published, published_at, created_at, updated_at)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        args: [fm.slug, fm.title, fm.excerpt, content, html, fm.category, author, minutes, published, publishedAt, now, now],
+                (slug, title, excerpt, body, body_html, cover_image, category, author, reading_minutes, published, published_at, created_at, updated_at)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        args: [fm.slug, fm.title, fm.excerpt, content, html, coverImage, fm.category, author, minutes, published, publishedAt, now, now],
       })
       created++
       console.log(`  + created  ${fm.slug}`)

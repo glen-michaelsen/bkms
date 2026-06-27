@@ -52,6 +52,15 @@ export default async function BlogPostPage({ params }: { params: Promise<{ slug:
         </Link>
 
         <article className="mt-6">
+          {post.coverImage && (
+            <img
+              src={post.coverImage}
+              alt={post.title}
+              width={1000}
+              height={500}
+              className="w-full aspect-[2/1] object-cover rounded-3xl border border-slate-100 mb-7"
+            />
+          )}
           <div className="flex items-center gap-3 mb-4">
             <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${catColor}`}>
               {post.category}

@@ -223,6 +223,7 @@ export const blogPosts = sqliteTable("blog_posts", {
   excerpt:        text("excerpt").notNull(),
   body:           text("body").notNull(),          // markdown source
   bodyHtml:       text("body_html").notNull(),      // pre-rendered HTML
+  coverImage:     text("cover_image"),              // /public path, e.g. /blog/the-alphabet.jpg
   category:       text("category").notNull(),
   author:         text("author").notNull().default("Glen Ranđelović Michaelsen"),
   readingMinutes: integer("reading_minutes").notNull().default(1),
