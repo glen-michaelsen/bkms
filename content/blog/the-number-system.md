@@ -3,6 +3,7 @@ title: "The Number System, Made Simple"
 slug: the-number-system
 category: Numbers
 excerpt: "Counting in Serbian and Croatian is regular and predictable — but numbers interact with cases in a way that surprises beginners. Here's how counting works and the one rule that makes it click."
+cover: /blog/the-number-system.jpg
 published: true
 publishedAt: "2026-06-25"
 ---

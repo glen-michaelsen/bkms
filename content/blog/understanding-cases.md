@@ -3,6 +3,7 @@ title: "Understanding the Seven Cases"
 slug: understanding-cases
 category: Grammar
 excerpt: "Cases are the part of Serbian and Croatian that scares beginners most — but the core idea is simple: word endings tell you who does what to whom. Here's a plain-English guide to all seven."
+cover: /blog/understanding-cases.jpg
 published: true
 publishedAt: "2026-06-25"
 ---

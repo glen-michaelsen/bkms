@@ -3,6 +3,7 @@ title: "The Alphabet: Two Scripts, One Sound Each"
 slug: the-alphabet
 category: Alphabet
 excerpt: "Serbian and Croatian are written with a near-perfect phonetic alphabet — every letter is exactly one sound. Here's how the Latin and Cyrillic scripts work and why they're easier than they look."
+cover: /blog/the-alphabet.jpg
 published: true
 publishedAt: "2026-06-25"
 ---

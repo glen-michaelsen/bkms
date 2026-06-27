@@ -52,19 +52,30 @@ export default async function BlogIndexPage() {
               <Link
                 key={post.id}
                 href={`/blog/${post.slug}`}
-                className="block bg-white rounded-3xl border border-slate-100 shadow-sm p-6 hover:shadow-md hover:border-violet-100 transition-all group"
+                className="block bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden hover:shadow-md hover:border-violet-100 transition-all group"
               >
-                <div className="flex items-center gap-3 mb-2.5">
-                  <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${catColor(post.category)}`}>
-                    {post.category}
-                  </span>
-                  <span className="text-xs text-slate-400">{post.readingMinutes} min read</span>
+                {post.coverImage && (
+                  <img
+                    src={post.coverImage}
+                    alt={post.title}
+                    width={1000}
+                    height={500}
+                    className="w-full aspect-[2/1] object-cover"
+                  />
+                )}
+                <div className="p-6">
+                  <div className="flex items-center gap-3 mb-2.5">
+                    <span className={`px-2.5 py-1 text-xs font-semibold rounded-full ${catColor(post.category)}`}>
+                      {post.category}
+                    </span>
+                    <span className="text-xs text-slate-400">{post.readingMinutes} min read</span>
+                  </div>
+                  <h2 className="text-xl font-bold text-slate-900 group-hover:text-violet-700 transition-colors">
+                    {post.title}
+                  </h2>
+                  <p className="text-slate-500 mt-1.5 leading-relaxed">{post.excerpt}</p>
+                  <p className="text-xs text-slate-400 mt-3">By {post.author}</p>
                 </div>
-                <h2 className="text-xl font-bold text-slate-900 group-hover:text-violet-700 transition-colors">
-                  {post.title}
-                </h2>
-                <p className="text-slate-500 mt-1.5 leading-relaxed">{post.excerpt}</p>
-                <p className="text-xs text-slate-400 mt-3">By {post.author}</p>
               </Link>
             ))}
           </div>
