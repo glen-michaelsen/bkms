@@ -55,5 +55,16 @@ export async function GET() {
     return { stepId: step.id, waiting }
   })
 
-  return NextResponse.json(result)
+  // How many enrolled users have completed the flow — i.e. received the last
+  // active step (sequential delivery guarantees they got every earlier step too).
+  const activeSorted = sorted.filter(s => s.active)
+  const lastActive = activeSorted[activeSorted.length - 1]
+  let finished = 0
+  if (lastActive) {
+    for (const userId of enrollmentMap.keys()) {
+      if (sentPairs.has(`${userId}:${lastActive.id}`)) finished++
+    }
+  }
+
+  return NextResponse.json({ buckets: result, finished })
 }

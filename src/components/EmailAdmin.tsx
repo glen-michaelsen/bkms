@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { Plus, Send, Clock, Trash2, Edit2, CheckCircle2, Loader2, FlaskConical, ChevronDown, ChevronUp, UserPlus } from "lucide-react"
 import { EmailBlockEditor } from "@/components/EmailBlockEditor"
 import type { Block, CampaignFilters } from "@/lib/email-html"
@@ -60,15 +60,66 @@ function cph0800OnDayOf(utcMs: number): number {
   return guess - tzOffsetMs(guess, "Europe/Copenhagen")
 }
 
-// When the daily 08:00 CPH cron will actually send this user's next step:
-// the first 08:00 run at or after they become eligible (enrolled + delayDays·24h).
-function predictedSend(enrolledAt: string, delayDays: number): Date {
+// When the daily 08:00 CPH cron will actually send a user's step: the first
+// 08:00 run at or after they become eligible (enrolled + delayDays·24h) — but
+// never in the past. An overdue email goes out at the next run, not retroactively.
+function predictedSendMs(enrolledAt: string, delayDays: number): number {
   const eligible = new Date(enrolledAt).getTime() + delayDays * 86_400_000
-  for (let i = 0; i < 60; i++) {
-    const run = cph0800OnDayOf(eligible + i * 86_400_000)
-    if (run >= eligible) return new Date(run)
+  const from = Math.max(eligible, Date.now())
+  for (let i = 0; i < 90; i++) {
+    const run = cph0800OnDayOf(from + i * 86_400_000)
+    if (run >= from) return run
   }
-  return new Date(eligible)
+  return from
+}
+
+function predictedSend(enrolledAt: string, delayDays: number): Date {
+  return new Date(predictedSendMs(enrolledAt, delayDays))
+}
+
+// Project every remaining send for one waiting user — their next step and each
+// later step — spaced at most one email per daily run, matching the cron (which
+// advances a user by at most one step per 08:00 run).
+function projectUserSends(enrolledAt: string, delays: number[]): number[] {
+  const out: number[] = []
+  let prevKey: string | null = null
+  for (const d of delays) {
+    let run = predictedSendMs(enrolledAt, d)
+    if (prevKey !== null) {
+      while (cphDayKey(run) <= prevKey) run = cph0800OnDayOf(run + 86_400_000)
+    }
+    out.push(run)
+    prevKey = cphDayKey(run)
+  }
+  return out
+}
+
+type UpcomingDay = { key: string; label: string; sortKey: number; count: number }
+
+// Across all waiting users, count how many welcome emails each future day will
+// deliver (every step combined). Only active steps are projected — paused ones
+// don't send, so users stuck before one contribute nothing.
+function computeUpcomingSends(steps: WelcomeStep[], waiting: WaitingEntry[]): UpcomingDay[] {
+  const active = steps.filter(s => s.active).sort((a, b) => a.delayDays - b.delayDays)
+  const byDay = new Map<string, { sortKey: number; count: number }>()
+  for (const entry of waiting) {
+    const step = steps.find(s => s.id === entry.stepId)
+    if (!step?.active) continue
+    const startIdx = active.findIndex(s => s.id === step.id)
+    if (startIdx < 0) continue
+    const delays = active.slice(startIdx).map(s => s.delayDays)
+    for (const u of entry.waiting) {
+      for (const run of projectUserSends(u.enrolledAt, delays)) {
+        const key = cphDayKey(run)
+        const g = byDay.get(key) ?? { sortKey: run, count: 0 }
+        g.count++
+        byDay.set(key, g)
+      }
+    }
+  }
+  return [...byDay.entries()]
+    .map(([key, v]) => ({ key, label: sendDayLabel(new Date(v.sortKey)), sortKey: v.sortKey, count: v.count }))
+    .sort((a, b) => a.sortKey - b.sortKey)
 }
 
 const cphDayKey = (ms: number) =>
@@ -509,7 +560,10 @@ export function EmailAdmin({ adminEmail, view, showTabBar = true }: {
   const [singleEnrollBusy,  setSingleEnrollBusy]  = useState(false)
   const [singleEnrollMsg,   setSingleEnrollMsg]   = useState<{ text: string; ok: boolean } | null>(null)
   const [waitingData,       setWaitingData]       = useState<WaitingEntry[]>([])
+  const [finishedCount,     setFinishedCount]     = useState(0)
   const [waitingModal,      setWaitingModal]      = useState<{ users: WaitingUser[]; delayDays: number; stepNumber: number } | null>(null)
+
+  const upcoming = useMemo(() => computeUpcomingSends(steps, waitingData), [steps, waitingData])
 
   useEffect(() => { loadAll() }, [])
 
@@ -523,7 +577,7 @@ export function EmailAdmin({ adminEmail, view, showTabBar = true }: {
     if (s) setSteps(s)
     if (c) setCampaigns(c)
     if (e) setEnrollStats(e)
-    if (w) setWaitingData(w)
+    if (w) { setWaitingData(w.buckets ?? []); setFinishedCount(w.finished ?? 0) }
   }
 
   async function toggleStepActive(step: WelcomeStep) {
@@ -778,6 +832,25 @@ export function EmailAdmin({ adminEmail, view, showTabBar = true }: {
             />
           ) : (
             <>
+              {/* Upcoming sends — emails the daily 08:00 cron will deliver, by day */}
+              {upcoming.length > 0 && (
+                <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Clock className="w-4 h-4 text-violet-500" />
+                    <h3 className="font-bold text-slate-900 text-sm">Upcoming sends</h3>
+                    <span className="text-xs text-slate-400">· all steps combined, by send day</span>
+                  </div>
+                  <div className="divide-y divide-slate-50">
+                    {upcoming.map(d => (
+                      <div key={d.key} className="flex items-center justify-between py-1.5">
+                        <span className="text-sm text-slate-600">{d.label}</span>
+                        <span className="text-sm font-bold text-slate-900">{d.count}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               <button onClick={() => setEditingStep("new")}
                 className="flex items-center gap-2 px-5 py-2.5 bg-violet-600 text-white text-sm font-bold rounded-2xl hover:bg-violet-700 transition">
                 <Plus className="w-4 h-4" /> New welcome step
@@ -838,6 +911,16 @@ export function EmailAdmin({ adminEmail, view, showTabBar = true }: {
                   </div>
                 )
               })}
+
+              {/* Flow completion */}
+              {steps.length > 0 && (
+                <div className="flex items-center justify-center gap-2 bg-emerald-50 border border-emerald-100 rounded-2xl py-3 mt-2">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                  <p className="text-sm text-emerald-700">
+                    <span className="font-bold">{finishedCount}</span> user{finishedCount !== 1 ? "s" : ""} finished the flow
+                  </p>
+                </div>
+              )}
             </>
           )}
         </div>
