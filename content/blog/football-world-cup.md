@@ -3,6 +3,7 @@ title: "Football & the World Cup: How to Cheer in Serbian & Croatian"
 slug: football-world-cup
 category: Culture
 excerpt: "In the Balkans, football is close to a religion — and the World Cup is the high holy season. Here's the vocabulary and the chants you need to follow a match, cheer for your team, and sound like a local."
+cover: /blog/football-world-cup.jpg
 published: true
 publishedAt: "2026-07-02"
 ---
