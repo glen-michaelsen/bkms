@@ -2,11 +2,13 @@
 
 import { signIn, signOut, auth } from "@/auth"
 import { db } from "@/db"
-import { users, categories, levels, userLevelConfig, words, sentences, userCrosswordProgress, userWordMatchProgress, verbs, userDailyActivity, userProfile, emailWelcomeEnrollments } from "@/db/schema"
-import { eq, and, max, asc } from "drizzle-orm"
-import { sendStreakReminder, sendVerbOfDay, localDateString } from "@/lib/resend"
+import { users, categories, levels, userLevelConfig, words, sentences, userCrosswordProgress, userWordMatchProgress, verbs, userDailyActivity, userProfile, emailWelcomeEnrollments, passwordResetTokens } from "@/db/schema"
+import { eq, and, max, asc, isNull, desc } from "drizzle-orm"
+import { sendStreakReminder, sendVerbOfDay, sendPasswordReset, localDateString } from "@/lib/resend"
 import bcrypt from "bcryptjs"
+import crypto from "node:crypto"
 import { redirect } from "next/navigation"
+import { headers } from "next/headers"
 import { revalidatePath } from "next/cache"
 import { AuthError } from "next-auth"
 
@@ -168,6 +170,101 @@ export async function updatePasswordAction(
     .where(eq(users.id, parseInt(session.user.id)))
 
   return { success: true }
+}
+
+// ─── Forgot / reset password ─────────────────────────────────────────────────
+
+/** Origin of the current deployment, used to build the reset link. */
+async function siteBaseUrl(): Promise<string> {
+  const h = await headers()
+  const host = h.get("x-forwarded-host") ?? h.get("host")
+  const proto = h.get("x-forwarded-proto") ?? "https"
+  return host ? `${proto}://${host}` : "https://cujemose.com"
+}
+
+// Step 1: user requests a reset link. Always returns the same result whether or
+// not the email exists — no account enumeration. Token is random, stored only as
+// a SHA-256 hash, single-use, and expires in 1 hour.
+export async function requestPasswordResetAction(
+  _prev: { done?: boolean; error?: string } | undefined,
+  formData: FormData
+): Promise<{ done?: boolean; error?: string }> {
+  const email = ((formData.get("email") as string) ?? "").trim().toLowerCase()
+  if (!email) return { error: "Email is required" }
+
+  const user = await db
+    .select({ id: users.id, email: users.email, firstName: users.firstName })
+    .from(users)
+    .where(eq(users.email, email))
+    .get()
+
+  if (user) {
+    // Throttle: if an unused token was issued in the last 60s, don't issue/send another.
+    const recent = await db
+      .select({ createdAt: passwordResetTokens.createdAt })
+      .from(passwordResetTokens)
+      .where(and(eq(passwordResetTokens.userId, user.id), isNull(passwordResetTokens.usedAt)))
+      .orderBy(desc(passwordResetTokens.createdAt))
+      .get()
+
+    const throttled = recent && Date.now() - recent.createdAt.getTime() < 60_000
+    if (!throttled) {
+      // Invalidate any earlier unused tokens for this user.
+      await db.delete(passwordResetTokens).where(
+        and(eq(passwordResetTokens.userId, user.id), isNull(passwordResetTokens.usedAt))
+      )
+
+      const rawToken = crypto.randomBytes(32).toString("hex")
+      const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex")
+      await db.insert(passwordResetTokens).values({
+        userId: user.id,
+        tokenHash,
+        expiresAt: new Date(Date.now() + 60 * 60 * 1000),
+      })
+
+      const resetUrl = `${await siteBaseUrl()}/reset-password?token=${rawToken}`
+      try {
+        await sendPasswordReset({ to: user.email, firstName: user.firstName, resetUrl })
+      } catch (err) {
+        console.error("password reset email failed", err)
+      }
+    }
+  }
+
+  // Same response regardless of whether the account exists.
+  return { done: true }
+}
+
+// Step 2: user submits a new password with the token from the emailed link.
+export async function resetPasswordAction(
+  _prev: { error?: string } | undefined,
+  formData: FormData
+): Promise<{ error?: string }> {
+  const token = ((formData.get("token") as string) ?? "").trim()
+  const newPassword = formData.get("newPassword") as string
+  const confirmPassword = formData.get("confirmPassword") as string
+
+  if (!token) return { error: "This reset link is invalid. Please request a new one." }
+  if (!newPassword || !confirmPassword) return { error: "All fields are required" }
+  if (newPassword.length < 8) return { error: "Password must be at least 8 characters" }
+  if (newPassword !== confirmPassword) return { error: "Passwords do not match" }
+
+  const tokenHash = crypto.createHash("sha256").update(token).digest("hex")
+  const row = await db
+    .select()
+    .from(passwordResetTokens)
+    .where(eq(passwordResetTokens.tokenHash, tokenHash))
+    .get()
+
+  if (!row || row.usedAt || row.expiresAt.getTime() < Date.now()) {
+    return { error: "This reset link is invalid or has expired. Please request a new one." }
+  }
+
+  const passwordHash = await bcrypt.hash(newPassword, 12)
+  await db.update(users).set({ passwordHash }).where(eq(users.id, row.userId))
+  await db.update(passwordResetTokens).set({ usedAt: new Date() }).where(eq(passwordResetTokens.id, row.id))
+
+  redirect("/login?reset=1")
 }
 
 // ─── Hint preference ─────────────────────────────────────────────────────────

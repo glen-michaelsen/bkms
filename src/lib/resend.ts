@@ -56,6 +56,72 @@ export function localDateString(timezone: string): string {
   return new Intl.DateTimeFormat("sv-SE", { timeZone: timezone }).format(new Date())
 }
 
+// ── Email: Password reset ──────────────────────────────────────────────────────
+
+export async function sendPasswordReset({
+  to,
+  firstName,
+  resetUrl,
+}: {
+  to: string
+  firstName: string | null
+  resetUrl: string
+}) {
+  const name = firstName || "there"
+  await sendEmail({
+    to,
+    subject: "Reset your password",
+    html: `
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:0;background:#f8fafc;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f8fafc;padding:40px 16px;">
+    <tr><td align="center">
+      <table width="100%" style="max-width:520px;background:#ffffff;border-radius:24px;overflow:hidden;border:1px solid #e2e8f0;">
+        <tr>
+          <td style="background:linear-gradient(135deg,#7c3aed,#a855f7);padding:32px 40px;text-align:center;">
+            <h1 style="margin:0;color:#ffffff;font-size:24px;font-weight:800;">Reset your password</h1>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:32px 40px;">
+            <p style="margin:0 0 16px;color:#334155;font-size:16px;line-height:1.6;">Hey ${name},</p>
+            <p style="margin:0 0 24px;color:#475569;font-size:15px;line-height:1.7;">
+              We received a request to reset your Čujemo se password. Click the button below to choose a new one. This link expires in <strong>1 hour</strong> and can be used once.
+            </p>
+            <table cellpadding="0" cellspacing="0" width="100%">
+              <tr>
+                <td align="center" style="padding:8px 0 24px;">
+                  <a href="${resetUrl}"
+                     style="display:inline-block;background:#7c3aed;color:#ffffff;font-weight:700;font-size:15px;text-decoration:none;padding:14px 32px;border-radius:14px;">
+                    Reset password
+                  </a>
+                </td>
+              </tr>
+            </table>
+            <p style="margin:0 0 8px;color:#94a3b8;font-size:13px;line-height:1.6;">
+              If the button doesn't work, copy and paste this link into your browser:<br>
+              <a href="${resetUrl}" style="color:#7c3aed;text-decoration:none;word-break:break-all;">${resetUrl}</a>
+            </p>
+            <p style="margin:16px 0 0;color:#94a3b8;font-size:13px;line-height:1.6;">
+              If you didn't request this, you can safely ignore this email — your password won't change.
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="background:#f8fafc;padding:20px 40px;border-top:1px solid #e2e8f0;">
+            <p style="margin:0;text-align:center;color:#94a3b8;font-size:12px;">Čujemo se · <a href="https://cujemose.com" style="color:#7c3aed;text-decoration:none;">cujemose.com</a></p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`,
+  })
+}
+
 /** Returns the current local hour (0–23) for a given IANA timezone */
 export function localHour(timezone: string): number {
   const s = new Intl.DateTimeFormat("en-US", {

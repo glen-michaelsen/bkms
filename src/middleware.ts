@@ -4,7 +4,7 @@ export default auth((req) => {
   const { pathname } = req.nextUrl
   const isLoggedIn = !!req.auth
 
-  const publicRoutes = ["/login", "/register"]
+  const publicRoutes = ["/login", "/register", "/forgot-password", "/reset-password"]
   const publicPrefixes = ["/words", "/sentences", "/cases", "/categories", "/blog"]
   const isPublic =
     publicRoutes.includes(pathname) ||
