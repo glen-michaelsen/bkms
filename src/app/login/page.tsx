@@ -10,6 +10,7 @@ function LoginForm() {
   const [state, action, pending] = useActionState(loginAction, undefined)
   const searchParams = useSearchParams()
   const registered = searchParams.get("registered")
+  const reset = searchParams.get("reset")
 
   return (
     <div className="min-h-screen flex">
@@ -56,6 +57,12 @@ function LoginForm() {
             </div>
           )}
 
+          {reset && (
+            <div className="mb-5 p-4 rounded-2xl bg-emerald-50 border border-emerald-100 text-emerald-700 text-sm">
+              Your password has been reset. Sign in with your new password.
+            </div>
+          )}
+
           <form action={action} className="space-y-4">
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-1.5">
@@ -71,9 +78,14 @@ function LoginForm() {
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-slate-700 mb-1.5">
-                Password
-              </label>
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-sm font-semibold text-slate-700">
+                  Password
+                </label>
+                <Link href="/forgot-password" className="text-sm font-medium text-violet-600 hover:underline">
+                  Forgot?
+                </Link>
+              </div>
               <input
                 name="password"
                 type="password"

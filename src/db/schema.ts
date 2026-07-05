@@ -237,6 +237,21 @@ export const blogPosts = sqliteTable("blog_posts", {
     .$defaultFn(() => new Date()),
 })
 
+// ── Password reset ──────────────────────────────────────────────────────────
+// Only the SHA-256 hash of the token is stored; the raw token lives solely in
+// the emailed link. Tokens are single-use (usedAt) and time-limited (expiresAt).
+
+export const passwordResetTokens = sqliteTable("password_reset_tokens", {
+  id:        integer("id").primaryKey({ autoIncrement: true }),
+  userId:    integer("user_id").notNull().references(() => users.id),
+  tokenHash: text("token_hash").notNull().unique(),
+  expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
+  usedAt:    integer("used_at", { mode: "timestamp" }),
+  createdAt: integer("created_at", { mode: "timestamp" })
+    .notNull()
+    .$defaultFn(() => new Date()),
+})
+
 export type User = typeof users.$inferSelect
 export type Verb = typeof verbs.$inferSelect
 export type Category = typeof categories.$inferSelect
