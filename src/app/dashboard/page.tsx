@@ -11,7 +11,7 @@ import { ActivityGraph } from "@/components/ActivityGraph"
 import { CategoryTags } from "@/components/CategoryTags"
 import { DailySentences } from "@/components/DailySentences"
 import { Greeting } from "@/components/Greeting"
-import { BookOpen, MessageSquare, Grid3x3, Shuffle, ArrowRight, Check, User, List, Sparkles, ALargeSmall, Hash } from "lucide-react"
+import { BookOpen, MessageSquare, Grid3x3, Shuffle, ArrowRight, Check, User, List, Sparkles, ALargeSmall, Hash, SpellCheck } from "lucide-react"
 
 const languageInfo = {
   sr: { label: "Serbian", flag: "🇷🇸", native: "Srpski" },
@@ -360,6 +360,13 @@ export default async function DashboardPage() {
               icon={Shuffle}
               name="Word Match"
               solved={!!wordMatchProgress?.solvedAt}
+            />
+            <GameCard
+              href="/games/hangman"
+              icon={SpellCheck}
+              name="Hangman"
+              solved={false}
+              subtitle="Guess the word"
             />
           </div>
         </div>

@@ -1,11 +1,52 @@
 import { Resend } from "resend"
 import type { Verb } from "@/db/schema"
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-export const FROM = "Čujemo se <zdravo@cujemose.com>"
+// ── Email provider switch ─────────────────────────────────────────────────────
+// Every email in this file goes through sendEmail(), which dispatches to Resend
+// or Brevo based on EMAIL_PROVIDER ("resend" | "brevo"; defaults to "resend").
+// Switching providers is a one-line env change — templates and call sites are
+// provider-agnostic.
 
-export async function sendEmail({ to, subject, html }: { to: string; subject: string; html: string }) {
-  await resend.emails.send({ from: FROM, to, subject, html })
+const PROVIDER = (process.env.EMAIL_PROVIDER ?? "resend").toLowerCase()
+
+const FROM_NAME  = "Čujemo se"
+const FROM_EMAIL = "zdravo@cujemose.com"
+export const FROM = `${FROM_NAME} <${FROM_EMAIL}>`
+
+// Lazily created so a Brevo-only deployment (no RESEND_API_KEY) never touches it.
+let resendClient: Resend | null = null
+const getResend = () => (resendClient ??= new Resend(process.env.RESEND_API_KEY))
+
+type SendArgs = { to: string; subject: string; html: string }
+
+async function sendViaResend({ to, subject, html }: SendArgs) {
+  await getResend().emails.send({ from: FROM, to, subject, html })
+}
+
+async function sendViaBrevo({ to, subject, html }: SendArgs) {
+  const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+    method: "POST",
+    headers: {
+      "api-key": process.env.BREVO_API_KEY ?? "",
+      "content-type": "application/json",
+      accept: "application/json",
+    },
+    body: JSON.stringify({
+      sender: { name: FROM_NAME, email: FROM_EMAIL },
+      to: [{ email: to }],
+      subject,
+      htmlContent: html,
+    }),
+  })
+  if (!res.ok) {
+    throw new Error(`Brevo send failed (${res.status}): ${await res.text().catch(() => "")}`)
+  }
+}
+
+// Single entry point for all sends — dispatches to the configured provider.
+export async function sendEmail({ to, subject, html }: SendArgs) {
+  if (PROVIDER === "brevo") return sendViaBrevo({ to, subject, html })
+  return sendViaResend({ to, subject, html })
 }
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -39,8 +80,7 @@ export async function sendStreakReminder({
 }) {
   const name = firstName || "there"
   const langLabel = language === "hr" ? "Croatian" : "Serbian"
-  await resend.emails.send({
-    from: FROM,
+  await sendEmail({
     to,
     subject: "Don't break your streak!",
     html: `
@@ -175,8 +215,7 @@ export async function sendVerbOfDay({
       <p style="margin:0;color:#64748b;font-size:13px;">${secondarySentence}</p>
     </div>`}).join("")}` : ""
 
-  await resend.emails.send({
-    from: FROM,
+  await sendEmail({
     to,
     subject: `Verb of the day: ${headerTitle}`,
     html: `
