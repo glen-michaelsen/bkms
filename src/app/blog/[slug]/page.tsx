@@ -7,7 +7,19 @@ import { db } from "@/db"
 import { blogPosts } from "@/db/schema"
 import { and, eq } from "drizzle-orm"
 
-export const dynamic = "force-dynamic"
+// Cached per-slug with 5-minute ISR — edits appear within minutes of a sync.
+export const revalidate = 300
+
+// Prerender all published posts at build; new slugs are rendered on first
+// request and then cached (dynamicParams defaults to true).
+export async function generateStaticParams() {
+  const rows = await db
+    .select({ slug: blogPosts.slug })
+    .from(blogPosts)
+    .where(eq(blogPosts.published, true))
+    .all()
+  return rows.map(r => ({ slug: r.slug }))
+}
 
 async function getPost(slug: string) {
   return db

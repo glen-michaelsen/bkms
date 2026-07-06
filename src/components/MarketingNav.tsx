@@ -1,8 +1,14 @@
-import Link from "next/link"
-import { auth } from "@/auth"
+"use client"
 
-export default async function MarketingNav({ variant = "light" }: { variant?: "light" | "dark" }) {
-  const session = await auth()
+import Link from "next/link"
+import { useSession } from "next-auth/react"
+
+// Client component: session state resolves in the browser so the marketing
+// pages that render this nav can be served statically (no per-request SSR).
+// While the session loads we show the logged-out actions — middleware
+// redirects signed-in users away from /login and /register regardless.
+export default function MarketingNav({ variant = "light" }: { variant?: "light" | "dark" }) {
+  const authed = useSession().status === "authenticated"
 
   const isDark = variant === "dark"
 
@@ -43,7 +49,7 @@ export default async function MarketingNav({ variant = "light" }: { variant?: "l
 
         {/* Right: auth actions */}
         <div className="flex items-center gap-3 flex-shrink-0">
-          {session ? (
+          {authed ? (
             <Link
               href="/dashboard"
               className={`px-4 py-2 text-sm font-semibold rounded-full transition-colors ${

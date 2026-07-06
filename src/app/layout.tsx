@@ -2,8 +2,7 @@ import type { Metadata } from "next"
 import { Plus_Jakarta_Sans } from "next/font/google"
 import "./globals.css"
 import { Providers } from "@/components/providers"
-import { GoogleAnalytics } from "@/components/GoogleAnalytics"
-import { auth } from "@/auth"
+import { AnalyticsGate } from "@/components/AnalyticsGate"
 
 // GA4 measurement IDs are public (they appear in page source), so we hardcode
 // both and switch on the deploy branch: the production build (main) uses the
@@ -35,19 +34,20 @@ export const metadata: Metadata = {
   },
 }
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  // Pre-login analytics only: once a user is signed in, GA is never rendered —
-  // so nothing that happens inside the app is tracked.
-  const session = await auth()
-
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  // Pre-login analytics only: AnalyticsGate checks the session client-side and
+  // loads GA solely for signed-out visitors. Keeping auth() out of this layout
+  // lets public pages render statically instead of per-request SSR.
   return (
     <html lang="en" className={`${jakarta.variable} h-full`}>
       <head>
         <meta name="theme-color" content="#7c3aed" />
       </head>
       <body className="min-h-full bg-white font-[family-name:var(--font-jakarta)] antialiased">
-        {!session && <GoogleAnalytics gaId={GA_MEASUREMENT_ID} />}
-        <Providers>{children}</Providers>
+        <Providers>
+          <AnalyticsGate gaId={GA_MEASUREMENT_ID} />
+          {children}
+        </Providers>
       </body>
     </html>
   )

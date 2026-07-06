@@ -5,9 +5,10 @@ import MarketingNav from "@/components/MarketingNav"
 import { db } from "@/db"
 import { words, sentences, categories } from "@/db/schema"
 import { eq } from "drizzle-orm"
-import { auth } from "@/auth"
+import { PracticeCta } from "@/components/AuthAwareCtas"
 
-export const dynamic = "force-dynamic"
+// Static + hourly ISR; session-aware CTA resolves client-side (PracticeCta).
+export const revalidate = 3600
 
 function toSlug(name: string): string {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")
@@ -67,8 +68,7 @@ export default async function CategoryPage({
   const cat = allCats.find((c) => toSlug(c.name) === slug)
   if (!cat) notFound()
 
-  const [session, catWords, catSentences] = await Promise.all([
-    auth(),
+  const [catWords, catSentences] = await Promise.all([
     db.select().from(words).where(eq(words.categoryId, cat.id)).limit(6),
     db.select().from(sentences).where(eq(sentences.categoryId, cat.id)).limit(6),
   ])
@@ -139,12 +139,7 @@ export default async function CategoryPage({
           <p className="text-violet-200 mb-8 text-base">
             Create a free account and start your first session in minutes.
           </p>
-          <Link
-            href={session ? "/dashboard" : "/register"}
-            className="inline-flex items-center px-7 py-3.5 bg-white text-violet-700 font-bold rounded-full hover:bg-violet-50 transition-colors shadow-sm"
-          >
-            {session ? "Go to dashboard →" : "Start learning free →"}
-          </Link>
+          <PracticeCta />
         </div>
       </main>
 

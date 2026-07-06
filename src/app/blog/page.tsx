@@ -5,7 +5,8 @@ import { db } from "@/db"
 import { blogPosts } from "@/db/schema"
 import { eq, desc } from "drizzle-orm"
 
-export const dynamic = "force-dynamic"
+// Cached with 5-minute ISR — new posts appear within minutes of a db:blog sync.
+export const revalidate = 300
 
 export const metadata: Metadata = {
   title: "Blog | Čujemo se",
