@@ -3,6 +3,7 @@ title: "Balkan Summer: The Classic Activities & the Phrases to Match"
 slug: balkan-summer
 category: Culture
 excerpt: "Coffee that lasts three hours, grill smoke in the air, and everyone asking if you're going 'na more'. Here are the classic Balkan summer activities — and the Serbian and Croatian phrases you need to join in."
+cover: /blog/balkan-summer.jpg
 published: true
 publishedAt: "2026-07-03"
 ---
