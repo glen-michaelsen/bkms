@@ -4,9 +4,10 @@ import MarketingNav from "@/components/MarketingNav"
 import { db } from "@/db"
 import { words, categories } from "@/db/schema"
 import { eq, inArray } from "drizzle-orm"
-import { auth } from "@/auth"
+import { PracticeCta } from "@/components/AuthAwareCtas"
 
-export const dynamic = "force-dynamic"
+// Static + hourly ISR; session-aware CTA resolves client-side (PracticeCta).
+export const revalidate = 3600
 
 export const metadata: Metadata = {
   title: "Serbian & Croatian Words | Čujemo se",
@@ -40,7 +41,7 @@ const INTROS: Record<string, string> = {
 }
 
 export default async function WordsPage() {
-  const [session, allCategories] = await Promise.all([auth(), db.select().from(categories)])
+  const allCategories = await db.select().from(categories)
 
   const featuredCategories = FEATURED_NAMES.map((name) =>
     allCategories.find((c) => c.name === name)
@@ -141,12 +142,7 @@ export default async function WordsPage() {
           <p className="text-violet-200 mb-8 text-base">
             Create a free account and start your first session in minutes.
           </p>
-          <Link
-            href={session ? "/dashboard" : "/register"}
-            className="inline-flex items-center px-7 py-3.5 bg-white text-violet-700 font-bold rounded-full hover:bg-violet-50 transition-colors shadow-sm"
-          >
-            {session ? "Go to dashboard →" : "Start learning free →"}
-          </Link>
+          <PracticeCta />
         </div>
       </main>
 

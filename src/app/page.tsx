@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import Link from "next/link"
-import { auth } from "@/auth"
 import MarketingNav from "@/components/MarketingNav"
+import { HeroCtas } from "@/components/AuthAwareCtas"
 import { BookOpen, MessageSquare, List, Gamepad2 } from "lucide-react"
 import { db } from "@/db"
 import { words, sentences } from "@/db/schema"
@@ -10,7 +10,9 @@ import { Dancing_Script } from "next/font/google"
 
 const signature = Dancing_Script({ subsets: ["latin"], weight: "700" })
 
-export const dynamic = "force-dynamic"
+// Statically cached, re-rendered at most hourly (word/sentence counts move
+// slowly). Session-dependent UI is handled client-side — see AuthAwareCtas.
+export const revalidate = 3600
 
 export const metadata: Metadata = {
   title: "Learn Serbian & Croatian | Čujemo se",
@@ -69,8 +71,7 @@ const CATEGORY_COLORS: Record<string, string> = {
 }
 
 export default async function HomePage() {
-  const [session, wordCountRow, sentenceCountRow] = await Promise.all([
-    auth(),
+  const [wordCountRow, sentenceCountRow] = await Promise.all([
     db.select({ count: sql<number>`count(*)` }).from(words).get(),
     db.select({ count: sql<number>`count(*)` }).from(sentences).get(),
   ])
@@ -108,37 +109,7 @@ export default async function HomePage() {
           </p>
 
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            {session ? (
-              <>
-                <Link
-                  href="/dashboard"
-                  className="px-6 py-3 bg-white text-violet-700 font-bold rounded-full hover:bg-violet-50 transition-colors shadow-lg"
-                >
-                  Go to dashboard →
-                </Link>
-                <Link
-                  href="/words"
-                  className="px-6 py-3 border border-white/30 text-white font-semibold rounded-full hover:bg-white/10 transition-colors"
-                >
-                  Explore words
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link
-                  href="/register"
-                  className="px-6 py-3 bg-white text-violet-700 font-bold rounded-full hover:bg-violet-50 transition-colors shadow-lg"
-                >
-                  Start learning free →
-                </Link>
-                <Link
-                  href="/login"
-                  className="px-6 py-3 border border-white/30 text-white font-semibold rounded-full hover:bg-white/10 transition-colors"
-                >
-                  Log in
-                </Link>
-              </>
-            )}
+            <HeroCtas />
           </div>
         </section>
       </div>{/* end gradient hero wrapper */}
