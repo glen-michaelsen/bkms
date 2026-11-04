@@ -12,14 +12,18 @@ export default auth((req) => {
     pathname === "/"
 
   if (!isLoggedIn && !isPublic) {
-    return Response.redirect(new URL("/login", req.url))
+    const login = new URL("/login", req.url)
+    if (pathname === "/oauth/authorize") login.searchParams.set("next", pathname + req.nextUrl.search)
+    return Response.redirect(login)
   }
 
   if (isLoggedIn && publicRoutes.includes(pathname)) {
-    return Response.redirect(new URL("/dashboard", req.url))
+    const next = req.nextUrl.searchParams.get("next")
+    const target = pathname === "/login" && next?.startsWith("/oauth/authorize?") ? next : "/dashboard"
+    return Response.redirect(new URL(target, req.url))
   }
 })
 
 export const config = {
-  matcher: ["/((?!api/auth|api/cron|_next/static|_next/image|favicon.ico|.*\\.svg|.*\\.png|.*\\.jpg|.*\\.ico|.*\\.webp|.*\\.json|manifest).*)"],
+  matcher: ["/((?!api/auth|api/cron|api/oauth|mcp(?:/|$)|\\.well-known|_next/static|_next/image|favicon.ico|.*\\.svg|.*\\.png|.*\\.jpg|.*\\.ico|.*\\.webp|.*\\.json|manifest).*)"],
 }

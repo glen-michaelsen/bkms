@@ -2,7 +2,7 @@
 
 import { signIn, signOut, auth } from "@/auth"
 import { db } from "@/db"
-import { users, categories, levels, userLevelConfig, words, sentences, userCrosswordProgress, userWordMatchProgress, verbs, userDailyActivity, userProfile, emailWelcomeEnrollments, passwordResetTokens } from "@/db/schema"
+import { users, categories, levels, userLevelConfig, words, sentences, userCrosswordProgress, userWordMatchProgress, verbs, userDailyActivity, userProfile, emailWelcomeEnrollments, passwordResetTokens, oauthTokens } from "@/db/schema"
 import { eq, and, max, asc, isNull, desc } from "drizzle-orm"
 import { sendStreakReminder, sendVerbOfDay, sendPasswordReset, localDateString } from "@/lib/resend"
 import bcrypt from "bcryptjs"
@@ -11,6 +11,12 @@ import { redirect } from "next/navigation"
 import { headers } from "next/headers"
 import { revalidatePath } from "next/cache"
 import { AuthError } from "next-auth"
+import { revokeAllForUser } from "@/lib/oauth"
+
+// Only the OAuth consent page may be returned to after login, so `next` can't be used as an open redirect.
+function safeLoginRedirect(next: FormDataEntryValue | null): string {
+  return typeof next === "string" && next.startsWith("/oauth/authorize?") ? next : "/dashboard"
+}
 
 export async function loginAction(
   _prev: { error: string } | undefined,
@@ -20,7 +26,7 @@ export async function loginAction(
     await signIn("credentials", {
       email: formData.get("email") as string,
       password: formData.get("password") as string,
-      redirectTo: "/dashboard",
+      redirectTo: safeLoginRedirect(formData.get("next")),
     })
   } catch (error) {
     if (error instanceof AuthError) {
@@ -168,8 +174,22 @@ export async function updatePasswordAction(
     .update(users)
     .set({ passwordHash })
     .where(eq(users.id, parseInt(session.user.id)))
+  await revokeAllForUser(parseInt(session.user.id))
 
   return { success: true }
+}
+
+// ─── Connected AI assistants ─────────────────────────────────────────────────
+
+export async function revokeMcpClientAction(clientId: string): Promise<void> {
+  const session = await auth()
+  if (!session) return
+  await db.update(oauthTokens).set({ revokedAt: new Date() }).where(and(
+    eq(oauthTokens.userId, parseInt(session.user.id)),
+    eq(oauthTokens.clientId, clientId),
+    isNull(oauthTokens.revokedAt),
+  ))
+  revalidatePath("/settings")
 }
 
 // ─── Forgot / reset password ─────────────────────────────────────────────────
@@ -262,6 +282,7 @@ export async function resetPasswordAction(
 
   const passwordHash = await bcrypt.hash(newPassword, 12)
   await db.update(users).set({ passwordHash }).where(eq(users.id, row.userId))
+  await revokeAllForUser(row.userId)
   await db.update(passwordResetTokens).set({ usedAt: new Date() }).where(eq(passwordResetTokens.id, row.id))
 
   redirect("/login?reset=1")

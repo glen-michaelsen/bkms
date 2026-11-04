@@ -11,6 +11,7 @@ function LoginForm() {
   const searchParams = useSearchParams()
   const registered = searchParams.get("registered")
   const reset = searchParams.get("reset")
+  const next = searchParams.get("next")
 
   return (
     <div className="min-h-screen flex">
@@ -64,6 +65,7 @@ function LoginForm() {
           )}
 
           <form action={action} className="space-y-4">
+            {next && <input type="hidden" name="next" value={next} />}
             <div>
               <label className="block text-sm font-semibold text-slate-700 mb-1.5">
                 Email

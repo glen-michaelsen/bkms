@@ -3,8 +3,10 @@ import { redirect } from "next/navigation"
 import Link from "next/link"
 import { SettingsForm } from "@/components/SettingsForm"
 import { db } from "@/db"
-import { users, levels, userLevelConfig, userProfile } from "@/db/schema"
-import { eq } from "drizzle-orm"
+import { headers } from "next/headers"
+import { users, levels, userLevelConfig, userProfile, oauthTokens, oauthClients } from "@/db/schema"
+import { and, eq, gt, isNull } from "drizzle-orm"
+import { MCP_PATH, originFromHeaders } from "@/lib/oauth"
 
 export default async function SettingsPage() {
   const session = await auth()
@@ -12,7 +14,7 @@ export default async function SettingsPage() {
 
   const userId = parseInt(session.user.id)
 
-  const [allLevels, levelConfig, userRow, profile] = await Promise.all([
+  const [allLevels, levelConfig, userRow, profile, activeTokens, requestHeaders] = await Promise.all([
     db.select().from(levels).orderBy(levels.id),
     db.select().from(userLevelConfig).where(eq(userLevelConfig.userId, userId)),
     db.select({
@@ -25,7 +27,24 @@ export default async function SettingsPage() {
       studyDirection: users.studyDirection,
     }).from(users).where(eq(users.id, userId)).get(),
     db.select().from(userProfile).where(eq(userProfile.userId, userId)).get(),
+    db.select({ clientId: oauthTokens.clientId, name: oauthClients.name, createdAt: oauthTokens.createdAt })
+      .from(oauthTokens)
+      .innerJoin(oauthClients, eq(oauthTokens.clientId, oauthClients.clientId))
+      .where(and(
+        eq(oauthTokens.userId, userId),
+        eq(oauthTokens.kind, "refresh"),
+        isNull(oauthTokens.usedAt),
+        isNull(oauthTokens.revokedAt),
+        gt(oauthTokens.expiresAt, new Date()),
+      )),
+    headers(),
   ])
+
+  const connectedApps = [...new Map(activeTokens.map(t => [t.clientId, {
+    clientId: t.clientId,
+    name: t.name,
+    connectedAt: t.createdAt.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }),
+  }])).values()]
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
@@ -60,6 +79,8 @@ export default async function SettingsPage() {
           initialNewsletterEnabled={userRow?.newsletterEnabled ?? true}
           initialMultipleChoiceRatio={userRow?.multipleChoiceRatio ?? 50}
           initialProfile={profile ?? null}
+          mcpUrl={`${originFromHeaders(requestHeaders)}${MCP_PATH}`}
+          connectedApps={connectedApps}
         />
       </main>
     </div>
