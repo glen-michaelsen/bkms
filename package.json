@@ -13,7 +13,8 @@
     "db:female-forms": "dotenv -e .env.local -- tsx scripts/populate-female-forms.ts",
     "db:female-forms:direct": "tsx scripts/populate-female-forms.ts",
     "db:blog": "dotenv -e .env.local -- tsx scripts/blog-sync.ts",
-    "db:password-reset": "dotenv -e .env.local -- tsx scripts/create-password-reset-table.ts"
+    "db:password-reset": "dotenv -e .env.local -- tsx scripts/create-password-reset-table.ts",
+    "blog:covers": "node scripts/generate-blog-covers.mjs"
   },
   "dependencies": {
     "@libsql/client": "^0.17.2",
