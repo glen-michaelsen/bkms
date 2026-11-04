@@ -11,6 +11,7 @@ import {
   updateStudyPrefsAction,
 } from "@/app/actions"
 import { LevelConfig } from "@/components/LevelConfig"
+import { McpSettings, type ConnectedApp } from "@/components/McpSettings"
 import { TIMEZONES } from "@/lib/timezones"
 import { COUNTRIES } from "@/lib/countries"
 import { JOB_TITLES, STUDY_LEVELS } from "@/lib/job-titles"
@@ -23,6 +24,7 @@ const NAV_SECTIONS = [
   { id: "study-mode",          label: "Study mode" },
   { id: "study-level",         label: "Study level" },
   { id: "about-you",           label: "About you" },
+  { id: "ai-assistants",       label: "AI assistants" },
 ]
 
 function SectionCard({
@@ -91,6 +93,8 @@ export function SettingsForm({
   initialNewsletterEnabled,
   initialMultipleChoiceRatio,
   initialProfile,
+  mcpUrl,
+  connectedApps,
 }: {
   initialFirstName: string
   initialEmail: string
@@ -106,6 +110,8 @@ export function SettingsForm({
   initialNewsletterEnabled: boolean
   initialMultipleChoiceRatio: number
   initialProfile: InitialProfile
+  mcpUrl: string
+  connectedApps: ConnectedApp[]
 }) {
   const { update } = useSession()
 
@@ -673,6 +679,15 @@ export function SettingsForm({
               </div>
             </div>
           </form>
+        </SectionCard>
+
+        {/* AI assistants */}
+        <SectionCard
+          id="ai-assistants"
+          title="AI assistants"
+          description="Let your AI assistant see what you're learning"
+        >
+          <McpSettings mcpUrl={mcpUrl} apps={connectedApps} />
         </SectionCard>
 
       </div>

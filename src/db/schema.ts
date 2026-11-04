@@ -252,6 +252,46 @@ export const passwordResetTokens = sqliteTable("password_reset_tokens", {
     .$defaultFn(() => new Date()),
 })
 
+// ── MCP OAuth ───────────────────────────────────────────────────────────────
+// Lets a user connect an AI assistant to their learning data (read-only).
+// Codes and tokens are stored only as SHA-256 hashes. familyId links everything
+// issued from one approval, so replaying a used code or refresh token revokes it all.
+
+export const oauthClients = sqliteTable("oauth_clients", {
+  id:           integer("id").primaryKey({ autoIncrement: true }),
+  clientId:     text("client_id").notNull().unique(),
+  name:         text("name").notNull(),
+  redirectUris: text("redirect_uris").notNull(), // JSON: string[]
+  createdAt:    integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+})
+
+export const oauthCodes = sqliteTable("oauth_codes", {
+  id:            integer("id").primaryKey({ autoIncrement: true }),
+  codeHash:      text("code_hash").notNull().unique(),
+  clientId:      text("client_id").notNull(),
+  userId:        integer("user_id").notNull().references(() => users.id),
+  familyId:      text("family_id").notNull(),
+  redirectUri:   text("redirect_uri").notNull(),
+  codeChallenge: text("code_challenge").notNull(),
+  resource:      text("resource"),
+  expiresAt:     integer("expires_at", { mode: "timestamp" }).notNull(),
+  usedAt:        integer("used_at", { mode: "timestamp" }),
+})
+
+export const oauthTokens = sqliteTable("oauth_tokens", {
+  id:        integer("id").primaryKey({ autoIncrement: true }),
+  tokenHash: text("token_hash").notNull().unique(),
+  kind:      text("kind", { enum: ["access", "refresh"] }).notNull(),
+  clientId:  text("client_id").notNull(),
+  userId:    integer("user_id").notNull().references(() => users.id),
+  familyId:  text("family_id").notNull(),
+  resource:  text("resource"),
+  expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
+  usedAt:    integer("used_at", { mode: "timestamp" }),    // refresh tokens: set on rotation
+  revokedAt: integer("revoked_at", { mode: "timestamp" }),
+  createdAt: integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+})
+
 export type User = typeof users.$inferSelect
 export type Verb = typeof verbs.$inferSelect
 export type Category = typeof categories.$inferSelect
