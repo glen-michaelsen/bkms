@@ -1,0 +1,33 @@
+{
+  "slug": "who-walks-the-dog",
+  "title": { "serbian": "Ko šeta psa?", "croatian": "Tko šeta psa?", "english": "Who walks the dog?" },
+  "level": "Beginner",
+  "category": "Daily routines",
+  "published": true,
+  "lines": [
+    { "serbian": "Sedam je sati ujutru.", "croatian": "Sedam je sati ujutro.", "english": "It's seven in the morning." },
+    { "serbian": "Ana i Marko još leže u krevetu.", "croatian": "Ana i Marko još leže u krevetu.", "english": "Ana and Marko are still lying in bed." },
+    { "serbian": "Njihov pas Reks stoji pored vrata i laje.", "croatian": "Njihov pas Reks stoji pored vrata i laje.", "english": "Their dog Reks is standing by the door and barking." },
+    { "serbian": "– Marko, ko šeta psa danas?", "croatian": "– Marko, tko šeta psa danas?", "english": "\"Marko, who's walking the dog today?\"" },
+    { "serbian": "– Ti, naravno.", "croatian": "– Ti, naravno.", "english": "\"You, of course.\"" },
+    { "serbian": "– Ja? Zašto ja? Šetala sam ga juče!", "croatian": "– Ja? Zašto ja? Šetala sam ga jučer!", "english": "\"Me? Why me? I walked him yesterday!\"" },
+    { "serbian": "– A ja sam ga šetao u ponedeljak.", "croatian": "– A ja sam ga šetao u ponedjeljak.", "english": "\"And I walked him on Monday.\"" },
+    { "serbian": "– To je bilo pre četiri dana!", "croatian": "– To je bilo prije četiri dana!", "english": "\"That was four days ago!\"" },
+    { "serbian": "Marko gleda kroz prozor.", "croatian": "Marko gleda kroz prozor.", "english": "Marko looks out of the window." },
+    { "serbian": "– Pada kiša. Reks ne voli kišu.", "croatian": "– Pada kiša. Reks ne voli kišu.", "english": "\"It's raining. Reks doesn't like rain.\"" },
+    { "serbian": "– Reks voli kišu. Ti ne voliš kišu.", "croatian": "– Reks voli kišu. Ti ne voliš kišu.", "english": "\"Reks likes rain. You don't like rain.\"" },
+    { "serbian": "Reks donosi povodac i stavlja ga na krevet.", "croatian": "Reks donosi povodac i stavlja ga na krevet.", "english": "Reks brings the leash and puts it on the bed." },
+    { "serbian": "Ana se smeje.", "croatian": "Ana se smije.", "english": "Ana laughs." },
+    { "serbian": "– Vidiš? On je izabrao tebe.", "croatian": "– Vidiš? On je izabrao tebe.", "english": "\"See? He chose you.\"" },
+    { "serbian": "Marko uzdiše i ustaje iz kreveta.", "croatian": "Marko uzdiše i ustaje iz kreveta.", "english": "Marko sighs and gets out of bed." },
+    { "serbian": "– Dobro, idem. Ali ti praviš kafu.", "croatian": "– Dobro, idem. Ali ti kuhaš kavu.", "english": "\"Fine, I'm going. But you're making the coffee.\"" },
+    { "serbian": "– Dogovoreno!", "croatian": "– Dogovoreno!", "english": "\"Deal!\"" },
+    { "serbian": "Posle deset minuta Marko i Reks se vraćaju.", "croatian": "Nakon deset minuta Marko i Reks se vraćaju.", "english": "Ten minutes later, Marko and Reks come back." },
+    { "serbian": "Obojica su mokri.", "croatian": "Obojica su mokri.", "english": "They're both wet." },
+    { "serbian": "Reks je srećan. Marko nije.", "croatian": "Reks je sretan. Marko nije.", "english": "Reks is happy. Marko isn't." },
+    { "serbian": "Na stolu ga čeka topla kafa.", "croatian": "Na stolu ga čeka topla kava.", "english": "A hot coffee is waiting for him on the table." },
+    { "serbian": "– Sutra ti šetaš psa – kaže Marko.", "croatian": "– Sutra ti šetaš psa – kaže Marko.", "english": "\"Tomorrow you walk the dog,\" says Marko." },
+    { "serbian": "Ana pije kafu i smeje se.", "croatian": "Ana pije kavu i smije se.", "english": "Ana drinks her coffee and laughs." },
+    { "serbian": "– Videćemo.", "croatian": "– Vidjet ćemo.", "english": "\"We'll see.\"" }
+  ]
+}
