@@ -48,7 +48,7 @@ export function StoryReader({
       {keyWords.length > 0 && (
         <section className="mt-7 bg-violet-50 border border-violet-100 rounded-2xl p-5">
           <h2 className="text-sm font-bold text-violet-900">Good words to know first</h2>
-          <ul className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-1.5">
+          <ul className="mt-3 space-y-1.5">
             {keyWords.map(word => (
               <li key={word.target} className="text-sm text-slate-700">
                 <span className="font-semibold text-slate-900">{word.target}</span> – {word.translation}
