@@ -1,0 +1,33 @@
+{
+  "slug": "the-hat",
+  "title": { "serbian": "Kapa", "croatian": "Kapa", "english": "The hat" },
+  "level": "Beginner",
+  "category": "Clothes",
+  "published": true,
+  "lines": [
+    { "serbian": "Ponedeljak je.", "croatian": "Ponedjeljak je.", "english": "It's Monday." },
+    { "serbian": "Napolju je magla.", "croatian": "Vani je magla.", "english": "It's foggy outside." },
+    { "serbian": "Jovan ide u šetnju.", "croatian": "Jovan ide u šetnju.", "english": "Jovan goes for a walk." },
+    { "serbian": "Na glavi ima šarenu kapu.", "croatian": "Na glavi ima šarenu kapu.", "english": "He's wearing a colourful hat on his head." },
+    { "serbian": "To je poklon od njegove ćerke.", "croatian": "To je poklon od njegove kćeri.", "english": "It's a gift from his daughter." },
+    { "serbian": "Onda duva vetar.", "croatian": "Onda puše vjetar.", "english": "Then the wind blows." },
+    { "serbian": "Kapa leti daleko, preko ulice.", "croatian": "Kapa leti daleko, preko ulice.", "english": "The hat flies far away, across the street." },
+    { "serbian": "Jovan traži kapu, ali ne vidi ništa.", "croatian": "Jovan traži kapu, ali ne vidi ništa.", "english": "Jovan looks for the hat, but he can't see anything." },
+    { "serbian": "Magla je gusta.", "croatian": "Magla je gusta.", "english": "The fog is thick." },
+    { "serbian": "Jovan je tužan.", "croatian": "Jovan je tužan.", "english": "Jovan is sad." },
+    { "serbian": "Ide u kafić i pije čaj.", "croatian": "Ide u kafić i pije čaj.", "english": "He goes to a café and drinks tea." },
+    { "serbian": "– Jovane? Zašto si tužan?", "croatian": "– Jovane? Zašto si tužan?", "english": "\"Jovan? Why are you sad?\"" },
+    { "serbian": "To je njegov rođak Stefan.", "croatian": "To je njegov bratić Stefan.", "english": "It's his cousin Stefan." },
+    { "serbian": "– Izgubio sam kapu – kaže Jovan.", "croatian": "– Izgubio sam kapu – kaže Jovan.", "english": "\"I lost my hat,\" says Jovan." },
+    { "serbian": "Stefan otvara torbu i vadi šarenu kapu.", "croatian": "Stefan otvara torbu i vadi šarenu kapu.", "english": "Stefan opens his bag and takes out a colourful hat." },
+    { "serbian": "– Ovu kapu?", "croatian": "– Ovu kapu?", "english": "\"This hat?\"" },
+    { "serbian": "Jovan je iznenađen.", "croatian": "Jovan je iznenađen.", "english": "Jovan is surprised." },
+    { "serbian": "– Da! Gde je bila?", "croatian": "– Da! Gdje je bila?", "english": "\"Yes! Where was it?\"" },
+    { "serbian": "– Na klupi u parku. Malo je prljava.", "croatian": "– Na klupi u parku. Malo je prljava.", "english": "\"On a bench in the park. It's a little dirty.\"" },
+    { "serbian": "– Hvala ti, Stefane!", "croatian": "– Hvala ti, Stefane!", "english": "\"Thank you, Stefan!\"" },
+    { "serbian": "– Nema na čemu. Ali ti plaćaš čaj.", "croatian": "– Nema na čemu. Ali ti plaćaš čaj.", "english": "\"You're welcome. But you're paying for the tea.\"" },
+    { "serbian": "Danas je u kafiću popust.", "croatian": "Danas je u kafiću popust.", "english": "There's a discount at the café today." },
+    { "serbian": "Jovan plaća gotovinom i smeje se.", "croatian": "Jovan plaća gotovinom i smije se.", "english": "Jovan pays in cash and laughs." },
+    { "serbian": "Dobar ponedeljak.", "croatian": "Dobar ponedjeljak.", "english": "A good Monday." }
+  ]
+}

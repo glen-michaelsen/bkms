@@ -14,6 +14,8 @@
     "db:female-forms:direct": "tsx scripts/populate-female-forms.ts",
     "db:blog": "dotenv -e .env.local -- tsx scripts/blog-sync.ts",
     "db:password-reset": "dotenv -e .env.local -- tsx scripts/create-password-reset-table.ts",
+    "db:stories": "dotenv -e .env.local -- tsx scripts/story-sync.ts",
+    "db:remove-upper-intermediate": "dotenv -e .env.local -- tsx scripts/remove-upper-intermediate.ts",
     "db:mcp": "dotenv -e .env.local -- tsx scripts/create-mcp-tables.ts",
     "blog:covers": "node scripts/generate-blog-covers.mjs"
   },

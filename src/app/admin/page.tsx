@@ -2,8 +2,8 @@ import { auth } from "@/auth"
 import { redirect } from "next/navigation"
 import Link from "next/link"
 import { db } from "@/db"
-import { words, sentences, categories, levels, users, userDailyActivity, verbs } from "@/db/schema"
-import { desc } from "drizzle-orm"
+import { words, sentences, categories, levels, users, userDailyActivity, verbs, stories, storyLines } from "@/db/schema"
+import { asc, desc } from "drizzle-orm"
 import { addCategoryAction, addLevelAction, deleteCategoryAction } from "@/app/actions"
 import { AdminTabs } from "@/components/AdminTabs"
 
@@ -32,7 +32,7 @@ export default async function AdminPage() {
   const today   = new Date().toISOString().slice(0, 10)
   const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)
 
-  const [allCategories, allLevels, allWords, allSentences, allUsers, allActivity, allVerbs] = await Promise.all([
+  const [allCategories, allLevels, allWords, allSentences, allUsers, allActivity, allVerbs, allStories, allStoryLines] = await Promise.all([
     db.select().from(categories).orderBy(categories.id),
     db.select().from(levels).orderBy(levels.id),
     db.select().from(words).orderBy(words.id),
@@ -40,6 +40,8 @@ export default async function AdminPage() {
     db.select().from(users).orderBy(desc(users.createdAt)),
     db.select().from(userDailyActivity),
     db.select().from(verbs).orderBy(verbs.sortOrder, verbs.id),
+    db.select().from(stories).orderBy(desc(stories.createdAt)),
+    db.select().from(storyLines).orderBy(asc(storyLines.position)),
   ])
 
   // ── Stats ─────────────────────────────────────────────────────────────────
@@ -161,6 +163,13 @@ export default async function AdminPage() {
           words={allWords}
           sentences={allSentences}
           verbs={allVerbs}
+          stories={allStories.map(story => ({
+            id: story.id, slug: story.slug,
+            titleSr: story.titleSr, titleHr: story.titleHr, titleEn: story.titleEn,
+            levelId: story.levelId, categoryId: story.categoryId, published: story.published,
+            lines: allStoryLines.filter(l => l.storyId === story.id)
+              .map(l => ({ serbian: l.serbian, croatian: l.croatian, english: l.english })),
+          }))}
           weeklyStats={weeklyStats}
           monthComparison={monthComparison}
           actions={{ addCategoryAction, addLevelAction, deleteCategoryAction }}

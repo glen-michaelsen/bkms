@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core"
+import { sqliteTable, text, integer, uniqueIndex } from "drizzle-orm/sqlite-core"
 
 export const users = sqliteTable("users", {
   id: integer("id").primaryKey({ autoIncrement: true }),
@@ -251,6 +251,39 @@ export const passwordResetTokens = sqliteTable("password_reset_tokens", {
     .notNull()
     .$defaultFn(() => new Date()),
 })
+
+// ── Stories ─────────────────────────────────────────────────────────────────
+// Short graded reading texts, stored line by line in all three languages so a
+// learner can reveal the translation of a single line.
+
+export const stories = sqliteTable("stories", {
+  id:         integer("id").primaryKey({ autoIncrement: true }),
+  slug:       text("slug").notNull().unique(),
+  titleSr:    text("title_sr").notNull(),
+  titleHr:    text("title_hr").notNull(),
+  titleEn:    text("title_en").notNull(),
+  levelId:    integer("level_id").notNull().references(() => levels.id),
+  categoryId: integer("category_id").notNull().references(() => categories.id),
+  published:  integer("published", { mode: "boolean" }).notNull().default(false),
+  createdAt:  integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+})
+
+export const storyLines = sqliteTable("story_lines", {
+  id:       integer("id").primaryKey({ autoIncrement: true }),
+  storyId:  integer("story_id").notNull().references(() => stories.id),
+  position: integer("position").notNull(),
+  serbian:  text("serbian").notNull(),
+  croatian: text("croatian").notNull(),
+  english:  text("english").notNull(),
+})
+
+export const userStoryProgress = sqliteTable("user_story_progress", {
+  id:            integer("id").primaryKey({ autoIncrement: true }),
+  userId:        integer("user_id").notNull().references(() => users.id),
+  storyId:       integer("story_id").notNull().references(() => stories.id),
+  understanding: text("understanding", { enum: ["few_words", "some", "most", "all"] }).notNull(),
+  readAt:        integer("read_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+}, (t) => [uniqueIndex("user_story_progress_user_story_unique").on(t.userId, t.storyId)])
 
 // ── MCP OAuth ───────────────────────────────────────────────────────────────
 // Lets a user connect an AI assistant to their learning data (read-only).
