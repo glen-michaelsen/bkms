@@ -68,7 +68,7 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       <nav className="bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-40">
-        <div className="max-w-2xl mx-auto px-5 h-16 flex items-center justify-between">
+        <div className="max-w-lg mx-auto px-5 h-16 flex items-center justify-between">
           <Link href="/stories" className="text-sm font-medium text-slate-500 hover:text-slate-900 transition">
             ← Stories
           </Link>
@@ -76,16 +76,16 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
         </div>
       </nav>
 
-      <main className="flex-1 max-w-2xl mx-auto w-full px-5 py-10">
+      <main className="flex-1 max-w-lg mx-auto w-full px-5 py-10">
         {story.imageVersion && (
           <img
             src={storyImageUrl(story.id, story.imageVersion, 480)}
             srcSet={storyImageSrcSet(story.id, story.imageVersion)}
-            sizes="(max-width: 448px) 100vw, 384px"
+            sizes="(max-width: 512px) 100vw, 472px"
             alt=""
-            width={384}
-            height={384}
-            className="w-full max-w-sm aspect-square rounded-3xl object-cover mb-7"
+            width={472}
+            height={472}
+            className="w-full aspect-square rounded-3xl object-cover mb-7"
           />
         )}
         <p className="text-xs font-semibold text-violet-600">{level?.name} · {category?.name}</p>
