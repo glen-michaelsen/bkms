@@ -9,7 +9,7 @@ import {
 } from "@/db/schema"
 import { StoryReader } from "@/components/StoryReader"
 import {
-  findKeyWords, readingMinutes, readingPair, type Language, type StudyDirection, type Understanding,
+  findKeyWords, readingMinutes, readingPair, storyImageSrcSet, storyImageUrl, type Language, type StudyDirection, type Understanding,
 } from "@/lib/stories"
 
 export const metadata: Metadata = { title: "Story | Čujemo se" }
@@ -77,6 +77,17 @@ export default async function StoryPage({ params }: { params: Promise<{ slug: st
       </nav>
 
       <main className="flex-1 max-w-2xl mx-auto w-full px-5 py-10">
+        {story.imageVersion && (
+          <img
+            src={storyImageUrl(story.id, story.imageVersion, 480)}
+            srcSet={storyImageSrcSet(story.id, story.imageVersion)}
+            sizes="(max-width: 448px) 100vw, 384px"
+            alt=""
+            width={384}
+            height={384}
+            className="w-full max-w-sm aspect-square rounded-3xl object-cover mb-7"
+          />
+        )}
         <p className="text-xs font-semibold text-violet-600">{level?.name} · {category?.name}</p>
         <h1 className="text-3xl font-extrabold text-slate-900 mt-1">{title.target}</h1>
         <p className="text-slate-500 mt-1">{title.translation}</p>

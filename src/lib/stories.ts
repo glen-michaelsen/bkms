@@ -161,6 +161,16 @@ export function findKeyWords(
   return [...verbMatches.sort((a, b) => a.order - b.order).slice(0, MAX_KEY_VERBS), ...keyWords]
 }
 
-export const toSlug = (title: string) =>
+/** Square photo widths: list thumbnail, then 1x and 2x for the story page. */
+export const STORY_IMAGE_SIZES = [240, 480, 960] as const
+export type StoryImageSize = (typeof STORY_IMAGE_SIZES)[number]
+
+export const storyImageUrl = (storyId: number, version: string, size: StoryImageSize) =>
+  `/api/story-images/${storyId}/${version}/${size}`
+
+export const storyImageSrcSet = (storyId: number, version: string) =>
+  STORY_IMAGE_SIZES.map(size => `${storyImageUrl(storyId, version, size)} ${size}w`).join(", ")
+
+export const toSlug =(title: string) =>
   title.toLowerCase().replace(/đ/g, "d").normalize("NFD").replace(/\p{M}/gu, "")
     .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "story"

@@ -60,6 +60,19 @@ async function main() {
     `CREATE UNIQUE INDEX IF NOT EXISTS user_story_progress_user_story_unique ON user_story_progress (user_id, story_id)`,
   ], "write")
 
+  await client.execute(`CREATE TABLE IF NOT EXISTS story_images (
+    story_id  integer NOT NULL REFERENCES stories(id),
+    size      integer NOT NULL,
+    mime_type text NOT NULL,
+    data      blob NOT NULL,
+    PRIMARY KEY (story_id, size)
+  )`)
+  try {
+    await client.execute("ALTER TABLE stories ADD COLUMN image_version text")
+  } catch (e) {
+    if (!/duplicate column/i.test(String(e))) throw e
+  }
+
   const files = readdirSync(DIR).filter(f => f.endsWith(".json"))
   const lookup = async (table: "levels" | "categories", name: string) => {
     const rows = await client.execute({ sql: `SELECT id FROM ${table} WHERE lower(name) = lower(?)`, args: [name] })

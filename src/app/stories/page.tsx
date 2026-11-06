@@ -2,11 +2,12 @@ import type { Metadata } from "next"
 import Link from "next/link"
 import { redirect } from "next/navigation"
 import { and, eq } from "drizzle-orm"
+import { BookText } from "lucide-react"
 import { auth } from "@/auth"
 import { db } from "@/db"
 import { categories, levels, stories, storyLines, userStoryProgress } from "@/db/schema"
 import {
-  readingMinutes, readingPair, understandingLabel, type Language, type StudyDirection,
+  readingMinutes, readingPair, storyImageSrcSet, storyImageUrl, understandingLabel, type Language, type StudyDirection,
 } from "@/lib/stories"
 
 export const metadata: Metadata = { title: "Stories | Čujemo se" }
@@ -126,8 +127,25 @@ export default async function StoriesPage({
               <Link
                 key={story.id}
                 href={`/stories/${story.slug}`}
-                className="block bg-white rounded-2xl border border-slate-100 p-5 hover:shadow-md hover:border-violet-100 transition-all group"
+                className="flex items-center gap-4 bg-white rounded-2xl border border-slate-100 p-4 hover:shadow-md hover:border-violet-100 transition-all group"
               >
+                {story.imageVersion ? (
+                  <img
+                    src={storyImageUrl(story.id, story.imageVersion, 240)}
+                    srcSet={storyImageSrcSet(story.id, story.imageVersion)}
+                    sizes="96px"
+                    alt=""
+                    width={96}
+                    height={96}
+                    loading="lazy"
+                    className="w-24 h-24 rounded-xl object-cover flex-shrink-0"
+                  />
+                ) : (
+                  <div className="w-24 h-24 rounded-xl bg-violet-50 text-violet-400 flex items-center justify-center flex-shrink-0">
+                    <BookText className="w-7 h-7" />
+                  </div>
+                )}
+                <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <h2 className="text-lg font-bold text-slate-900 group-hover:text-violet-700 transition-colors">
@@ -144,6 +162,7 @@ export default async function StoriesPage({
                 <p className="text-xs text-slate-400 mt-3">
                   {levelName.get(story.levelId)} · {categoryName.get(story.categoryId)} · {readingMinutes(lines)} min read
                 </p>
+                </div>
               </Link>
             )
           })}

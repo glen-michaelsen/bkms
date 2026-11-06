@@ -1,4 +1,4 @@
-import { sqliteTable, text, integer, uniqueIndex } from "drizzle-orm/sqlite-core"
+import { sqliteTable, text, integer, blob, primaryKey, uniqueIndex } from "drizzle-orm/sqlite-core"
 
 export const users = sqliteTable("users", {
   id: integer("id").primaryKey({ autoIncrement: true }),
@@ -265,8 +265,16 @@ export const stories = sqliteTable("stories", {
   levelId:    integer("level_id").notNull().references(() => levels.id),
   categoryId: integer("category_id").notNull().references(() => categories.id),
   published:  integer("published", { mode: "boolean" }).notNull().default(false),
+  imageVersion: text("image_version"), // changes with each new photo, so its URLs can be cached forever
   createdAt:  integer("created_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
 })
+
+export const storyImages = sqliteTable("story_images", {
+  storyId:  integer("story_id").notNull().references(() => stories.id),
+  size:     integer("size").notNull(),
+  mimeType: text("mime_type").notNull(),
+  data:     blob("data", { mode: "buffer" }).notNull(),
+}, (t) => [primaryKey({ columns: [t.storyId, t.size] })])
 
 export const storyLines = sqliteTable("story_lines", {
   id:       integer("id").primaryKey({ autoIncrement: true }),

@@ -167,6 +167,7 @@ export default async function AdminPage() {
             id: story.id, slug: story.slug,
             titleSr: story.titleSr, titleHr: story.titleHr, titleEn: story.titleEn,
             levelId: story.levelId, categoryId: story.categoryId, published: story.published,
+            imageVersion: story.imageVersion,
             lines: allStoryLines.filter(l => l.storyId === story.id)
               .map(l => ({ serbian: l.serbian, croatian: l.croatian, english: l.english })),
           }))}

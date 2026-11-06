@@ -2,9 +2,11 @@
 
 import { useState, useTransition } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react"
 import { deleteStoryAction, saveStoryAction } from "@/app/stories/actions"
-import { countWords, LEARNER_WORDS_PER_MINUTE, MAX_STORY_WORDS } from "@/lib/stories"
+import { countWords, LEARNER_WORDS_PER_MINUTE, MAX_STORY_WORDS, storyImageUrl } from "@/lib/stories"
+import { StoryPhotoField, type PhotoChange } from "@/components/StoryPhotoField"
 
 type Option = { id: number; name: string }
 type Line = { serbian: string; croatian: string; english: string }
@@ -12,9 +14,11 @@ export type AdminStory = {
   id: number; slug: string
   titleSr: string; titleHr: string; titleEn: string
   levelId: number; categoryId: number; published: boolean
+  imageVersion: string | null
   lines: Line[]
 }
-type Draft = Omit<AdminStory, "id" | "slug" | "levelId" | "categoryId"> & {
+type Draft = Omit<AdminStory, "id" | "slug" | "levelId" | "categoryId" | "imageVersion"> & {
+  imageVersion?: string | null
   id?: number; levelId: number | ""; categoryId: number | ""
 }
 
@@ -25,12 +29,23 @@ const blankDraft = (): Draft => ({
 
 const fieldCls = "w-full px-3 py-2 border border-slate-200 rounded-xl text-sm bg-slate-50 focus:bg-white focus:outline-none focus:ring-2 focus:ring-violet-500"
 
+async function savePhoto(storyId: number, photo: PhotoChange): Promise<boolean> {
+  if (photo.kind === "keep") return true
+  const url = `/api/admin/stories/${storyId}/image`
+  if (photo.kind === "remove") return (await fetch(url, { method: "DELETE" })).ok
+  const form = new FormData()
+  for (const [size, image] of Object.entries(photo.images)) form.append(size, image)
+  return (await fetch(url, { method: "POST", body: form })).ok
+}
+
 function StoryForm({ initial, levels, categories, onDone }: {
   initial: Draft; levels: Option[]; categories: Option[]; onDone: () => void
 }) {
   const [draft, setDraft] = useState(initial)
   const [error, setError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
+  const [photo, setPhoto] = useState<PhotoChange>({ kind: "keep" })
+  const router = useRouter()
 
   const setLine = (index: number, key: keyof Line, value: string) =>
     setDraft(d => ({ ...d, lines: d.lines.map((l, i) => (i === index ? { ...l, [key]: value } : l)) }))
@@ -52,8 +67,16 @@ function StoryForm({ initial, levels, categories, onDone }: {
     const { levelId, categoryId } = draft
     startTransition(async () => {
       const result = await saveStoryAction({ ...draft, levelId, categoryId })
-      if (result.error) setError(result.error)
-      else onDone()
+      if (result.error || !result.id) return setError(result.error ?? "Couldn't save the story")
+
+      const saved = await savePhoto(result.id, photo)
+      if (!saved) {
+        // The text is saved by now, so a retry must update this story rather than create another.
+        setDraft(d => ({ ...d, id: result.id }))
+        return setError("The story was saved, but the photo wasn't. Try saving again.")
+      }
+      router.refresh()
+      onDone()
     })
   }
 
@@ -94,6 +117,11 @@ function StoryForm({ initial, levels, categories, onDone }: {
           </select>
         </label>
       </div>
+
+      <StoryPhotoField
+        currentUrl={draft.id && draft.imageVersion ? storyImageUrl(draft.id, draft.imageVersion, 240) : null}
+        onChange={setPhoto}
+      />
 
       <div className="space-y-3">
         <div className="flex items-baseline justify-between">
@@ -184,7 +212,17 @@ export function StoryAdmin({ stories, levels, categories }: {
       {stories.length === 0 && <p className="text-sm text-slate-400 text-center py-10">No stories yet</p>}
       {stories.map(story => (
         <div key={story.id} className="bg-white rounded-3xl border border-slate-100 shadow-sm p-5 flex items-center justify-between gap-3">
-          <div className="min-w-0">
+          {story.imageVersion && (
+            <img
+              src={storyImageUrl(story.id, story.imageVersion, 240)}
+              alt=""
+              width={56}
+              height={56}
+              loading="lazy"
+              className="w-14 h-14 rounded-xl object-cover flex-shrink-0"
+            />
+          )}
+          <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <p className="font-bold text-slate-900 truncate">{story.titleSr}</p>
               <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${story.published ? "bg-green-50 text-green-600" : "bg-slate-100 text-slate-500"}`}>

@@ -4,7 +4,7 @@ import { eq } from "drizzle-orm"
 import { revalidatePath } from "next/cache"
 import { auth } from "@/auth"
 import { db } from "@/db"
-import { categories, levels, stories, storyLines, userStoryProgress } from "@/db/schema"
+import { categories, levels, stories, storyImages, storyLines, userStoryProgress } from "@/db/schema"
 import { toSlug, UNDERSTANDING_OPTIONS, type StoryText, type Understanding } from "@/lib/stories"
 
 export async function saveUnderstandingAction(storyId: number, understanding: Understanding): Promise<void> {
@@ -93,6 +93,7 @@ export async function deleteStoryAction(id: number): Promise<{ error?: string }>
   await db.batch([
     db.delete(userStoryProgress).where(eq(userStoryProgress.storyId, id)),
     db.delete(storyLines).where(eq(storyLines.storyId, id)),
+    db.delete(storyImages).where(eq(storyImages.storyId, id)),
     db.delete(stories).where(eq(stories.id, id)),
   ])
   refreshStoryPages()
