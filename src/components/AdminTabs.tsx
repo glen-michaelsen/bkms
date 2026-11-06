@@ -8,6 +8,7 @@ import { AddNamedItem } from "./AddNamedItem"
 import { CsvUpload } from "./CsvUpload"
 import { VerbCsvUpload } from "./VerbCsvUpload"
 import { EmailAdmin } from "./EmailAdmin"
+import { StoryAdmin, type AdminStory } from "./StoryAdmin"
 import {
   updateWordAction, deleteWordAction,
   updateSentenceAction, deleteSentenceAction,
@@ -58,6 +59,7 @@ export type AdminTabsProps = {
   words: Word[]
   sentences: Sentence[]
   verbs: Verb[]
+  stories: AdminStory[]
   weeklyStats: WeekStat[]
   monthComparison: MonthComparison
   actions: ServerActions
@@ -65,7 +67,7 @@ export type AdminTabsProps = {
 
 // ── Tab definitions ──────────────────────────────────────────────────────────
 
-const TABS = ["Stats", "Email", "Taxonomies", "Words", "Sentences", "Verbs"] as const
+const TABS = ["Stats", "Email", "Taxonomies", "Words", "Sentences", "Verbs", "Stories"] as const
 type Tab = (typeof TABS)[number]
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -1112,7 +1114,7 @@ function VerbsPanel({ verbs }: { verbs: Verb[] }) {
 
 // ── Root component ───────────────────────────────────────────────────────────
 
-export function AdminTabs({ stats, adminEmail, categories, levels, words, sentences, verbs, weeklyStats, monthComparison, actions }: AdminTabsProps) {
+export function AdminTabs({ stats, adminEmail, categories, levels, words, sentences, verbs, stories, weeklyStats, monthComparison, actions }: AdminTabsProps) {
   const [activeTab, setActiveTab] = useState<Tab>("Stats")
 
   return (
@@ -1141,6 +1143,7 @@ export function AdminTabs({ stats, adminEmail, categories, levels, words, senten
       {activeTab === "Words"       && <WordsPanel words={words} categories={categories} levels={levels} />}
       {activeTab === "Sentences"   && <SentencesPanel sentences={sentences} categories={categories} levels={levels} />}
       {activeTab === "Verbs"       && <VerbsPanel verbs={verbs} />}
+      {activeTab === "Stories"     && <StoryAdmin stories={stories} levels={levels} categories={categories} />}
     </>
   )
 }

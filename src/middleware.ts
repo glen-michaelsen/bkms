@@ -25,5 +25,5 @@ export default auth((req) => {
 })
 
 export const config = {
-  matcher: ["/((?!api/auth|api/cron|api/oauth|mcp(?:/|$)|\\.well-known|_next/static|_next/image|favicon.ico|.*\\.svg|.*\\.png|.*\\.jpg|.*\\.ico|.*\\.webp|.*\\.json|manifest).*)"],
+  matcher: ["/((?!api/auth|api/cron|api/oauth|api/story-images|mcp(?:/|$)|\\.well-known|_next/static|_next/image|favicon.ico|.*\\.svg|.*\\.png|.*\\.jpg|.*\\.ico|.*\\.webp|.*\\.json|manifest).*)"],
 }

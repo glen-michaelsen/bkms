@@ -11,7 +11,7 @@ import { ActivityGraph } from "@/components/ActivityGraph"
 import { CategoryTags } from "@/components/CategoryTags"
 import { DailySentences } from "@/components/DailySentences"
 import { Greeting } from "@/components/Greeting"
-import { BookOpen, MessageSquare, Grid3x3, Shuffle, ArrowRight, Check, User, List, Sparkles, ALargeSmall, Hash, SpellCheck } from "lucide-react"
+import { BookOpen, MessageSquare, Grid3x3, Shuffle, ArrowRight, Check, User, List, Sparkles, ALargeSmall, Hash, SpellCheck, BookText } from "lucide-react"
 
 const languageInfo = {
   sr: { label: "Serbian", flag: "🇷🇸", native: "Srpski" },
@@ -341,6 +341,13 @@ export default async function DashboardPage() {
               name="Numbers"
               solved={false}
               subtitle="Learn to count"
+            />
+            <GameCard
+              href="/stories"
+              icon={BookText}
+              name="Stories"
+              solved={false}
+              subtitle="Read short stories"
             />
           </div>
         </div>
