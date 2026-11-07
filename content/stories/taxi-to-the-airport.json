@@ -1,0 +1,123 @@
+{
+  "slug": "taxi-to-the-airport",
+  "title": {
+    "serbian": "Taksi do aerodroma",
+    "croatian": "Taksi do zračne luke",
+    "english": "A taxi to the airport"
+  },
+  "level": "Beginner",
+  "category": "Transportation",
+  "published": true,
+  "lines": [
+    {
+      "serbian": "Pet je sati ujutru.",
+      "croatian": "Pet je sati ujutro.",
+      "english": "It's five in the morning."
+    },
+    {
+      "serbian": "Porodica Ilić stoji ispred zgrade sa četiri kofera.",
+      "croatian": "Obitelj Ilić stoji ispred zgrade s četiri kofera.",
+      "english": "The Ilić family is standing outside their building with four suitcases."
+    },
+    {
+      "serbian": "Taksi dolazi. Vozač izlazi i gleda kofere.",
+      "croatian": "Taksi dolazi. Vozač izlazi i gleda kofere.",
+      "english": "The taxi arrives. The driver gets out and looks at the suitcases."
+    },
+    {
+      "serbian": "– Ovo je mnogo kofera! – kaže.",
+      "croatian": "– Ovo je puno kofera! – kaže.",
+      "english": "\"That's a lot of suitcases!\" he says."
+    },
+    {
+      "serbian": "– Idemo na more na dve nedelje – kaže mama.",
+      "croatian": "– Idemo na more na dva tjedna – kaže mama.",
+      "english": "\"We're going to the seaside for two weeks,\" says Mum."
+    },
+    {
+      "serbian": "Vozač stavlja tri kofera u gepek.",
+      "croatian": "Vozač stavlja tri kofera u prtljažnik.",
+      "english": "The driver puts three suitcases in the boot."
+    },
+    {
+      "serbian": "Četvrti kofer ide na zadnje sedište, pored dece.",
+      "croatian": "Četvrti kofer ide na stražnje sjedalo, pored djece.",
+      "english": "The fourth suitcase goes on the back seat, next to the children."
+    },
+    {
+      "serbian": "– Na aerodrom, molim vas – kaže tata.",
+      "croatian": "– Do zračne luke, molim vas – kaže tata.",
+      "english": "\"To the airport, please,\" says Dad."
+    },
+    {
+      "serbian": "Ulice su prazne. Deca spavaju.",
+      "croatian": "Ulice su prazne. Djeca spavaju.",
+      "english": "The streets are empty. The children are asleep."
+    },
+    {
+      "serbian": "– Imaš li pasoše? – pita mama.",
+      "croatian": "– Imaš li putovnice? – pita mama.",
+      "english": "\"Do you have the passports?\" asks Mum."
+    },
+    {
+      "serbian": "Tata gleda u torbu. Gleda u džepove.",
+      "croatian": "Tata gleda u torbu. Gleda u džepove.",
+      "english": "Dad looks in his bag. He looks in his pockets."
+    },
+    {
+      "serbian": "– Nemam.",
+      "croatian": "– Nemam.",
+      "english": "\"No.\""
+    },
+    {
+      "serbian": "– Kako nemaš?!",
+      "croatian": "– Kako nemaš?!",
+      "english": "\"What do you mean, no?!\""
+    },
+    {
+      "serbian": "– Stanite, molim vas! Moramo nazad!",
+      "croatian": "– Stanite, molim vas! Moramo natrag!",
+      "english": "\"Stop, please! We have to go back!\""
+    },
+    {
+      "serbian": "Vozač okreće taksi i vozi nazad.",
+      "croatian": "Vozač okreće taksi i vozi natrag.",
+      "english": "The driver turns the taxi around and drives back."
+    },
+    {
+      "serbian": "Svi gledaju tatu.",
+      "croatian": "Svi gledaju tatu.",
+      "english": "Everyone looks at Dad."
+    },
+    {
+      "serbian": "Mala Ana otvara oči i vadi nešto iz svog ranca.",
+      "croatian": "Mala Ana otvara oči i vadi nešto iz svog ruksaka.",
+      "english": "Little Ana opens her eyes and takes something out of her backpack."
+    },
+    {
+      "serbian": "– Da li tražite ovo?",
+      "croatian": "– Tražite li ovo?",
+      "english": "\"Are you looking for these?\""
+    },
+    {
+      "serbian": "U ruci ima četiri pasoša.",
+      "croatian": "U ruci ima četiri putovnice.",
+      "english": "She has four passports in her hand."
+    },
+    {
+      "serbian": "– Htela sam da ih čuvam – kaže.",
+      "croatian": "– Htjela sam ih čuvati – kaže.",
+      "english": "\"I wanted to look after them,\" she says."
+    },
+    {
+      "serbian": "Vozač se smeje i ponovo okreće taksi.",
+      "croatian": "Vozač se smije i ponovno okreće taksi.",
+      "english": "The driver laughs and turns the taxi around again."
+    },
+    {
+      "serbian": "– Na aerodrom!",
+      "croatian": "– Do zračne luke!",
+      "english": "\"To the airport!\""
+    }
+  ]
+}

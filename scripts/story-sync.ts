@@ -1,12 +1,13 @@
 /**
- * Creates the stories tables if needed, then adds any stories from
- * content/stories/*.json that aren't in the database yet.
+ * Creates the stories tables if needed, then adds the named stories from
+ * content/stories/<slug>.json.
  *
- * Existing stories are skipped, because admin edits live in the database and
- * must not be overwritten. Levels and categories are matched by name since
- * their ids differ between databases.
+ * Only named slugs are added: a story deleted in Admin still has its file here,
+ * so adding every file would bring deleted stories back. Existing stories are
+ * skipped, because admin edits live in the database and must not be overwritten.
+ * Levels and categories are matched by name since their ids differ between databases.
  *
- *   npm run db:stories
+ *   npm run db:stories -- free-coffee the-red-dress
  */
 import { readFileSync, readdirSync } from "fs"
 import { join } from "path"
@@ -73,6 +74,17 @@ async function main() {
     if (!/duplicate column/i.test(String(e))) throw e
   }
 
+  const requested = process.argv.slice(2)
+  if (requested.length === 0) {
+    console.log("Tables ready. Name the story slugs to add: npm run db:stories -- <slug> [<slug>...]")
+    return client.close()
+  }
+  const missing = requested.filter(slug => !readdirSync(DIR).some(f => {
+    const story = JSON.parse(readFileSync(join(DIR, f), "utf8")) as StoryFile
+    return story.slug === slug
+  }))
+  if (missing.length > 0) throw new Error(`No story file with slug: ${missing.join(", ")}`)
+
   const files = readdirSync(DIR).filter(f => f.endsWith(".json"))
   const lookup = async (table: "levels" | "categories", name: string) => {
     const rows = await client.execute({ sql: `SELECT id FROM ${table} WHERE lower(name) = lower(?)`, args: [name] })
@@ -82,6 +94,7 @@ async function main() {
 
   for (const file of files) {
     const story = JSON.parse(readFileSync(join(DIR, file), "utf8")) as StoryFile
+    if (!requested.includes(story.slug)) continue
     const existing = await client.execute({ sql: "SELECT id FROM stories WHERE slug = ?", args: [story.slug] })
     if (existing.rows.length > 0) {
       console.log(`  skipped  ${story.slug} (already exists)`)

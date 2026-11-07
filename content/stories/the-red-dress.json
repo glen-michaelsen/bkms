@@ -1,0 +1,113 @@
+{
+  "slug": "the-red-dress",
+  "title": {
+    "serbian": "Crvena haljina",
+    "croatian": "Crvena haljina",
+    "english": "The red dress"
+  },
+  "level": "Beginner",
+  "category": "Clothes",
+  "published": true,
+  "lines": [
+    {
+      "serbian": "Sara ulazi u prodavnicu.",
+      "croatian": "Sara ulazi u trgovinu.",
+      "english": "Sara walks into a shop."
+    },
+    {
+      "serbian": "U subotu ima svadbu i treba joj nova haljina.",
+      "croatian": "U subotu ima vjenčanje i treba joj nova haljina.",
+      "english": "She has a wedding on Saturday and needs a new dress."
+    },
+    {
+      "serbian": "Prodavačica pita: – Mogu li da vam pomognem?",
+      "croatian": "Prodavačica pita: – Mogu li vam pomoći?",
+      "english": "The shop assistant asks: \"Can I help you?\""
+    },
+    {
+      "serbian": "– Da, tražim haljinu.",
+      "croatian": "– Da, tražim haljinu.",
+      "english": "\"Yes, I'm looking for a dress.\""
+    },
+    {
+      "serbian": "– Koju boju volite?",
+      "croatian": "– Koju boju volite?",
+      "english": "\"What colour do you like?\""
+    },
+    {
+      "serbian": "– Plavu ili zelenu.",
+      "croatian": "– Plavu ili zelenu.",
+      "english": "\"Blue or green.\""
+    },
+    {
+      "serbian": "Sara proba plavu haljinu.",
+      "croatian": "Sara isprobava plavu haljinu.",
+      "english": "Sara tries on a blue dress."
+    },
+    {
+      "serbian": "Premala je.",
+      "croatian": "Premala je.",
+      "english": "It's too small."
+    },
+    {
+      "serbian": "Onda proba zelenu haljinu.",
+      "croatian": "Onda isprobava zelenu haljinu.",
+      "english": "Then she tries on a green dress."
+    },
+    {
+      "serbian": "Prevelika je.",
+      "croatian": "Prevelika je.",
+      "english": "It's too big."
+    },
+    {
+      "serbian": "Sara je tužna.",
+      "croatian": "Sara je tužna.",
+      "english": "Sara is sad."
+    },
+    {
+      "serbian": "Onda vidi crvenu haljinu na kraju prodavnice.",
+      "croatian": "Onda vidi crvenu haljinu na kraju trgovine.",
+      "english": "Then she sees a red dress at the back of the shop."
+    },
+    {
+      "serbian": "– A ova? – pita.",
+      "croatian": "– A ova? – pita.",
+      "english": "\"And this one?\" she asks."
+    },
+    {
+      "serbian": "Haljina je savršena.",
+      "croatian": "Haljina je savršena.",
+      "english": "The dress is perfect."
+    },
+    {
+      "serbian": "– Koliko košta?",
+      "croatian": "– Koliko košta?",
+      "english": "\"How much is it?\""
+    },
+    {
+      "serbian": "– Pedeset evra.",
+      "croatian": "– Pedeset eura.",
+      "english": "\"Fifty euros.\""
+    },
+    {
+      "serbian": "– Skupo je, ali uzimam je!",
+      "croatian": "– Skupo je, ali uzimam je!",
+      "english": "\"It's expensive, but I'll take it!\""
+    },
+    {
+      "serbian": "U subotu svi pitaju: – Gde si kupila tu lepu haljinu?",
+      "croatian": "U subotu svi pitaju: – Gdje si kupila tu lijepu haljinu?",
+      "english": "On Saturday everyone asks: \"Where did you buy that beautiful dress?\""
+    },
+    {
+      "serbian": "Sara se smeje.",
+      "croatian": "Sara se smije.",
+      "english": "Sara laughs."
+    },
+    {
+      "serbian": "– A tražila sam plavu!",
+      "croatian": "– A tražila sam plavu!",
+      "english": "\"And I was looking for a blue one!\""
+    }
+  ]
+}
