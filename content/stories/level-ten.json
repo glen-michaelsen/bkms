@@ -1,0 +1,113 @@
+{
+  "slug": "level-ten",
+  "title": {
+    "serbian": "Deseti nivo",
+    "croatian": "Deseta razina",
+    "english": "Level ten"
+  },
+  "level": "Beginner",
+  "category": "Technology",
+  "published": true,
+  "lines": [
+    {
+      "serbian": "Lena ima deset godina.",
+      "croatian": "Lena ima deset godina.",
+      "english": "Lena is ten years old."
+    },
+    {
+      "serbian": "Posle škole igra igricu na računaru.",
+      "croatian": "Nakon škole igra igricu na računalu.",
+      "english": "After school she plays a game on the computer."
+    },
+    {
+      "serbian": "U igrici je ona mali vitez.",
+      "croatian": "U igrici je ona mali vitez.",
+      "english": "In the game she's a little knight."
+    },
+    {
+      "serbian": "Vitez mora da spase zamak od zmaja.",
+      "croatian": "Vitez mora spasiti dvorac od zmaja.",
+      "english": "The knight has to save the castle from a dragon."
+    },
+    {
+      "serbian": "Lena je već na desetom nivou.",
+      "croatian": "Lena je već na desetoj razini.",
+      "english": "Lena is already on level ten."
+    },
+    {
+      "serbian": "Zmaj je veliki i zelen.",
+      "croatian": "Zmaj je veliki i zelen.",
+      "english": "The dragon is big and green."
+    },
+    {
+      "serbian": "Lena pokušava. Gubi.",
+      "croatian": "Lena pokušava. Gubi.",
+      "english": "Lena tries. She loses."
+    },
+    {
+      "serbian": "Pokušava opet. Opet gubi.",
+      "croatian": "Pokušava opet. Opet gubi.",
+      "english": "She tries again. She loses again."
+    },
+    {
+      "serbian": "– Lena, večera! – zove mama.",
+      "croatian": "– Lena, večera! – zove mama.",
+      "english": "\"Lena, dinner!\" calls Mum."
+    },
+    {
+      "serbian": "– Još pet minuta!",
+      "croatian": "– Još pet minuta!",
+      "english": "\"Five more minutes!\""
+    },
+    {
+      "serbian": "Njen mali brat Vuk ulazi u sobu.",
+      "croatian": "Njezin mali brat Vuk ulazi u sobu.",
+      "english": "Her little brother Vuk comes into the room."
+    },
+    {
+      "serbian": "Gleda ekran.",
+      "croatian": "Gleda ekran.",
+      "english": "He looks at the screen."
+    },
+    {
+      "serbian": "– Zašto ne koristiš mač?",
+      "croatian": "– Zašto ne koristiš mač?",
+      "english": "\"Why don't you use the sword?\""
+    },
+    {
+      "serbian": "– Kakav mač?",
+      "croatian": "– Kakav mač?",
+      "english": "\"What sword?\""
+    },
+    {
+      "serbian": "– Tamo, iza drveta.",
+      "croatian": "– Tamo, iza stabla.",
+      "english": "\"There, behind the tree.\""
+    },
+    {
+      "serbian": "Lena uzima mač. Zmaj pada.",
+      "croatian": "Lena uzima mač. Zmaj pada.",
+      "english": "Lena takes the sword. The dragon falls."
+    },
+    {
+      "serbian": "Pobedila je!",
+      "croatian": "Pobijedila je!",
+      "english": "She's won!"
+    },
+    {
+      "serbian": "– Kako si to znao? Imaš samo šest godina!",
+      "croatian": "– Kako si to znao? Imaš samo šest godina!",
+      "english": "\"How did you know that? You're only six!\""
+    },
+    {
+      "serbian": "– Igram ovo dok si ti u školi – kaže Vuk.",
+      "croatian": "– Igram ovo dok si ti u školi – kaže Vuk.",
+      "english": "\"I play this while you're at school,\" says Vuk."
+    },
+    {
+      "serbian": "Mama ih ponovo zove. Oboje trče na večeru.",
+      "croatian": "Mama ih ponovno zove. Oboje trče na večeru.",
+      "english": "Mum calls them again. They both run to dinner."
+    }
+  ]
+}

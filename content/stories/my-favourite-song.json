@@ -1,0 +1,103 @@
+{
+  "slug": "my-favourite-song",
+  "title": {
+    "serbian": "Omiljena pesma",
+    "croatian": "Omiljena pjesma",
+    "english": "My favourite song"
+  },
+  "level": "Beginner",
+  "category": "Hobbies and free time",
+  "published": true,
+  "lines": [
+    {
+      "serbian": "Tijana svako jutro ide autobusom na posao.",
+      "croatian": "Tijana svako jutro ide autobusom na posao.",
+      "english": "Every morning Tijana takes the bus to work."
+    },
+    {
+      "serbian": "Uvek ima slušalice na ušima.",
+      "croatian": "Uvijek ima slušalice na ušima.",
+      "english": "She always has her headphones on."
+    },
+    {
+      "serbian": "Danas pušta svoju omiljenu pesmu.",
+      "croatian": "Danas pušta svoju omiljenu pjesmu.",
+      "english": "Today she plays her favourite song."
+    },
+    {
+      "serbian": "Muzika je glasna i Tijana je srećna.",
+      "croatian": "Glazba je glasna i Tijana je sretna.",
+      "english": "The music is loud and Tijana is happy."
+    },
+    {
+      "serbian": "Zatvara oči i tiho peva.",
+      "croatian": "Zatvara oči i tiho pjeva.",
+      "english": "She closes her eyes and sings quietly."
+    },
+    {
+      "serbian": "Onda peva malo glasnije.",
+      "croatian": "Onda pjeva malo glasnije.",
+      "english": "Then she sings a little louder."
+    },
+    {
+      "serbian": "Glava joj se pomera u ritmu.",
+      "croatian": "Glava joj se pomiče u ritmu.",
+      "english": "Her head moves to the rhythm."
+    },
+    {
+      "serbian": "Dolazi refren. Tijana peva iz sveg glasa.",
+      "croatian": "Dolazi refren. Tijana pjeva iz sveg glasa.",
+      "english": "The chorus comes. Tijana sings at the top of her voice."
+    },
+    {
+      "serbian": "Otvara oči.",
+      "croatian": "Otvara oči.",
+      "english": "She opens her eyes."
+    },
+    {
+      "serbian": "Ceo autobus je gleda.",
+      "croatian": "Cijeli autobus je gleda.",
+      "english": "The whole bus is looking at her."
+    },
+    {
+      "serbian": "Neki ljudi se smeju.",
+      "croatian": "Neki ljudi se smiju.",
+      "english": "Some people are laughing."
+    },
+    {
+      "serbian": "Mali dečak je snima telefonom.",
+      "croatian": "Mali dječak je snima mobitelom.",
+      "english": "A little boy is filming her on a phone."
+    },
+    {
+      "serbian": "Tijana skida slušalice. Lice joj je crveno.",
+      "croatian": "Tijana skida slušalice. Lice joj je crveno.",
+      "english": "Tijana takes off her headphones. Her face is red."
+    },
+    {
+      "serbian": "Stariji čovek pored nje se naginje.",
+      "croatian": "Stariji čovjek pored nje se naginje.",
+      "english": "An older man next to her leans over."
+    },
+    {
+      "serbian": "– Izvinite, koja je to pesma?",
+      "croatian": "– Oprostite, koja je to pjesma?",
+      "english": "\"Excuse me, what song is that?\""
+    },
+    {
+      "serbian": "– Zašto?",
+      "croatian": "– Zašto?",
+      "english": "\"Why?\""
+    },
+    {
+      "serbian": "– Unuka je stalno sluša. Ali ona peva bolje.",
+      "croatian": "– Unuka je stalno sluša. Ali ona pjeva bolje.",
+      "english": "\"My granddaughter listens to it all the time. But she sings better.\""
+    },
+    {
+      "serbian": "Tijana se smeje, stavlja slušalice i ćuti do kraja puta.",
+      "croatian": "Tijana se smije, stavlja slušalice i šuti do kraja puta.",
+      "english": "Tijana laughs, puts her headphones on and stays quiet for the rest of the trip."
+    }
+  ]
+}

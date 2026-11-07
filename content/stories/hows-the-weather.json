@@ -1,0 +1,103 @@
+{
+  "slug": "hows-the-weather",
+  "title": {
+    "serbian": "Kakvo je vreme kod tebe?",
+    "croatian": "Kakvo je vrijeme kod tebe?",
+    "english": "How's the weather there?"
+  },
+  "level": "Beginner",
+  "category": "Weather",
+  "published": true,
+  "lines": [
+    {
+      "serbian": "Ivana živi u Beogradu, a njen brat Miloš u Kopenhagenu.",
+      "croatian": "Ivana živi u Beogradu, a njezin brat Miloš u Kopenhagenu.",
+      "english": "Ivana lives in Belgrade, and her brother Miloš in Copenhagen."
+    },
+    {
+      "serbian": "Svake nedelje se čuju telefonom.",
+      "croatian": "Svake nedjelje se čuju telefonom.",
+      "english": "They talk on the phone every Sunday."
+    },
+    {
+      "serbian": "– Kakvo je vreme kod tebe? – pita Miloš.",
+      "croatian": "– Kakvo je vrijeme kod tebe? – pita Miloš.",
+      "english": "\"How's the weather where you are?\" asks Miloš."
+    },
+    {
+      "serbian": "– Divno! Sunčano je i trideset stepeni.",
+      "croatian": "– Divno! Sunčano je i trideset stupnjeva.",
+      "english": "\"Lovely! It's sunny and thirty degrees.\""
+    },
+    {
+      "serbian": "– Trideset? Kod nas je petnaest i pada kiša.",
+      "croatian": "– Trideset? Kod nas je petnaest i pada kiša.",
+      "english": "\"Thirty? Here it's fifteen and raining.\""
+    },
+    {
+      "serbian": "– U julu?",
+      "croatian": "– U srpnju?",
+      "english": "\"In July?\""
+    },
+    {
+      "serbian": "– Da, u julu. I duva vetar.",
+      "croatian": "– Da, u srpnju. I puše vjetar.",
+      "english": "\"Yes, in July. And it's windy.\""
+    },
+    {
+      "serbian": "– Jadan moj! Ja sedim u bašti i pijem hladnu limunadu.",
+      "croatian": "– Jadan moj! Ja sjedim u vrtu i pijem hladnu limunadu.",
+      "english": "\"You poor thing! I'm sitting in the garden drinking cold lemonade.\""
+    },
+    {
+      "serbian": "– Ja sam danas vozio bicikl u jakni.",
+      "croatian": "– Ja sam danas vozio bicikl u jakni.",
+      "english": "\"I rode my bike in a jacket today.\""
+    },
+    {
+      "serbian": "Šest meseci kasnije Miloš ponovo zove.",
+      "croatian": "Šest mjeseci kasnije Miloš ponovno zove.",
+      "english": "Six months later Miloš calls again."
+    },
+    {
+      "serbian": "Sad je januar.",
+      "croatian": "Sad je siječanj.",
+      "english": "Now it's January."
+    },
+    {
+      "serbian": "– Kako je u Beogradu?",
+      "croatian": "– Kako je u Beogradu?",
+      "english": "\"How is it in Belgrade?\""
+    },
+    {
+      "serbian": "– Užasno! Minus deset i sneg do kolena. A kod tebe?",
+      "croatian": "– Užasno! Minus deset i snijeg do koljena. A kod tebe?",
+      "english": "\"Awful! Minus ten and snow up to my knees. And where you are?\""
+    },
+    {
+      "serbian": "– Tri stepena i pada kiša.",
+      "croatian": "– Tri stupnja i pada kiša.",
+      "english": "\"Three degrees and raining.\""
+    },
+    {
+      "serbian": "– Opet kiša?",
+      "croatian": "– Opet kiša?",
+      "english": "\"Rain again?\""
+    },
+    {
+      "serbian": "– Uvek kiša – smeje se Miloš. – Ali nemam sneg.",
+      "croatian": "– Uvijek kiša – smije se Miloš. – Ali nemam snijeg.",
+      "english": "\"Always rain,\" Miloš laughs. \"But I have no snow.\""
+    },
+    {
+      "serbian": "– Znaš šta? U julu dođi ti meni.",
+      "croatian": "– Znaš što? U srpnju dođi ti meni.",
+      "english": "\"You know what? In July, you come to me.\""
+    },
+    {
+      "serbian": "– Dogovoreno. A ti u januaru ostani kod kuće!",
+      "croatian": "– Dogovoreno. A ti u siječnju ostani kod kuće!",
+      "english": "\"Deal. And in January, you stay home!\""
+    }
+  ]
+}
