@@ -1,8 +1,8 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { redirect } from "next/navigation"
-import { and, eq } from "drizzle-orm"
-import { BookText } from "lucide-react"
+import { and, asc, eq } from "drizzle-orm"
+import { BookText, Check } from "lucide-react"
 import { auth } from "@/auth"
 import { db } from "@/db"
 import { categories, levels, stories, storyLines, userStoryProgress } from "@/db/schema"
@@ -16,8 +16,9 @@ function Chip({ href, active, children }: { href: string; active: boolean; child
   return (
     <Link
       href={href}
-      className={`px-3 py-1.5 text-sm font-semibold rounded-full transition-colors ${
-        active ? "bg-violet-600 text-white" : "bg-white border border-slate-200 text-slate-600 hover:border-violet-300"
+      aria-current={active ? "true" : undefined}
+      className={`px-3.5 py-1.5 text-sm font-semibold rounded-full whitespace-nowrap transition-colors ${
+        active ? "bg-slate-900 text-white" : "bg-white border border-slate-200 text-slate-600 hover:border-slate-400"
       }`}
     >
       {children}
@@ -42,7 +43,9 @@ export default async function StoriesPage({
     db.select().from(stories).where(eq(stories.published, true)),
     db.select({
       storyId: storyLines.storyId, serbian: storyLines.serbian, croatian: storyLines.croatian, english: storyLines.english,
-    }).from(storyLines).innerJoin(stories, and(eq(storyLines.storyId, stories.id), eq(stories.published, true))),
+    }).from(storyLines)
+      .innerJoin(stories, and(eq(storyLines.storyId, stories.id), eq(stories.published, true)))
+      .orderBy(asc(storyLines.position)),
     db.select().from(levels).orderBy(levels.id),
     db.select().from(categories),
     db.select().from(userStoryProgress).where(eq(userStoryProgress.userId, userId)),
@@ -64,36 +67,34 @@ export default async function StoriesPage({
   const usedCategories = categoryRows
     .filter(c => storyRows.some(s => s.categoryId === c.id))
     .sort((a, b) => a.name.localeCompare(b.name))
-  const levelOrder = new Map(levelRows.map((l, i) => [l.id, i]))
   const levelName = new Map(levelRows.map(l => [l.id, l.name]))
   const categoryName = new Map(categoryRows.map(c => [c.id, c.name]))
   const understood = new Map(progress.map(p => [p.storyId, p.understanding]))
 
   const visible = storyRows
     .filter(s => (!levelId || s.levelId === levelId) && (!categoryId || s.categoryId === categoryId))
-    .sort((a, b) =>
-      (levelOrder.get(a.levelId) ?? 0) - (levelOrder.get(b.levelId) ?? 0) ||
-      b.createdAt.getTime() - a.createdAt.getTime(),
-    )
+    .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
       <nav className="bg-white/80 backdrop-blur-md border-b border-slate-100 sticky top-0 z-40">
-        <div className="max-w-3xl mx-auto px-5 h-16 flex items-center justify-between">
+        <div className="max-w-6xl mx-auto px-5 h-16 flex items-center">
           <Link href="/dashboard" className="text-sm font-medium text-slate-500 hover:text-slate-900 transition">
             ← Dashboard
           </Link>
-          <span className="font-bold text-slate-900">Stories</span>
-          <div className="w-20" />
         </div>
       </nav>
 
-      <main className="flex-1 max-w-3xl mx-auto w-full px-5 py-10">
-        <h1 className="text-3xl font-extrabold text-slate-900">Stories</h1>
-        <p className="text-slate-500 mt-1">Short reads you can finish in a few minutes. Tap a line if you get stuck.</p>
+      <main className="flex-1 max-w-6xl mx-auto w-full px-5 py-12">
+        <header className="max-w-2xl">
+          <h1 className="text-5xl font-extrabold text-slate-900 tracking-tight">Stories</h1>
+          <p className="text-lg text-slate-500 mt-3">
+            Short reads you can finish in a few minutes. Tap a line if you get stuck.
+          </p>
+        </header>
 
         {usedLevels.length > 0 && (
-          <div className="mt-6 space-y-3">
+          <div className="mt-8 space-y-3">
             <div className="flex flex-wrap gap-2">
               <Chip href={hrefWith({ level: null })} active={!levelId}>All levels</Chip>
               {usedLevels.map(l => (
@@ -101,7 +102,7 @@ export default async function StoriesPage({
               ))}
             </div>
             <div className="flex flex-wrap gap-2">
-              <Chip href={hrefWith({ category: null })} active={!categoryId}>All categories</Chip>
+              <Chip href={hrefWith({ category: null })} active={!categoryId}>All topics</Chip>
               {usedCategories.map(c => (
                 <Chip key={c.id} href={hrefWith({ category: c.id })} active={categoryId === c.id}>{c.name}</Chip>
               ))}
@@ -109,64 +110,61 @@ export default async function StoriesPage({
           </div>
         )}
 
-        <div className="mt-6 space-y-3">
-          {visible.length === 0 && (
-            <p className="text-slate-500 py-10 text-center">
-              {storyRows.length === 0 ? "The first stories are on their way." : "No stories match these filters yet."}
-            </p>
-          )}
-          {visible.map(story => {
-            const lines = lineRows
-              .filter(l => l.storyId === story.id)
-              .map(l => readingPair(l, language, direction).target)
-            const title = readingPair(
-              { serbian: story.titleSr, croatian: story.titleHr, english: story.titleEn }, language, direction,
-            )
-            const result = understood.get(story.id)
-            return (
-              <Link
-                key={story.id}
-                href={`/stories/${story.slug}`}
-                className="flex items-center gap-4 bg-white rounded-2xl border border-slate-100 p-4 hover:shadow-md hover:border-violet-100 transition-all group"
-              >
-                {story.imageVersion ? (
-                  <img
-                    src={storyImageUrl(story.id, story.imageVersion, 240)}
-                    srcSet={storyImageSrcSet(story.id, story.imageVersion)}
-                    sizes="96px"
-                    alt=""
-                    width={96}
-                    height={96}
-                    loading="lazy"
-                    className="w-24 h-24 rounded-xl object-cover flex-shrink-0"
-                  />
-                ) : (
-                  <div className="w-24 h-24 rounded-xl bg-violet-50 text-violet-400 flex items-center justify-center flex-shrink-0">
-                    <BookText className="w-7 h-7" />
+        {visible.length === 0 ? (
+          <p className="text-slate-500 py-20 text-center">
+            {storyRows.length === 0 ? "The first stories are on their way." : "No stories match these filters yet."}
+          </p>
+        ) : (
+          <div className="mt-10 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-7 gap-y-10">
+            {visible.map(story => {
+              const lines = lineRows
+                .filter(l => l.storyId === story.id)
+                .map(l => readingPair(l, language, direction).target)
+              const title = readingPair(
+                { serbian: story.titleSr, croatian: story.titleHr, english: story.titleEn }, language, direction,
+              )
+              const result = understood.get(story.id)
+              return (
+                <Link key={story.id} href={`/stories/${story.slug}`} className="group flex flex-col">
+                  <div className="relative aspect-square rounded-3xl overflow-hidden bg-violet-600">
+                    {story.imageVersion ? (
+                      <img
+                        src={storyImageUrl(story.id, story.imageVersion, 480)}
+                        srcSet={storyImageSrcSet(story.id, story.imageVersion)}
+                        sizes="(min-width: 1024px) 352px, (min-width: 640px) 50vw, 100vw"
+                        alt=""
+                        width={480}
+                        height={480}
+                        loading="lazy"
+                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                    ) : (
+                      <>
+                        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_#a78bfa_0%,_transparent_60%)] opacity-50" />
+                        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_left,_#ec4899_0%,_transparent_60%)] opacity-30" />
+                        <BookText className="absolute inset-0 m-auto w-14 h-14 text-white/90" />
+                      </>
+                    )}
+                    {result && (
+                      <span className="absolute top-3 left-3 flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-full bg-white text-emerald-700 shadow-sm">
+                        <Check className="w-3.5 h-3.5" />{understandingLabel(result)}
+                      </span>
+                    )}
                   </div>
-                )}
-                <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h2 className="text-lg font-bold text-slate-900 group-hover:text-violet-700 transition-colors">
-                      {title.target}
-                    </h2>
-                    <p className="text-sm text-slate-500">{title.translation}</p>
-                  </div>
-                  {result && (
-                    <span className="flex-shrink-0 px-2.5 py-1 text-xs font-semibold rounded-full bg-emerald-100 text-emerald-700">
-                      {understandingLabel(result)}
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-slate-400 mt-3">
-                  {levelName.get(story.levelId)} · {categoryName.get(story.categoryId)} · {readingMinutes(lines)} min read
-                </p>
-                </div>
-              </Link>
-            )
-          })}
-        </div>
+                  <p className="mt-4 text-xs font-semibold text-violet-600">
+                    {levelName.get(story.levelId)} · {categoryName.get(story.categoryId)}
+                  </p>
+                  <h2 className="mt-1.5 text-2xl font-extrabold tracking-tight text-slate-900 group-hover:text-violet-700 transition-colors">
+                    {title.target}
+                  </h2>
+                  <p className="text-sm text-slate-500 mt-0.5">{title.translation}</p>
+                  <p className="mt-2.5 text-slate-600 leading-relaxed line-clamp-2">{lines.slice(0, 3).join(" ")}</p>
+                  <p className="mt-3 text-xs text-slate-400">{readingMinutes(lines)} min read</p>
+                </Link>
+              )
+            })}
+          </div>
+        )}
       </main>
     </div>
   )
